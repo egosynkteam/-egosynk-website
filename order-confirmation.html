@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Order Confirmed — EGOSYNK</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0D0E10; --surface:#17181B; --surface-2:#1F2023; --line:#2A2B2F;
+    --bone:#EDEAE3; --bone-dim:#A8A6A0; --steel:#8B8D93;
+    --rust:#C41E3A; --rust-bright:#E63950;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{
+    background:var(--bg);color:var(--bone);font-family:'Inter',sans-serif;
+    min-height:100vh;display:flex;flex-direction:column;align-items:center;
+    padding:60px 20px;
+  }
+  a{color:inherit;}
+  .mono{font-family:'JetBrains Mono',monospace;letter-spacing:0.04em;}
+  .logo{font-family:'Archivo Black',sans-serif;font-size:20px;text-transform:uppercase;margin-bottom:40px;}
+  .logo span{color:var(--rust);}
+  .card{
+    background:var(--surface);border:1px solid var(--line);border-radius:8px;
+    max-width:480px;width:100%;padding:32px 28px;
+  }
+  .status-icon{font-size:40px;margin-bottom:16px;}
+  h1{font-family:'Archivo Black',sans-serif;text-transform:uppercase;font-size:24px;margin-bottom:8px;}
+  .sub{color:var(--bone-dim);font-size:13px;margin-bottom:24px;line-height:1.5;}
+  .order-id{
+    font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--rust-bright);
+    background:var(--surface-2);border:1px solid var(--line);border-radius:4px;
+    padding:8px 12px;margin-bottom:24px;display:inline-block;word-break:break-all;
+  }
+  .section-label{
+    font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--steel);
+    letter-spacing:0.08em;text-transform:uppercase;margin:20px 0 10px;
+  }
+  .item-row{display:flex;justify-content:space-between;gap:10px;padding:8px 0;border-bottom:1px solid var(--line);font-size:13px;}
+  .item-row .meta{color:var(--steel);font-size:11px;}
+  .total-row{display:flex;justify-content:space-between;padding-top:14px;font-weight:700;font-size:16px;}
+  .addr-block{font-size:13px;color:var(--bone-dim);line-height:1.6;}
+  .btn{
+    display:block;text-align:center;width:100%;background:var(--rust);color:var(--bone);
+    padding:14px;border-radius:2px;text-transform:uppercase;letter-spacing:0.05em;
+    font-weight:700;font-size:13px;margin-top:28px;text-decoration:none;
+  }
+  .support-note{margin-top:16px;font-size:11px;color:var(--steel);text-align:center;font-family:'JetBrains Mono',monospace;}
+  .loading, .error-state{color:var(--bone-dim);font-size:13px;}
+  .error-state{color:var(--rust-bright);}
+</style>
+</head>
+<body>
+
+<div class="logo"><span>EGO</span>SYNK</div>
+
+<div class="card" id="card">
+  <div class="loading">Confirming your order…</div>
+</div>
+
+<script>
+async function init(){
+  const card = document.getElementById('card');
+  const params = new URLSearchParams(window.location.search);
+  const orderId = params.get('order');
+  const paymentId = params.get('payment_id');
+  const signature = params.get('signature');
+
+  if(!orderId){
+    card.innerHTML = '<div class="error-state">No order reference found.</div>';
+    return;
+  }
+
+  try{
+    // First landing right after Razorpay's popup: verify the signature server-side.
+    // This is the single point where a payment gets marked "paid" and the cart is cleared —
+    // so a payment is only ever confirmed once, right before being shown to the customer.
+    if(paymentId && signature){
+      const verifyRes = await fetch('/.netlify/functions/verify-payment', {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({ razorpay_order_id: orderId, razorpay_payment_id: paymentId, razorpay_signature: signature })
+      });
+      const verifyResult = await verifyRes.json();
+      if(!verifyResult.verified){
+        card.innerHTML = '<div class="error-state">Payment could not be verified.<br>If money was deducted, contact <a href="mailto:support@egosynk.com">support@egosynk.com</a> with this order ID:<br><br>' + orderId + '</div>';
+        return;
+      }
+      sessionStorage.removeItem('egosynk_cart');
+    }
+
+    const orderRes = await fetch(`/.netlify/functions/get-order?id=${encodeURIComponent(orderId)}`);
+    if(!orderRes.ok){
+      card.innerHTML = '<div class="error-state">Order not found yet. If you just paid, refresh in a few seconds, or contact <a href="mailto:support@egosynk.com">support@egosynk.com</a>.</div>';
+      return;
+    }
+    const order = await orderRes.json();
+    render(order);
+  } catch(err){
+    console.error(err);
+    card.innerHTML = '<div class="error-state">Something went wrong loading your order. Contact <a href="mailto:support@egosynk.com">support@egosynk.com</a>.</div>';
+  }
+}
+
+function render(order){
+  const itemsHtml = order.items.map(i => `
+    <div class="item-row">
+      <div>
+        <div>${escapeHtml(i.name)}</div>
+        <div class="meta">${i.size ? 'Size: ' + escapeHtml(i.size) + ' · ' : ''}Qty: ${i.qty}</div>
+      </div>
+      <div class="mono">₹${(i.price * i.qty).toLocaleString('en-IN')}</div>
+    </div>
+  `).join('');
+
+  const s = order.shipping;
+  document.getElementById('card').innerHTML = `
+    <div class="status-icon">✓</div>
+    <h1>Order Confirmed</h1>
+    <div class="sub">Thanks for the order — we're getting it ready. A confirmation will be sent to ${s.email ? escapeHtml(s.email) : 'your phone number'} shortly.</div>
+    <div class="order-id mono">${escapeHtml(order.orderId)}</div>
+
+    <div class="section-label">Items</div>
+    ${itemsHtml}
+    <div class="total-row"><span>Total</span><span class="mono">₹${(order.amount/100).toLocaleString('en-IN')}</span></div>
+
+    <div class="section-label">Delivering to</div>
+    <div class="addr-block">
+      ${escapeHtml(s.name)}<br>
+      ${escapeHtml(s.address1)}${s.address2 ? ', ' + escapeHtml(s.address2) : ''}<br>
+      ${escapeHtml(s.city)}, ${escapeHtml(s.state)} ${escapeHtml(s.pincode)}<br>
+      ${escapeHtml(s.phone)}
+    </div>
+
+    <a class="btn" href="/">Continue Shopping</a>
+    <div class="support-note">Questions? support@egosynk.com</div>
+  `;
+}
+
+function escapeHtml(str){
+  const d = document.createElement('div');
+  d.textContent = str == null ? '' : String(str);
+  return d.innerHTML;
+}
+
+init();
+</script>
+</body>
+</html>

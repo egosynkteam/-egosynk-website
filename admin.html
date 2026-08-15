@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EGOSYNK Admin Portal</title>
+<meta name="robots" content="noindex, nofollow">
+<style>
+  :root{
+    --bg:#0D0E10; --surface:#17181B; --surface-2:#1F2023; --line:#2A2B2F;
+    --bone:#EDEAE3; --bone-dim:#A8A6A0; --steel:#8B8D93;
+    --rust:#C41E3A; --rust-bright:#E63950; --ok:#3FA96A;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{background:var(--bg);color:var(--bone);font-family:'Segoe UI',Inter,sans-serif;padding:24px;}
+  h1{font-size:20px;}
+  h2{font-size:16px;margin-bottom:14px;}
+  a{color:var(--rust-bright);}
+  input,select{background:var(--surface-2);border:1px solid var(--line);color:var(--bone);padding:9px 10px;border-radius:4px;font-size:13px;}
+  input:focus,select:focus{outline:none;border-color:var(--rust);}
+  button{background:var(--rust);color:var(--bone);border:none;padding:9px 16px;border-radius:4px;cursor:pointer;font-weight:600;font-size:13px;}
+  button.secondary{background:var(--surface-2);border:1px solid var(--line);color:var(--bone);}
+  button.danger{background:transparent;border:1px solid var(--rust-bright);color:var(--rust-bright);}
+  button:disabled{opacity:0.5;cursor:not-allowed;}
+  .hidden{display:none;}
+
+  .gate{max-width:360px;margin:80px auto;background:var(--surface);border:1px solid var(--line);padding:24px;border-radius:8px;}
+  .gate input{width:100%;margin:12px 0;}
+  .gate button{width:100%;}
+
+  .top{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;}
+  .logo{font-weight:700;letter-spacing:0.04em;}
+  .logo span{color:var(--rust);}
+
+  .tabs{display:flex;gap:8px;margin-bottom:20px;border-bottom:1px solid var(--line);}
+  .tab-btn{background:none;border:none;color:var(--steel);padding:10px 4px;margin-right:16px;font-weight:600;border-bottom:2px solid transparent;border-radius:0;}
+  .tab-btn.active{color:var(--bone);border-bottom-color:var(--rust);}
+  .panel{display:none;}
+  .panel.active{display:block;}
+
+  table{width:100%;border-collapse:collapse;font-size:13px;margin-top:8px;}
+  th,td{text-align:left;padding:9px 8px;border-bottom:1px solid var(--line);vertical-align:top;}
+  th{color:var(--steel);text-transform:uppercase;font-size:11px;letter-spacing:0.05em;}
+  .status{padding:2px 8px;border-radius:10px;font-size:11px;text-transform:uppercase;}
+  .status.paid,.status.true{background:rgba(63,169,106,0.15);color:var(--ok);}
+  .status.pending,.status.false{background:rgba(230,57,80,0.15);color:var(--rust-bright);}
+  .muted{color:var(--steel);font-size:12px;}
+  .msg{color:var(--steel);font-size:13px;padding:20px 0;}
+  .toolbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;gap:10px;flex-wrap:wrap;}
+  .row-actions{display:flex;gap:6px;flex-wrap:wrap;}
+  .row-actions button{padding:5px 10px;font-size:11px;}
+
+  .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.6);display:none;align-items:center;justify-content:center;z-index:50;padding:20px;}
+  .modal-overlay.open{display:flex;}
+  .modal{background:var(--surface);border:1px solid var(--line);border-radius:8px;max-width:440px;width:100%;padding:22px;max-height:88vh;overflow-y:auto;}
+  .modal h3{margin-bottom:14px;}
+  .field{margin-bottom:12px;}
+  .field label{display:block;font-size:11px;color:var(--steel);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:5px;}
+  .field input,.field select{width:100%;}
+  .field-row{display:flex;gap:10px;}
+  .field-row > .field{flex:1;}
+  .checkbox-field{display:flex;align-items:center;gap:8px;margin-bottom:14px;}
+  .checkbox-field input{width:auto;}
+  .modal-actions{display:flex;gap:8px;margin-top:16px;}
+  .modal-actions button{flex:1;}
+  .form-error{color:var(--rust-bright);font-size:12px;margin-bottom:10px;display:none;}
+</style>
+</head>
+<body>
+
+<div class="gate" id="gate">
+  <h1>EGOSYNK <span style="color:var(--rust-bright)">Admin</span></h1>
+  <input type="password" id="keyInput" placeholder="Admin key">
+  <button onclick="unlock()">Unlock</button>
+  <div class="msg" id="gateMsg"></div>
+</div>
+
+<div id="app" class="hidden">
+  <div class="top">
+    <div class="logo">EGO<span>SYNK</span> ADMIN PORTAL</div>
+    <div><a href="/">← Back to store</a></div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab-btn active" data-tab="catalog" onclick="switchTab('catalog')">Catalog</button>
+    <button class="tab-btn" data-tab="orders" onclick="switchTab('orders')">Orders</button>
+    <button class="tab-btn" data-tab="audit" onclick="switchTab('audit')">Audit Log</button>
+  </div>
+
+  <!-- CATALOG -->
+  <div class="panel active" id="panel-catalog">
+    <div class="toolbar">
+      <h2 style="margin:0;">Catalog / Inventory</h2>
+      <div class="row-actions">
+        <button class="secondary" onclick="loadCatalog()">Refresh</button>
+        <button onclick="openProductForm()">+ Add Product</button>
+      </div>
+    </div>
+    <div id="catalogWrap"><div class="msg">Loading…</div></div>
+  </div>
+
+  <!-- ORDERS -->
+  <div class="panel" id="panel-orders">
+    <div class="toolbar">
+      <h2 style="margin:0;">Orders</h2>
+      <button class="secondary" onclick="loadOrders()">Refresh</button>
+    </div>
+    <div id="ordersWrap"><div class="msg">Loading…</div></div>
+  </div>
+
+  <!-- AUDIT LOG -->
+  <div class="panel" id="panel-audit">
+    <div class="toolbar">
+      <h2 style="margin:0;">Audit Log</h2>
+      <button class="secondary" onclick="loadAudit()">Refresh</button>
+    </div>
+    <div id="auditWrap"><div class="msg">Loading…</div></div>
+  </div>
+</div>
+
+<!-- PRODUCT FORM MODAL -->
+<div class="modal-overlay" id="productModalOverlay" onclick="closeProductForm(event)">
+  <div class="modal" onclick="event.stopPropagation()">
+    <h3 id="productFormTitle">Add Product</h3>
+    <div class="form-error" id="productFormError"></div>
+    <form id="productForm" onsubmit="submitProductForm(event)">
+      <input type="hidden" id="p-id" value="">
+      <div class="field">
+        <label for="p-name">Product Name</label>
+        <input id="p-name" required>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label for="p-cat">Category</label>
+          <select id="p-cat" required>
+            <option value="sleeves">Gym Sleeves</option>
+            <option value="innerwear">Innerwear</option>
+            <option value="socks">Gym Socks</option>
+            <option value="compression">Compression Wear</option>
+            <option value="accessories">Accessories</option>
+            <option value="fragrance">Bold Fragrance</option>
+            <option value="bottoms">Bottoms</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="p-price">Price (₹)</label>
+          <input id="p-price" type="number" min="1" required>
+        </div>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label for="p-tag">Tag (optional)</label>
+          <input id="p-tag" placeholder="NEW / BESTSELLER">
+        </div>
+        <div class="field">
+          <label for="p-stock">Stock (optional)</label>
+          <input id="p-stock" type="number" min="0" placeholder="Leave blank = untracked">
+        </div>
+      </div>
+      <div class="field">
+        <label for="p-sizes">Sizes / Variants (comma-separated)</label>
+        <input id="p-sizes" placeholder="S, M, L, XL" required>
+      </div>
+      <div class="field">
+        <label for="p-guide">Size Guide (optional)</label>
+        <select id="p-guide">
+          <option value="">None</option>
+          <option value="apparel">Apparel</option>
+          <option value="sleeves">Sleeves</option>
+          <option value="underwear">Underwear</option>
+          <option value="socks">Socks</option>
+          <option value="belt">Belt</option>
+        </select>
+      </div>
+      <div class="checkbox-field">
+        <input type="checkbox" id="p-available" checked>
+        <label for="p-available" style="margin:0;">Available for sale</label>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="secondary" onclick="closeProductForm()">Cancel</button>
+        <button type="submit" id="productFormSubmit">Save Product</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+let adminKey = null;
+let catalogCache = [];
+
+function unlock(){
+  const key = document.getElementById('keyInput').value.trim();
+  if(!key){ document.getElementById('gateMsg').textContent = 'Enter the admin key.'; return; }
+  adminKey = key;
+  sessionStorage.setItem('egosynk_admin_key', key);
+  document.getElementById('gate').classList.add('hidden');
+  document.getElementById('app').classList.remove('hidden');
+  loadCatalog();
+  loadOrders();
+  loadAudit();
+}
+
+function adminFetch(url, opts){
+  opts = opts || {};
+  opts.headers = Object.assign({}, opts.headers, { 'x-admin-key': adminKey });
+  return fetch(url, opts);
+}
+
+function switchTab(tab){
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
+  document.querySelectorAll('.panel').forEach(p => p.classList.toggle('active', p.id === `panel-${tab}`));
+}
+
+function esc(str){
+  const d = document.createElement('div');
+  d.textContent = str == null ? '' : String(str);
+  return d.innerHTML;
+}
+
+/* ---------- CATALOG ---------- */
+async function loadCatalog(){
+  const wrap = document.getElementById('catalogWrap');
+  try{
+    const res = await adminFetch('/.netlify/functions/admin-catalog');
+    if(res.status === 401){ handleUnauthorized(); return; }
+    const data = await res.json();
+    catalogCache = data.products || [];
+    renderCatalog();
+  } catch(err){
+    wrap.innerHTML = '<div class="msg">Could not load catalog.</div>';
+  }
+}
+
+function renderCatalog(){
+  const wrap = document.getElementById('catalogWrap');
+  if(catalogCache.length === 0){
+    wrap.innerHTML = `<div class="msg">No products yet. <button onclick="seedCatalog()">Seed from original 16 products</button></div>`;
+    return;
+  }
+  const rows = catalogCache.map(p => `
+    <tr>
+      <td>${p.id}</td>
+      <td>${esc(p.name)}${p.tag ? ' <span class="muted">('+esc(p.tag)+')</span>' : ''}</td>
+      <td>${esc(p.cat)}</td>
+      <td>₹${p.price.toLocaleString('en-IN')}</td>
+      <td>${esc((p.sizes||[]).join(', '))}</td>
+      <td>${p.stock === null || p.stock === undefined ? '<span class="muted">—</span>' : p.stock}</td>
+      <td><span class="status ${p.available}">${p.available ? 'Available' : 'Sold Out'}</span></td>
+      <td class="row-actions">
+        <button class="secondary" onclick="toggleAvailability(${p.id})">${p.available ? 'Mark Sold Out' : 'Mark Available'}</button>
+        <button class="secondary" onclick="editProduct(${p.id})">Edit</button>
+        <button class="danger" onclick="deleteProduct(${p.id})">Delete</button>
+      </td>
+    </tr>
+  `).join('');
+  wrap.innerHTML = `
+    <table>
+      <thead><tr><th>ID</th><th>Name</th><th>Category</th><th>Price</th><th>Sizes</th><th>Stock</th><th>Status</th><th>Actions</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+  `;
+}
+
+async function seedCatalog(){
+  const res = await adminFetch('/.netlify/functions/admin-seed-catalog', { method: 'POST' });
+  const data = await res.json();
+  if(data.seeded){ loadCatalog(); }
+  else { alert(data.reason || 'Catalog already has products.'); }
+}
+
+function openProductForm(product){
+  document.getElementById('productFormError').style.display = 'none';
+  document.getElementById('productForm').reset();
+  document.getElementById('p-available').checked = true;
+  if(product){
+    document.getElementById('productFormTitle').textContent = 'Edit Product';
+    document.getElementById('p-id').value = product.id;
+    document.getElementById('p-name').value = product.name;
+    document.getElementById('p-cat').value = product.cat;
+    document.getElementById('p-price').value = product.price;
+    document.getElementById('p-tag').value = product.tag || '';
+    document.getElementById('p-stock').value = product.stock === null || product.stock === undefined ? '' : product.stock;
+    document.getElementById('p-sizes').value = (product.sizes || []).join(', ');
+    document.getElementById('p-guide').value = product.guide || '';
+    document.getElementById('p-available').checked = product.available !== false;
+  } else {
+    document.getElementById('productFormTitle').textContent = 'Add Product';
+    document.getElementById('p-id').value = '';
+  }
+  document.getElementById('productModalOverlay').classList.add('open');
+}
+
+function closeProductForm(e){
+  if(e && e.target !== e.currentTarget) return;
+  document.getElementById('productModalOverlay').classList.remove('open');
+}
+
+function editProduct(id){
+  const product = catalogCache.find(p => p.id === id);
+  if(product) openProductForm(product);
+}
+
+async function submitProductForm(e){
+  e.preventDefault();
+  const errorEl = document.getElementById('productFormError');
+  errorEl.style.display = 'none';
+
+  const idVal = document.getElementById('p-id').value;
+  const payload = {
+    id: idVal ? Number(idVal) : undefined,
+    name: document.getElementById('p-name').value.trim(),
+    cat: document.getElementById('p-cat').value,
+    price: Number(document.getElementById('p-price').value),
+    tag: document.getElementById('p-tag').value.trim() || null,
+    stock: document.getElementById('p-stock').value === '' ? null : Number(document.getElementById('p-stock').value),
+    sizes: document.getElementById('p-sizes').value.split(',').map(s => s.trim()).filter(Boolean),
+    guide: document.getElementById('p-guide').value || null,
+    available: document.getElementById('p-available').checked,
+  };
+
+  const res = await adminFetch('/.netlify/functions/admin-catalog', {
+    method: 'POST',
+    headers: {'Content-Type':'application/json'},
+    body: JSON.stringify(payload)
+  });
+  const result = await res.json();
+  if(!res.ok){
+    errorEl.textContent = result.error || 'Could not save product';
+    errorEl.style.display = 'block';
+    return;
+  }
+  closeProductForm();
+  loadCatalog();
+}
+
+async function toggleAvailability(id){
+  const product = catalogCache.find(p => p.id === id);
+  if(!product) return;
+  await adminFetch('/.netlify/functions/admin-catalog', {
+    method: 'POST',
+    headers: {'Content-Type':'application/json'},
+    body: JSON.stringify(Object.assign({}, product, { available: !product.available }))
+  });
+  loadCatalog();
+}
+
+async function deleteProduct(id){
+  const product = catalogCache.find(p => p.id === id);
+  if(!confirm(`Delete "${product ? product.name : id}"? This can't be undone.`)) return;
+  await adminFetch(`/.netlify/functions/admin-catalog?id=${id}`, { method: 'DELETE' });
+  loadCatalog();
+}
+
+/* ---------- ORDERS ---------- */
+async function loadOrders(){
+  const wrap = document.getElementById('ordersWrap');
+  try{
+    const res = await adminFetch('/.netlify/functions/list-orders');
+    if(res.status === 401){ handleUnauthorized(); return; }
+    const data = await res.json();
+    renderOrders(data.orders || []);
+  } catch(err){
+    wrap.innerHTML = '<div class="msg">Could not load orders.</div>';
+  }
+}
+
+function renderOrders(orders){
+  const wrap = document.getElementById('ordersWrap');
+  if(!orders.length){ wrap.innerHTML = '<div class="msg">No orders yet.</div>'; return; }
+  const rows = orders.map(o => `
+    <tr>
+      <td>${new Date(o.createdAt).toLocaleString('en-IN')}</td>
+      <td><span class="status ${o.status}">${o.status}</span></td>
+      <td>${esc(o.shipping.name)}<br><span class="muted">${esc(o.shipping.phone)}</span></td>
+      <td>${esc(o.shipping.city)}, ${esc(o.shipping.state)} ${esc(o.shipping.pincode)}</td>
+      <td class="muted">${o.items.map(i => `${esc(i.name)}${i.size ? ' ('+esc(i.size)+')' : ''} x${i.qty}`).join('<br>')}</td>
+      <td>₹${(o.amount/100).toLocaleString('en-IN')}</td>
+      <td class="muted">${esc(o.orderId)}</td>
+    </tr>
+  `).join('');
+  wrap.innerHTML = `
+    <table>
+      <thead><tr><th>Date</th><th>Status</th><th>Customer</th><th>Location</th><th>Items</th><th>Amount</th><th>Order ID</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+  `;
+}
+
+/* ---------- AUDIT LOG ---------- */
+async function loadAudit(){
+  const wrap = document.getElementById('auditWrap');
+  try{
+    const res = await adminFetch('/.netlify/functions/list-audit-log');
+    if(res.status === 401){ handleUnauthorized(); return; }
+    const data = await res.json();
+    renderAudit(data.logs || []);
+  } catch(err){
+    wrap.innerHTML = '<div class="msg">Could not load audit log.</div>';
+  }
+}
+
+function renderAudit(logs){
+  const wrap = document.getElementById('auditWrap');
+  if(!logs.length){ wrap.innerHTML = '<div class="msg">No events yet.</div>'; return; }
+  const rows = logs.map(l => `
+    <tr>
+      <td class="muted">${new Date(l.timestamp).toLocaleString('en-IN')}</td>
+      <td>${esc(l.type)}</td>
+      <td>${esc(l.actor)}</td>
+      <td class="muted">${esc(l.ip || '—')}</td>
+      <td class="muted">${esc(JSON.stringify(l.detail || {}))}</td>
+    </tr>
+  `).join('');
+  wrap.innerHTML = `
+    <table>
+      <thead><tr><th>Time</th><th>Event</th><th>Actor</th><th>IP</th><th>Detail</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+  `;
+}
+
+function handleUnauthorized(){
+  sessionStorage.removeItem('egosynk_admin_key');
+  document.getElementById('app').classList.add('hidden');
+  document.getElementById('gate').classList.remove('hidden');
+  document.getElementById('gateMsg').textContent = 'Session expired or wrong key — enter it again.';
+}
+
+const savedKey = sessionStorage.getItem('egosynk_admin_key');
+if(savedKey){
+  document.getElementById('keyInput').value = savedKey;
+  unlock();
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,11 @@
+{
+  "name": "egosynk-website",
+  "version": "1.0.0",
+  "private": true,
+  "description": "EGOSYNK storefront + Razorpay checkout functions",
+  "dependencies": {
+    "razorpay": "^2.9.4",
+    "@netlify/blobs": "^8.1.0",
+    "bcryptjs": "^2.4.3"
+  }
+}

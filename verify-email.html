@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Verify Email — EGOSYNK</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{ --bg:#0D0E10; --surface:#17181B; --line:#2A2B2F; --bone:#EDEAE3; --bone-dim:#A8A6A0; --rust:#C41E3A; --rust-bright:#E63950; --ok:#3FA96A; }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{background:var(--bg);color:var(--bone);font-family:'Inter',sans-serif;min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:80px 20px;}
+  a{color:var(--rust-bright);}
+  .logo{font-family:'Archivo Black',sans-serif;font-size:20px;text-transform:uppercase;margin-bottom:32px;}
+  .logo span{color:var(--rust);}
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:8px;max-width:400px;width:100%;padding:28px;text-align:center;}
+  .icon{font-size:36px;margin-bottom:12px;}
+  h1{font-family:'Archivo Black',sans-serif;text-transform:uppercase;font-size:18px;margin-bottom:8px;}
+  p{color:var(--bone-dim);font-size:13px;line-height:1.6;}
+  .btn{display:inline-block;margin-top:20px;background:var(--rust);color:var(--bone);padding:12px 24px;border-radius:2px;text-transform:uppercase;letter-spacing:0.05em;font-weight:700;font-size:13px;text-decoration:none;}
+</style>
+</head>
+<body>
+
+<a href="/" class="logo"><span>EGO</span>SYNK</a>
+<div class="card" id="card"><p>Verifying…</p></div>
+
+<script>
+async function init(){
+  const token = new URLSearchParams(window.location.search).get('token');
+  const card = document.getElementById('card');
+  if(!token){
+    card.innerHTML = '<div class="icon">✕</div><h1>Missing Link</h1><p>No verification token found in this link.</p>';
+    return;
+  }
+  try{
+    const res = await fetch(`/.netlify/functions/verify-email?token=${encodeURIComponent(token)}`);
+    const result = await res.json();
+    if(res.ok && result.ok){
+      card.innerHTML = '<div class="icon" style="color:var(--ok)">✓</div><h1>Email Verified</h1><p>Your account is verified.</p><a class="btn" href="/account.html">Go to Account</a>';
+    } else {
+      card.innerHTML = `<div class="icon">✕</div><h1>Verification Failed</h1><p>${result.error || 'This link is invalid or expired.'}</p><a class="btn" href="/account.html">Go to Account</a>`;
+    }
+  } catch(err){
+    card.innerHTML = '<div class="icon">✕</div><h1>Something Went Wrong</h1><p>Try again, or contact support@egosynk.com.</p>';
+  }
+}
+init();
+</script>
+</body>
+</html>

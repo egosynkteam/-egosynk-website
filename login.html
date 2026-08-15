@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Log In — EGOSYNK</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0D0E10; --surface:#17181B; --surface-2:#1F2023; --line:#2A2B2F;
+    --bone:#EDEAE3; --bone-dim:#A8A6A0; --steel:#8B8D93;
+    --rust:#C41E3A; --rust-bright:#E63950;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{
+    background:var(--bg);color:var(--bone);font-family:'Inter',sans-serif;
+    min-height:100vh;display:flex;flex-direction:column;align-items:center;
+    padding:60px 20px;
+  }
+  a{color:var(--rust-bright);}
+  .logo{font-family:'Archivo Black',sans-serif;font-size:20px;text-transform:uppercase;margin-bottom:32px;}
+  .logo span{color:var(--rust);}
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:8px;max-width:400px;width:100%;padding:28px;}
+  h1{font-family:'Archivo Black',sans-serif;text-transform:uppercase;font-size:20px;margin-bottom:6px;}
+  .sub{color:var(--bone-dim);font-size:13px;margin-bottom:24px;}
+  .field{margin-bottom:14px;}
+  .field label{
+    display:block;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--steel);
+    letter-spacing:0.05em;text-transform:uppercase;margin-bottom:6px;
+  }
+  .field input{
+    width:100%;background:var(--surface-2);border:1px solid var(--line);color:var(--bone);
+    padding:12px;border-radius:2px;font-size:14px;font-family:'Inter',sans-serif;
+  }
+  .field input:focus{outline:none;border-color:var(--rust);}
+  button[type=submit]{
+    width:100%;background:var(--rust);color:var(--bone);border:none;padding:14px;
+    border-radius:2px;text-transform:uppercase;letter-spacing:0.05em;font-weight:700;
+    font-size:13px;cursor:pointer;margin-top:6px;
+  }
+  button[type=submit]:disabled{background:var(--surface-2);color:var(--steel);cursor:not-allowed;}
+  .error{color:var(--rust-bright);font-size:13px;margin-bottom:14px;display:none;}
+  .switch{margin-top:20px;font-size:13px;color:var(--bone-dim);text-align:center;}
+  .guest-note{margin-top:14px;font-size:12px;color:var(--steel);text-align:center;font-family:'JetBrains Mono',monospace;}
+</style>
+</head>
+<body>
+
+<a href="/" class="logo"><span>EGO</span>SYNK</a>
+
+<div class="card">
+  <h1>Log In</h1>
+  <div class="sub">Welcome back.</div>
+  <div class="error" id="errorMsg"></div>
+  <form id="loginForm">
+    <div class="field">
+      <label for="email">Email</label>
+      <input id="email" name="email" type="email" required>
+    </div>
+    <div class="field">
+      <label for="password">Password</label>
+      <input id="password" name="password" type="password" required>
+      <div style="text-align:right;margin-top:6px;"><a href="/forgot-password.html" style="font-size:12px;">Forgot password?</a></div>
+    </div>
+    <button type="submit" id="submitBtn">Log In</button>
+  </form>
+  <div class="switch">New here? <a href="/signup.html">Create an account</a></div>
+  <div class="guest-note">Or just <a href="/">continue shopping as guest</a> — no account needed to buy.</div>
+</div>
+
+<script>
+const params = new URLSearchParams(window.location.search);
+const redirect = params.get('redirect') || '/account.html';
+
+document.getElementById('loginForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const btn = document.getElementById('submitBtn');
+  const errorEl = document.getElementById('errorMsg');
+  errorEl.style.display = 'none';
+
+  const data = Object.fromEntries(new FormData(e.target).entries());
+  btn.disabled = true;
+  btn.textContent = 'Logging in…';
+
+  try{
+    const res = await fetch('/.netlify/functions/login', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify(data)
+    });
+    const result = await res.json();
+    if(!res.ok){
+      errorEl.textContent = result.error || 'Login failed';
+      errorEl.style.display = 'block';
+      btn.disabled = false;
+      btn.textContent = 'Log In';
+      return;
+    }
+    window.location.href = redirect;
+  } catch(err){
+    console.error(err);
+    errorEl.textContent = 'Something went wrong. Try again.';
+    errorEl.style.display = 'block';
+    btn.disabled = false;
+    btn.textContent = 'Log In';
+  }
+});
+</script>
+</body>
+</html>

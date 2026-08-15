@@ -6,6 +6,7 @@
 <title>EGOSYNK — Compression Engineered for the Grind</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 <style>
   :root{
     --bg:#0D0E10;
@@ -204,6 +205,9 @@
     display:flex;align-items:center;justify-content:center;
   }
   .add-btn:active{background:var(--rust);color:var(--bone);}
+  .add-btn:disabled{border-color:var(--line);color:var(--steel);cursor:not-allowed;}
+  .card.sold-out .card-img{opacity:0.5;}
+  .card-tag.sold-out-tag{background:var(--surface-2);color:var(--steel);border:1px solid var(--line);}
 
   /* MANIFESTO */
   .manifesto{
@@ -355,6 +359,20 @@
     color:var(--bone);padding:12px;border-radius:2px;cursor:pointer;
     text-transform:uppercase;font-size:12px;letter-spacing:0.05em;font-weight:700;
   }
+
+  /* SHIPPING ADDRESS MODAL */
+  .addr-form{display:flex;flex-direction:column;gap:14px;margin-top:16px;}
+  .addr-row{display:flex;gap:10px;}
+  .addr-row > *{flex:1;min-width:0;}
+  .addr-field label{
+    display:block;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--steel);
+    letter-spacing:0.05em;text-transform:uppercase;margin-bottom:6px;
+  }
+  .addr-field input{
+    width:100%;background:var(--surface);border:1px solid var(--line);color:var(--bone);
+    padding:12px;border-radius:2px;font-size:14px;font-family:'Inter',sans-serif;
+  }
+  .addr-field input:focus{outline:none;border-color:var(--rust);}
 </style>
 </head>
 <body>
@@ -362,6 +380,9 @@
 <nav>
   <div class="logo"><span>EGO</span>SYNK</div>
   <div class="nav-right">
+    <a class="cart-btn" href="/account.html" id="accountBtn" title="Account">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+    </a>
     <button class="cart-btn" onclick="toggleCart(true)">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
       <span class="cart-count" id="cartCount">0</span>
@@ -427,7 +448,7 @@
     </div>
     <div>
       <h5>Support</h5>
-      <ul><li>Size Guide</li><li>Shipping</li><li>Returns</li><li>Contact</li></ul>
+      <ul><li>Size Guide</li><li>Shipping</li><li>Returns</li><li><a href="mailto:support@egosynk.com">Contact</a></li><li><a href="/privacy-policy.html">Privacy Policy</a></li></ul>
     </div>
   </div>
   <div class="footer-bottom">
@@ -449,8 +470,8 @@
       <span>Subtotal</span>
       <span class="amt" id="subtotal">₹0</span>
     </div>
-    <button class="checkout-btn" onclick="checkout()">Checkout</button>
-    <div class="checkout-note">Payment gateway connects at launch — this is a preview build</div>
+    <button class="checkout-btn" id="checkoutBtn" onclick="checkout()">Checkout</button>
+    <div class="checkout-note">Secure checkout via Razorpay · UPI, Cards &amp; Netbanking</div>
   </div>
 </div>
 
@@ -495,6 +516,53 @@
   </div>
 </div>
 
+<!-- SHIPPING ADDRESS MODAL -->
+<div class="modal-overlay" id="addressModalOverlay" onclick="closeAddressModal(event)">
+  <div class="size-modal" onclick="event.stopPropagation()">
+    <h3>Delivery Details</h3>
+    <div class="modal-sub">WHERE SHOULD WE SEND YOUR ORDER?</div>
+    <form class="addr-form" id="addressForm" onsubmit="submitAddressAndPay(event)">
+      <div class="addr-field">
+        <label for="addr-name">Full Name</label>
+        <input id="addr-name" name="name" type="text" required>
+      </div>
+      <div class="addr-row">
+        <div class="addr-field">
+          <label for="addr-phone">Phone</label>
+          <input id="addr-phone" name="phone" type="tel" inputmode="numeric" pattern="[6-9][0-9]{9}" maxlength="10" placeholder="10-digit mobile" required>
+        </div>
+        <div class="addr-field">
+          <label for="addr-email">Email (optional)</label>
+          <input id="addr-email" name="email" type="email">
+        </div>
+      </div>
+      <div class="addr-field">
+        <label for="addr-a1">Address Line 1</label>
+        <input id="addr-a1" name="address1" type="text" required>
+      </div>
+      <div class="addr-field">
+        <label for="addr-a2">Address Line 2 (optional)</label>
+        <input id="addr-a2" name="address2" type="text">
+      </div>
+      <div class="addr-row">
+        <div class="addr-field">
+          <label for="addr-city">City</label>
+          <input id="addr-city" name="city" type="text" required>
+        </div>
+        <div class="addr-field">
+          <label for="addr-state">State</label>
+          <input id="addr-state" name="state" type="text" required>
+        </div>
+      </div>
+      <div class="addr-field">
+        <label for="addr-pin">Pincode</label>
+        <input id="addr-pin" name="pincode" type="text" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" required>
+      </div>
+      <button type="submit" class="sheet-add-btn" id="addrSubmitBtn">Continue to Payment</button>
+    </form>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
@@ -509,25 +577,22 @@ const categories = [
   {id:'bottoms',      num:'07', name:'Bottoms',           desc:'Gym shorts, built for reps'},
 ];
 
-// guide = key into sizeGuides. sizes = null means no size selection needed (still asks qty).
-const products = [
-  {id:1,  name:'Full Compression Arm Sleeves',      cat:'sleeves',     price:1299, tag:'BESTSELLER', sizes:['S','M','L','XL'], guide:'sleeves'},
-  {id:2,  name:'Half Compression Arm Sleeves',      cat:'sleeves',     price:999,  tag:null,          sizes:['S','M','L','XL'], guide:'sleeves'},
-  {id:3,  name:'Performance Trunks — Pack of 2',    cat:'innerwear',   price:899,  tag:'NEW',         sizes:['S','M','L','XL','XXL'], guide:'underwear'},
-  {id:4,  name:'Performance Trunks — Pack of 3',    cat:'innerwear',   price:1249, tag:null,          sizes:['S','M','L','XL','XXL'], guide:'underwear'},
-  {id:5,  name:'Full Length Grip Socks',            cat:'socks',       price:499,  tag:null,          sizes:['Free Size'], guide:'socks'},
-  {id:6,  name:'Ankle Grip Socks — Pack of 3',      cat:'socks',       price:649,  tag:'BESTSELLER',  sizes:['Free Size'], guide:'socks'},
-  {id:7,  name:'Forge Compression Tee',             cat:'compression', price:1499, tag:'NEW',         sizes:['S','M','L','XL','XXL'], guide:'apparel'},
-  {id:8,  name:'Sync Compression Leggings',         cat:'compression', price:2199, tag:null,          sizes:['S','M','L','XL','XXL'], guide:'apparel'},
-  {id:9,  name:'Compression Long Sleeve Tee',       cat:'compression', price:1899, tag:null,          sizes:['S','M','L','XL','XXL'], guide:'apparel'},
-  {id:10, name:'Grit Lifting Grips (Pair)',         cat:'accessories', price:799,  tag:null,          sizes:['Free Size'], guide:null},
-  {id:11, name:'Steel Core Lifting Belt 10mm',      cat:'accessories', price:2499, tag:'BESTSELLER',  sizes:['S','M','L'], guide:'belt'},
-  {id:12, name:'Chalk-Grip Wrist Wraps',            cat:'accessories', price:599,  tag:null,          sizes:['Free Size'], guide:null},
-  {id:13, name:'EGOSYNK BOLD — Eau De Parfum 50ml', cat:'fragrance',   price:1799, tag:'NEW',         sizes:['50ml'], guide:null},
-  {id:14, name:'EGOSYNK BOLD — Eau De Parfum 100ml',cat:'fragrance',   price:2799, tag:null,          sizes:['100ml'], guide:null},
-  {id:15, name:'Anvil Training Shorts',             cat:'bottoms',     price:1399, tag:null,          sizes:['S','M','L','XL','XXL'], guide:'apparel'},
-  {id:16, name:'Iron Line 2-in-1 Shorts',           cat:'bottoms',     price:1699, tag:'BESTSELLER',  sizes:['S','M','L','XL','XXL'], guide:'apparel'},
-];
+// Product catalog is fetched live from /.netlify/functions/get-catalog (backed by the
+// `catalog` Blobs store) instead of being hardcoded here — this is what keeps the storefront
+// in sync with whatever the admin portal has configured (price, availability, new/removed items).
+let products = [];
+
+async function loadCatalog(){
+  try{
+    const res = await fetch('/.netlify/functions/get-catalog');
+    const data = await res.json();
+    products = data.products || [];
+  } catch(err){
+    console.error('Could not load catalog', err);
+    products = [];
+  }
+  renderProducts();
+}
 
 const sizeGuides = {
   apparel:   {title:'Apparel Size Chart', sub:'CHEST / WAIST · INCHES', head:['Size','Chest (in)','Waist (in)'],
@@ -542,8 +607,15 @@ const sizeGuides = {
               rows:[['S','28–32'],['M','32–36'],['L','36–40']]},
 };
 
+/* ---------- PAYMENT CONFIG ---------- */
+// Public "key_id" — safe to expose client-side. This is TEST mode; swap to your rzp_live_ key at launch.
+// The secret key never goes in this file — it lives only in Netlify's environment variables,
+// used by the serverless functions in netlify/functions/.
+const RAZORPAY_KEY_ID = 'rzp_test_REPLACE_ME';
+
 /* ---------- STATE ---------- */
 let cart = JSON.parse(sessionStorage.getItem('egosynk_cart') || '[]');
+let currentUser = null; // populated by checkSession() if a login cookie is present
 let currentFilter = 'all';
 let activeProduct = null;
 let sheetSize = null;
@@ -572,9 +644,9 @@ function renderProducts(){
   const grid = document.getElementById('productGrid');
   const filtered = currentFilter === 'all' ? products : products.filter(p => p.cat === currentFilter);
   grid.innerHTML = filtered.map(p => `
-    <div class="card" onclick="openSheet(${p.id})">
+    <div class="card${p.available === false ? ' sold-out' : ''}" onclick="openSheet(${p.id})">
       <div class="card-img">
-        ${p.tag ? `<span class="card-tag">${p.tag}</span>` : ''}
+        ${p.available === false ? `<span class="card-tag sold-out-tag">SOLD OUT</span>` : (p.tag ? `<span class="card-tag">${p.tag}</span>` : '')}
         <span class="placeholder-mark">ES</span>
       </div>
       <div class="card-body">
@@ -582,7 +654,7 @@ function renderProducts(){
         <div class="cat">${categories.find(c=>c.id===p.cat).name}</div>
         <div class="price-row">
           <span class="price">₹${p.price.toLocaleString('en-IN')}</span>
-          <button class="add-btn" onclick="event.stopPropagation();openSheet(${p.id})">+</button>
+          <button class="add-btn" ${p.available === false ? 'disabled' : ''} onclick="event.stopPropagation();openSheet(${p.id})">${p.available === false ? '×' : '+'}</button>
         </div>
       </div>
     </div>
@@ -638,6 +710,11 @@ function changeSheetQty(delta){
 
 function updateSheetAddBtn(){
   const btn = document.getElementById('sheetAddBtn');
+  if(activeProduct.available === false){
+    btn.disabled = true;
+    btn.textContent = 'Sold Out';
+    return;
+  }
   const needsSize = !(activeProduct.sizes.length === 1 && activeProduct.sizes[0] === 'Free Size');
   btn.disabled = needsSize && !sheetSize;
   btn.textContent = (needsSize && !sheetSize) ? 'Select a size' : 'Add to Bag';
@@ -645,6 +722,7 @@ function updateSheetAddBtn(){
 
 function confirmAddToCart(){
   if(!activeProduct) return;
+  if(activeProduct.available === false) return;
   const needsSize = !(activeProduct.sizes.length === 1 && activeProduct.sizes[0] === 'Free Size');
   if(needsSize && !sheetSize) return;
   const size = sheetSize || 'Free Size';
@@ -739,16 +817,120 @@ function showToast(msg){
   window._toastTimer = setTimeout(() => t.classList.remove('show'), 2200);
 }
 
+let shippingInfo = null;
+
 function checkout(){
   if(cart.length === 0){ showToast('Your bag is empty'); return; }
-  showToast('Checkout connects once Razorpay is wired in');
+  // Logged-in users (existing accounts) get their saved details prefilled but can still
+  // edit before paying; guests just see a blank form. Either way this is the same modal —
+  // an account only removes retyping, it's never required to buy.
+  if(currentUser){
+    document.getElementById('addr-name').value = currentUser.name || '';
+    document.getElementById('addr-phone').value = currentUser.phone || '';
+    document.getElementById('addr-email').value = currentUser.email || '';
+    const saved = (currentUser.addresses || [])[0];
+    if(saved){
+      document.getElementById('addr-a1').value = saved.address1 || '';
+      document.getElementById('addr-a2').value = saved.address2 || '';
+      document.getElementById('addr-city').value = saved.city || '';
+      document.getElementById('addr-state').value = saved.state || '';
+      document.getElementById('addr-pin').value = saved.pincode || '';
+    }
+  }
+  document.getElementById('addressModalOverlay').classList.add('open');
+}
+
+async function checkSession(){
+  try{
+    const res = await fetch('/.netlify/functions/me');
+    if(res.ok){
+      currentUser = await res.json();
+      document.getElementById('accountBtn').title = `Account (${currentUser.name})`;
+    }
+  } catch(err){
+    // Not logged in / offline — silently treat as guest, this must never block the storefront.
+  }
+}
+
+function closeAddressModal(e){
+  if(e && e.target !== e.currentTarget) return;
+  document.getElementById('addressModalOverlay').classList.remove('open');
+}
+
+function submitAddressAndPay(e){
+  e.preventDefault();
+  const data = Object.fromEntries(new FormData(e.target).entries());
+
+  if(!/^[6-9]\d{9}$/.test(data.phone)){ showToast('Enter a valid 10-digit mobile number'); return; }
+  if(!/^\d{6}$/.test(data.pincode)){ showToast('Enter a valid 6-digit pincode'); return; }
+
+  shippingInfo = data;
+  document.getElementById('addressModalOverlay').classList.remove('open');
+  proceedToPayment();
+}
+
+async function proceedToPayment(){
+  const btn = document.getElementById('checkoutBtn');
+  btn.disabled = true;
+  btn.textContent = 'Processing…';
+
+  try{
+    // Server recomputes the total from its own price list — the cart here only supplies
+    // product IDs/qty (+ name/size for display), so the amount charged can't be tampered with.
+    const orderRes = await fetch('/.netlify/functions/create-order', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({
+        cart: cart.map(c => ({id:c.id, name:c.name, size:c.size, qty:c.qty})),
+        shipping: shippingInfo
+      })
+    });
+    if(!orderRes.ok){
+      const errBody = await orderRes.json().catch(() => ({}));
+      throw new Error(errBody.error || 'Order creation failed');
+    }
+    const { orderId, amount } = await orderRes.json();
+
+    const rzp = new Razorpay({
+      key: RAZORPAY_KEY_ID,
+      order_id: orderId,
+      amount: amount,
+      currency: 'INR',
+      name: 'EGOSYNK',
+      description: 'Compression Engineered for the Grind',
+      prefill: { name: shippingInfo.name, contact: shippingInfo.phone, email: shippingInfo.email || '' },
+      theme: { color: '#C41E3A' },
+      handler: function(response){
+        // Verification + cart-clearing happens on the confirmation page itself, so a payment
+        // is only ever counted as final in exactly one place, right before it's displayed.
+        const q = new URLSearchParams({
+          order: response.razorpay_order_id,
+          payment_id: response.razorpay_payment_id,
+          signature: response.razorpay_signature
+        });
+        window.location.href = `/order-confirmation.html?${q.toString()}`;
+      },
+      modal: {
+        ondismiss: function(){ showToast('Checkout cancelled'); }
+      }
+    });
+    rzp.on('payment.failed', function(){ showToast('Payment failed. Please try again.'); });
+    rzp.open();
+  } catch(err){
+    console.error(err);
+    showToast(err.message || 'Could not start checkout. Try again.');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Checkout';
+  }
 }
 
 /* ---------- INIT ---------- */
 renderCatRail();
 renderFilterRow();
-renderProducts();
+loadCatalog(); // fetches live products, then calls renderProducts() itself
 updateCartUI();
+checkSession();
 </script>
 </body>
 </html>
