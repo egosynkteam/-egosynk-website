@@ -1,0 +1,754 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EGOSYNK — Compression Engineered for the Grind</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0D0E10;
+    --surface:#17181B;
+    --surface-2:#1F2023;
+    --line:#2A2B2F;
+    --bone:#EDEAE3;
+    --bone-dim:#A8A6A0;
+    --steel:#8B8D93;
+    --rust:#C41E3A;
+    --rust-bright:#E63950;
+    --rust-dim:#3D0F16;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    background:var(--bg);
+    color:var(--bone);
+    font-family:'Inter',sans-serif;
+    overflow-x:hidden;
+  }
+  ::selection{background:var(--rust);color:var(--bone);}
+  a{color:inherit;text-decoration:none;}
+
+  .mono{font-family:'JetBrains Mono',monospace;letter-spacing:0.04em;}
+  .display{font-family:'Archivo Black',sans-serif;text-transform:uppercase;}
+
+  /* NAV */
+  nav{
+    position:fixed;top:0;left:0;right:0;z-index:100;
+    display:flex;align-items:center;justify-content:space-between;
+    padding:18px 24px;
+    background:rgba(13,14,16,0.85);
+    backdrop-filter:blur(10px);
+    border-bottom:1px solid var(--line);
+  }
+  .logo{font-family:'Archivo Black',sans-serif;font-size:20px;letter-spacing:0.02em;text-transform:uppercase;}
+  .logo span{color:var(--rust);}
+  .nav-right{display:flex;align-items:center;gap:18px;}
+  .cart-btn{
+    position:relative;background:none;border:1px solid var(--line);
+    color:var(--bone);width:40px;height:40px;border-radius:2px;
+    display:flex;align-items:center;justify-content:center;cursor:pointer;
+    transition:border-color .2s;
+  }
+  .cart-btn:active{border-color:var(--rust);}
+  .cart-count{
+    position:absolute;top:-6px;right:-6px;background:var(--rust);
+    color:var(--bone);font-size:10px;font-weight:700;
+    width:16px;height:16px;border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+    font-family:'JetBrains Mono',monospace;
+  }
+
+  /* HERO */
+  .hero{
+    min-height:100vh;
+    display:flex;flex-direction:column;justify-content:center;
+    padding:100px 24px 60px;
+    position:relative;
+  }
+  .hero-eyebrow{
+    font-family:'JetBrains Mono',monospace;font-size:12px;
+    color:var(--rust-bright);letter-spacing:0.15em;
+    display:flex;align-items:center;gap:10px;margin-bottom:20px;
+  }
+  .hero-eyebrow::before{
+    content:'';width:24px;height:1px;background:var(--rust-bright);
+  }
+  .hero h1{
+    font-family:'Archivo Black',sans-serif;
+    font-size:clamp(42px,11vw,88px);
+    line-height:0.92;
+    text-transform:uppercase;
+    letter-spacing:-0.01em;
+    margin-bottom:24px;
+  }
+  .hero h1 .accent{color:var(--rust);}
+  .hero-sub{
+    font-size:16px;color:var(--bone-dim);max-width:440px;
+    line-height:1.6;margin-bottom:36px;
+  }
+  .hero-actions{display:flex;gap:12px;flex-wrap:wrap;}
+  .btn-primary{
+    background:var(--rust);color:var(--bone);
+    padding:16px 28px;font-weight:700;font-size:14px;
+    text-transform:uppercase;letter-spacing:0.05em;
+    border:none;border-radius:2px;cursor:pointer;
+    transition:background .2s;
+  }
+  .btn-primary:active{background:var(--rust-bright);}
+  .btn-secondary{
+    background:transparent;color:var(--bone);
+    padding:16px 28px;font-weight:700;font-size:14px;
+    text-transform:uppercase;letter-spacing:0.05em;
+    border:1px solid var(--line);border-radius:2px;cursor:pointer;
+  }
+  .hero-gauge{
+    position:absolute;right:24px;top:50%;transform:translateY(-50%);
+    display:none;
+  }
+  @media(min-width:860px){
+    .hero-gauge{display:block;}
+  }
+
+  /* MARQUEE */
+  .marquee{
+    border-top:1px solid var(--line);border-bottom:1px solid var(--line);
+    padding:14px 0;overflow:hidden;white-space:nowrap;
+    background:var(--surface);
+  }
+  .marquee-track{display:inline-block;animation:scroll 22s linear infinite;}
+  .marquee-track span{
+    font-family:'JetBrains Mono',monospace;font-size:12px;
+    color:var(--steel);letter-spacing:0.1em;margin:0 28px;
+  }
+  .marquee-track span.dot{color:var(--rust);}
+  @keyframes scroll{
+    from{transform:translateX(0);}
+    to{transform:translateX(-50%);}
+  }
+
+  /* SECTION HEADER */
+  .section{padding:80px 24px;max-width:1200px;margin:0 auto;}
+  .section-head{
+    display:flex;justify-content:space-between;align-items:flex-end;
+    margin-bottom:40px;flex-wrap:wrap;gap:16px;
+    border-bottom:1px solid var(--line);padding-bottom:20px;
+  }
+  .section-tag{
+    font-family:'JetBrains Mono',monospace;font-size:12px;
+    color:var(--rust-bright);letter-spacing:0.1em;margin-bottom:8px;display:block;
+  }
+  .section-head h2{
+    font-family:'Archivo Black',sans-serif;
+    font-size:clamp(26px,5vw,40px);text-transform:uppercase;
+  }
+
+  /* CATEGORY RAIL */
+  .cat-rail{
+    display:flex;gap:12px;overflow-x:auto;padding:4px 24px 12px;
+    scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch;
+    scrollbar-width:none;
+  }
+  .cat-rail::-webkit-scrollbar{display:none;}
+  .cat-card{
+    background:var(--surface);border:1px solid var(--line);padding:24px 20px;cursor:pointer;
+    transition:border-color .2s,background .2s;position:relative;overflow:hidden;
+    flex:0 0 200px;scroll-snap-align:start;border-radius:2px;
+  }
+  .cat-card:active{background:var(--surface-2);border-color:var(--rust);}
+  .cat-num{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--rust);margin-bottom:18px;display:block;}
+  .cat-card h3{font-family:'Archivo Black',sans-serif;font-size:18px;text-transform:uppercase;margin-bottom:6px;line-height:1.15;}
+  .cat-card p{font-size:12px;color:var(--bone-dim);line-height:1.5;}
+
+  /* PRODUCT GRID */
+  .filter-row{display:flex;gap:8px;margin-bottom:28px;overflow-x:auto;padding-bottom:4px;scrollbar-width:none;}
+  .filter-row::-webkit-scrollbar{display:none;}
+  .filter-chip{
+    font-family:'JetBrains Mono',monospace;font-size:12px;
+    padding:8px 14px;border:1px solid var(--line);border-radius:20px;
+    background:transparent;color:var(--bone-dim);cursor:pointer;
+    white-space:nowrap;flex-shrink:0;
+  }
+  .filter-chip.active{background:var(--rust);border-color:var(--rust);color:var(--bone);}
+  .grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;}
+  @media(min-width:700px){.grid{grid-template-columns:repeat(3,1fr);gap:20px;}}
+  .card{
+    background:var(--surface);border:1px solid var(--line);
+    border-radius:2px;overflow:hidden;cursor:pointer;
+    transition:border-color .2s;
+  }
+  .card:active{border-color:var(--rust);}
+  .card-img{
+    aspect-ratio:1;background:linear-gradient(135deg,var(--surface-2),var(--bg));
+    display:flex;align-items:center;justify-content:center;
+    position:relative;
+  }
+  .card-img .placeholder-mark{
+    font-family:'Archivo Black',sans-serif;font-size:28px;color:var(--line);
+  }
+  .card-tag{
+    position:absolute;top:8px;left:8px;background:var(--rust);
+    color:var(--bone);font-family:'JetBrains Mono',monospace;
+    font-size:10px;padding:3px 8px;border-radius:2px;text-transform:uppercase;
+  }
+  .card-body{padding:14px;}
+  .card-body h4{font-size:14px;font-weight:600;margin-bottom:4px;line-height:1.35;}
+  .card-body .cat{font-size:11px;color:var(--steel);margin-bottom:10px;text-transform:uppercase;letter-spacing:0.05em;}
+  .card-body .variant-note{font-size:11px;color:var(--bone-dim);margin-bottom:10px;}
+  .card-body .price-row{display:flex;justify-content:space-between;align-items:center;}
+  .price{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:15px;}
+  .add-btn{
+    width:30px;height:30px;border-radius:50%;border:1px solid var(--rust);
+    background:transparent;color:var(--rust);font-size:16px;cursor:pointer;
+    display:flex;align-items:center;justify-content:center;
+  }
+  .add-btn:active{background:var(--rust);color:var(--bone);}
+
+  /* MANIFESTO */
+  .manifesto{
+    background:var(--surface);border-top:1px solid var(--line);border-bottom:1px solid var(--line);
+    padding:90px 24px;text-align:center;
+  }
+  .manifesto p{
+    font-family:'Archivo Black',sans-serif;
+    font-size:clamp(24px,6vw,46px);text-transform:uppercase;
+    line-height:1.15;max-width:760px;margin:0 auto;
+  }
+  .manifesto p .accent{color:var(--rust);}
+  .manifesto-sub{
+    margin-top:20px;color:var(--steel);font-size:13px;
+    font-family:'JetBrains Mono',monospace;letter-spacing:0.08em;
+  }
+
+  /* FOOTER */
+  footer{padding:60px 24px 40px;border-top:1px solid var(--line);}
+  .footer-grid{
+    display:grid;grid-template-columns:1fr;gap:32px;max-width:1200px;margin:0 auto 40px;
+  }
+  @media(min-width:700px){.footer-grid{grid-template-columns:2fr 1fr 1fr;}}
+  .footer-grid h5{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--rust-bright);letter-spacing:0.1em;margin-bottom:16px;text-transform:uppercase;}
+  .footer-grid ul{list-style:none;}
+  .footer-grid li{margin-bottom:10px;font-size:13px;color:var(--bone-dim);}
+  .footer-bottom{
+    max-width:1200px;margin:0 auto;padding-top:24px;border-top:1px solid var(--line);
+    display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px;
+    font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--steel);
+  }
+
+  /* CART DRAWER */
+  .overlay{
+    position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:200;
+    opacity:0;pointer-events:none;transition:opacity .25s;
+  }
+  .overlay.open{opacity:1;pointer-events:all;}
+  .drawer{
+    position:fixed;top:0;right:0;bottom:0;width:100%;max-width:400px;
+    background:var(--bg);border-left:1px solid var(--line);z-index:201;
+    transform:translateX(100%);transition:transform .3s cubic-bezier(.4,0,.2,1);
+    display:flex;flex-direction:column;
+  }
+  .drawer.open{transform:translateX(0);}
+  .drawer-head{
+    padding:20px;border-bottom:1px solid var(--line);
+    display:flex;justify-content:space-between;align-items:center;
+  }
+  .drawer-head h3{font-family:'Archivo Black',sans-serif;text-transform:uppercase;font-size:18px;}
+  .close-btn{background:none;border:none;color:var(--bone);font-size:22px;cursor:pointer;}
+  .drawer-items{flex:1;overflow-y:auto;padding:16px 20px;}
+  .empty-cart{color:var(--steel);font-size:13px;text-align:center;padding:60px 0;}
+  .drawer-item{
+    display:flex;gap:12px;padding:14px 0;border-bottom:1px solid var(--line);
+  }
+  .drawer-item .thumb{
+    width:56px;height:56px;background:var(--surface);border:1px solid var(--line);
+    flex-shrink:0;display:flex;align-items:center;justify-content:center;
+    font-family:'Archivo Black',sans-serif;color:var(--line);font-size:14px;
+  }
+  .drawer-item-info{flex:1;}
+  .drawer-item-info h5{font-size:13px;margin-bottom:4px;}
+  .drawer-item-info .meta{font-size:11px;color:var(--steel);margin-bottom:6px;}
+  .qty-row{display:flex;align-items:center;gap:10px;}
+  .qty-btn{
+    width:22px;height:22px;border:1px solid var(--line);background:none;
+    color:var(--bone);cursor:pointer;font-size:13px;border-radius:2px;
+  }
+  .drawer-item .price{font-size:13px;}
+  .remove-btn{background:none;border:none;color:var(--steel);font-size:11px;cursor:pointer;text-decoration:underline;margin-top:4px;}
+  .drawer-foot{padding:20px;border-top:1px solid var(--line);}
+  .subtotal-row{display:flex;justify-content:space-between;margin-bottom:16px;font-size:14px;}
+  .subtotal-row .amt{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:18px;}
+  .checkout-btn{
+    width:100%;background:var(--rust);color:var(--bone);border:none;
+    padding:16px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;
+    border-radius:2px;cursor:pointer;font-size:14px;
+  }
+  .checkout-note{font-size:11px;color:var(--steel);text-align:center;margin-top:10px;font-family:'JetBrains Mono',monospace;}
+
+  /* TOAST */
+  .toast{
+    position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(100px);
+    background:var(--bone);color:var(--bg);padding:14px 22px;border-radius:2px;
+    font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:600;
+    z-index:300;transition:transform .3s;max-width:88vw;text-align:center;
+  }
+  .toast.show{transform:translateX(-50%) translateY(0);}
+
+  .drawer-item .meta.size-line{color:var(--bone-dim);}
+
+  /* QUICK-ADD SHEET & SIZE GUIDE MODAL */
+  .sheet{
+    position:fixed;left:0;right:0;bottom:0;max-height:82vh;
+    background:var(--bg);border-top:1px solid var(--line);
+    border-radius:14px 14px 0 0;z-index:401;
+    transform:translateY(100%);transition:transform .3s cubic-bezier(.4,0,.2,1);
+    display:flex;flex-direction:column;overflow:hidden;
+    margin:0 auto;max-width:480px;
+  }
+  .sheet.open{transform:translateY(0);}
+  .sheet-handle{width:36px;height:4px;background:var(--line);border-radius:2px;margin:12px auto 4px;}
+  .sheet-head{padding:12px 20px 4px;display:flex;justify-content:space-between;align-items:flex-start;}
+  .sheet-head h3{font-family:'Archivo Black',sans-serif;font-size:17px;text-transform:uppercase;max-width:80%;line-height:1.25;}
+  .sheet-price{font-family:'JetBrains Mono',monospace;color:var(--rust-bright);font-weight:700;font-size:15px;margin-top:6px;}
+  .sheet-body{padding:16px 20px 20px;overflow-y:auto;}
+  .sheet-label{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--steel);letter-spacing:0.08em;text-transform:uppercase;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;}
+  .size-guide-link{color:var(--rust-bright);text-decoration:underline;cursor:pointer;font-size:11px;}
+  .size-options{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px;}
+  .size-opt{
+    min-width:44px;height:44px;padding:0 12px;border:1px solid var(--line);
+    background:var(--surface);color:var(--bone);border-radius:2px;cursor:pointer;
+    font-family:'JetBrains Mono',monospace;font-size:13px;
+  }
+  .size-opt.selected{border-color:var(--rust);background:var(--rust-dim);color:var(--bone);}
+  .sheet-qty-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;}
+  .sheet-qty-controls{display:flex;align-items:center;gap:16px;border:1px solid var(--line);border-radius:2px;padding:6px 14px;}
+  .sheet-qty-controls button{background:none;border:none;color:var(--bone);font-size:18px;cursor:pointer;width:20px;}
+  .sheet-add-btn{
+    width:100%;background:var(--rust);color:var(--bone);border:none;
+    padding:16px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;
+    border-radius:2px;cursor:pointer;font-size:14px;
+  }
+  .sheet-add-btn:disabled{background:var(--surface-2);color:var(--steel);cursor:not-allowed;}
+
+  .modal-overlay{
+    position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:410;
+    opacity:0;pointer-events:none;transition:opacity .2s;
+    display:flex;align-items:center;justify-content:center;padding:20px;
+  }
+  .modal-overlay.open{opacity:1;pointer-events:all;}
+  .size-modal{
+    background:var(--surface);border:1px solid var(--line);border-radius:8px;
+    max-width:420px;width:100%;max-height:80vh;overflow-y:auto;padding:24px;
+  }
+  .size-modal h3{font-family:'Archivo Black',sans-serif;text-transform:uppercase;font-size:18px;margin-bottom:4px;}
+  .size-modal .modal-sub{font-size:12px;color:var(--steel);margin-bottom:18px;font-family:'JetBrains Mono',monospace;}
+  .size-table{width:100%;border-collapse:collapse;font-size:13px;}
+  .size-table th{
+    text-align:left;font-family:'JetBrains Mono',monospace;font-size:11px;
+    color:var(--rust-bright);text-transform:uppercase;letter-spacing:0.05em;
+    padding:8px 6px;border-bottom:1px solid var(--line);
+  }
+  .size-table td{padding:10px 6px;border-bottom:1px solid var(--line);color:var(--bone-dim);}
+  .size-table tr:last-child td{border-bottom:none;}
+  .modal-close{
+    margin-top:18px;width:100%;background:transparent;border:1px solid var(--line);
+    color:var(--bone);padding:12px;border-radius:2px;cursor:pointer;
+    text-transform:uppercase;font-size:12px;letter-spacing:0.05em;font-weight:700;
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="logo"><span>EGO</span>SYNK</div>
+  <div class="nav-right">
+    <button class="cart-btn" onclick="toggleCart(true)">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+      <span class="cart-count" id="cartCount">0</span>
+    </button>
+  </div>
+</nav>
+
+<section class="hero">
+  <div class="hero-eyebrow mono">FORGED FOR THE GRIND · MUMBAI</div>
+  <h1>Sync your<br>ego to the<br><span class="accent">iron.</span></h1>
+  <p class="hero-sub">Compression gear engineered for lifters who train past the point everyone else stops. Sleeves, compression wear, and accessories built for load, not looks.</p>
+  <div class="hero-actions">
+    <button class="btn-primary" onclick="document.getElementById('shop').scrollIntoView({behavior:'smooth'})">Shop the drop</button>
+    <button class="btn-secondary" onclick="document.getElementById('manifesto').scrollIntoView({behavior:'smooth'})">Our story</button>
+  </div>
+</section>
+
+<div class="marquee">
+  <div class="marquee-track mono">
+    <span>COMPRESSION SLEEVES</span><span class="dot">●</span>
+    <span>PERFORMANCE COMPRESSION WEAR</span><span class="dot">●</span>
+    <span>TRAINING ACCESSORIES</span><span class="dot">●</span>
+    <span>FREE SHIPPING OVER ₹1999</span><span class="dot">●</span>
+    <span>COMPRESSION SLEEVES</span><span class="dot">●</span>
+    <span>PERFORMANCE COMPRESSION WEAR</span><span class="dot">●</span>
+    <span>TRAINING ACCESSORIES</span><span class="dot">●</span>
+    <span>FREE SHIPPING OVER ₹1999</span><span class="dot">●</span>
+  </div>
+</div>
+
+<section class="section" style="padding-left:0;padding-right:0;">
+  <div style="padding:0 24px;max-width:1200px;margin:0 auto;">
+    <span class="section-tag mono">SHOP BY CATEGORY</span>
+  </div>
+  <div class="cat-rail" id="catRail"></div>
+</section>
+
+<section class="section" id="shop">
+  <div class="section-head">
+    <div>
+      <span class="section-tag mono">THE COLLECTION</span>
+      <h2>Shop the drop</h2>
+    </div>
+  </div>
+  <div class="filter-row" id="filterRow"></div>
+  <div class="grid" id="productGrid"></div>
+</section>
+
+<section class="manifesto" id="manifesto">
+  <p>Discipline isn't <span class="accent">motivation.</span><br>It's what you wear when no one's watching.</p>
+  <div class="manifesto-sub">EGOSYNK · BUILT FOR BOLD · WORN UNDER LOAD</div>
+</section>
+
+<footer>
+  <div class="footer-grid">
+    <div>
+      <div class="logo" style="margin-bottom:14px;"><span>EGO</span>SYNK</div>
+      <p style="color:var(--bone-dim);font-size:13px;max-width:280px;line-height:1.6;">Compression apparel and training accessories built for lifters who don't train for likes.</p>
+    </div>
+    <div>
+      <h5>Shop</h5>
+      <ul><li>Gym Sleeves</li><li>Innerwear</li><li>Gym Socks</li><li>Compression Wear</li><li>Accessories</li><li>Bold Fragrance</li><li>Bottoms</li></ul>
+    </div>
+    <div>
+      <h5>Support</h5>
+      <ul><li>Size Guide</li><li>Shipping</li><li>Returns</li><li>Contact</li></ul>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <span>© 2026 EGOSYNK.COM</span>
+    <span>MADE FOR THE GRIND</span>
+  </div>
+</footer>
+
+<!-- CART -->
+<div class="overlay" id="overlay" onclick="toggleCart(false)"></div>
+<div class="drawer" id="drawer">
+  <div class="drawer-head">
+    <h3>Your Bag</h3>
+    <button class="close-btn" onclick="toggleCart(false)">×</button>
+  </div>
+  <div class="drawer-items" id="drawerItems"></div>
+  <div class="drawer-foot">
+    <div class="subtotal-row">
+      <span>Subtotal</span>
+      <span class="amt" id="subtotal">₹0</span>
+    </div>
+    <button class="checkout-btn" onclick="checkout()">Checkout</button>
+    <div class="checkout-note">Payment gateway connects at launch — this is a preview build</div>
+  </div>
+</div>
+
+<!-- QUICK ADD SHEET -->
+<div class="overlay" id="sheetOverlay" onclick="closeSheet()"></div>
+<div class="sheet" id="sheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-head">
+    <div>
+      <h3 id="sheetName"></h3>
+      <div class="sheet-price" id="sheetPrice"></div>
+    </div>
+    <button class="close-btn" onclick="closeSheet()">×</button>
+  </div>
+  <div class="sheet-body">
+    <div id="sheetSizeBlock">
+      <div class="sheet-label">
+        <span>Select size</span>
+        <span class="size-guide-link" onclick="openSizeGuideFromSheet()">Size guide</span>
+      </div>
+      <div class="size-options" id="sizeOptions"></div>
+    </div>
+    <div class="sheet-qty-row">
+      <span class="sheet-label" style="margin-bottom:0;">Quantity</span>
+      <div class="sheet-qty-controls">
+        <button onclick="changeSheetQty(-1)">−</button>
+        <span class="mono" id="sheetQty">1</span>
+        <button onclick="changeSheetQty(1)">+</button>
+      </div>
+    </div>
+    <button class="sheet-add-btn" id="sheetAddBtn" onclick="confirmAddToCart()">Add to Bag</button>
+  </div>
+</div>
+
+<!-- SIZE GUIDE MODAL -->
+<div class="modal-overlay" id="sizeGuideOverlay" onclick="closeSizeGuide(event)">
+  <div class="size-modal" onclick="event.stopPropagation()">
+    <h3 id="guideTitle">Size Guide</h3>
+    <div class="modal-sub" id="guideSub">INDIAN SIZING · CM/IN</div>
+    <table class="size-table" id="guideTable"></table>
+    <button class="modal-close" onclick="closeSizeGuide()">Close</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ---------- CATALOG DATA ---------- */
+const categories = [
+  {id:'sleeves',      num:'01', name:'Gym Sleeves',       desc:'Full & half arm compression'},
+  {id:'innerwear',    num:'02', name:'Innerwear',         desc:'Performance trunks built to move'},
+  {id:'socks',        num:'03', name:'Gym Socks',         desc:'Full length & ankle, grip-fit'},
+  {id:'compression',  num:'04', name:'Compression Wear',  desc:'Tees & leggings for load'},
+  {id:'accessories',  num:'05', name:'Accessories',       desc:'Grips, straps & belts'},
+  {id:'fragrance',    num:'06', name:'Bold Fragrance',    desc:'EGOSYNK BOLD, signature scent'},
+  {id:'bottoms',      num:'07', name:'Bottoms',           desc:'Gym shorts, built for reps'},
+];
+
+// guide = key into sizeGuides. sizes = null means no size selection needed (still asks qty).
+const products = [
+  {id:1,  name:'Full Compression Arm Sleeves',      cat:'sleeves',     price:1299, tag:'BESTSELLER', sizes:['S','M','L','XL'], guide:'sleeves'},
+  {id:2,  name:'Half Compression Arm Sleeves',      cat:'sleeves',     price:999,  tag:null,          sizes:['S','M','L','XL'], guide:'sleeves'},
+  {id:3,  name:'Performance Trunks — Pack of 2',    cat:'innerwear',   price:899,  tag:'NEW',         sizes:['S','M','L','XL','XXL'], guide:'underwear'},
+  {id:4,  name:'Performance Trunks — Pack of 3',    cat:'innerwear',   price:1249, tag:null,          sizes:['S','M','L','XL','XXL'], guide:'underwear'},
+  {id:5,  name:'Full Length Grip Socks',            cat:'socks',       price:499,  tag:null,          sizes:['Free Size'], guide:'socks'},
+  {id:6,  name:'Ankle Grip Socks — Pack of 3',      cat:'socks',       price:649,  tag:'BESTSELLER',  sizes:['Free Size'], guide:'socks'},
+  {id:7,  name:'Forge Compression Tee',             cat:'compression', price:1499, tag:'NEW',         sizes:['S','M','L','XL','XXL'], guide:'apparel'},
+  {id:8,  name:'Sync Compression Leggings',         cat:'compression', price:2199, tag:null,          sizes:['S','M','L','XL','XXL'], guide:'apparel'},
+  {id:9,  name:'Compression Long Sleeve Tee',       cat:'compression', price:1899, tag:null,          sizes:['S','M','L','XL','XXL'], guide:'apparel'},
+  {id:10, name:'Grit Lifting Grips (Pair)',         cat:'accessories', price:799,  tag:null,          sizes:['Free Size'], guide:null},
+  {id:11, name:'Steel Core Lifting Belt 10mm',      cat:'accessories', price:2499, tag:'BESTSELLER',  sizes:['S','M','L'], guide:'belt'},
+  {id:12, name:'Chalk-Grip Wrist Wraps',            cat:'accessories', price:599,  tag:null,          sizes:['Free Size'], guide:null},
+  {id:13, name:'EGOSYNK BOLD — Eau De Parfum 50ml', cat:'fragrance',   price:1799, tag:'NEW',         sizes:['50ml'], guide:null},
+  {id:14, name:'EGOSYNK BOLD — Eau De Parfum 100ml',cat:'fragrance',   price:2799, tag:null,          sizes:['100ml'], guide:null},
+  {id:15, name:'Anvil Training Shorts',             cat:'bottoms',     price:1399, tag:null,          sizes:['S','M','L','XL','XXL'], guide:'apparel'},
+  {id:16, name:'Iron Line 2-in-1 Shorts',           cat:'bottoms',     price:1699, tag:'BESTSELLER',  sizes:['S','M','L','XL','XXL'], guide:'apparel'},
+];
+
+const sizeGuides = {
+  apparel:   {title:'Apparel Size Chart', sub:'CHEST / WAIST · INCHES', head:['Size','Chest (in)','Waist (in)'],
+              rows:[['S','36–38','30–32'],['M','38–40','32–34'],['L','40–42','34–36'],['XL','42–44','36–38'],['XXL','44–46','38–40']]},
+  sleeves:   {title:'Sleeve Size Chart', sub:'BICEP MEASUREMENT · INCHES', head:['Size','Bicep (in)'],
+              rows:[['S','10–11'],['M','11–13'],['L','13–15'],['XL','15–17']]},
+  underwear: {title:'Innerwear Size Chart', sub:'WAIST MEASUREMENT · INCHES', head:['Size','Waist (in)'],
+              rows:[['S','28–30'],['M','32–34'],['L','36–38'],['XL','40–42'],['XXL','44–46']]},
+  socks:     {title:'Socks Size Chart', sub:'INDIAN / UK SHOE SIZE', head:['Fit','UK Size'],
+              rows:[['Free Size','6–11 (fits most)']]},
+  belt:      {title:'Lifting Belt Size Chart', sub:'WAIST MEASUREMENT · INCHES', head:['Size','Waist (in)'],
+              rows:[['S','28–32'],['M','32–36'],['L','36–40']]},
+};
+
+/* ---------- STATE ---------- */
+let cart = JSON.parse(sessionStorage.getItem('egosynk_cart') || '[]');
+let currentFilter = 'all';
+let activeProduct = null;
+let sheetSize = null;
+let sheetQty = 1;
+
+/* ---------- CATEGORY RAIL ---------- */
+function renderCatRail(){
+  document.getElementById('catRail').innerHTML = categories.map(c => `
+    <div class="cat-card" onclick="filterCat('${c.id}')">
+      <span class="cat-num mono">${c.num}</span>
+      <h3>${c.name}</h3>
+      <p>${c.desc}</p>
+    </div>
+  `).join('');
+}
+
+function renderFilterRow(){
+  const all = [{id:'all', name:'All'}, ...categories];
+  document.getElementById('filterRow').innerHTML = all.map(c => `
+    <button class="filter-chip${c.id==='all' ? ' active' : ''}" data-cat="${c.id}" onclick="filterCat('${c.id}')">${c.name}</button>
+  `).join('');
+}
+
+/* ---------- PRODUCT GRID (fast: build string once, single innerHTML write) ---------- */
+function renderProducts(){
+  const grid = document.getElementById('productGrid');
+  const filtered = currentFilter === 'all' ? products : products.filter(p => p.cat === currentFilter);
+  grid.innerHTML = filtered.map(p => `
+    <div class="card" onclick="openSheet(${p.id})">
+      <div class="card-img">
+        ${p.tag ? `<span class="card-tag">${p.tag}</span>` : ''}
+        <span class="placeholder-mark">ES</span>
+      </div>
+      <div class="card-body">
+        <h4>${p.name}</h4>
+        <div class="cat">${categories.find(c=>c.id===p.cat).name}</div>
+        <div class="price-row">
+          <span class="price">₹${p.price.toLocaleString('en-IN')}</span>
+          <button class="add-btn" onclick="event.stopPropagation();openSheet(${p.id})">+</button>
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function filterCat(cat){
+  currentFilter = cat;
+  document.querySelectorAll('.filter-chip').forEach(c => c.classList.toggle('active', c.dataset.cat === cat));
+  renderProducts();
+  document.getElementById('shop').scrollIntoView({behavior:'smooth'});
+}
+
+/* ---------- QUICK-ADD SHEET ---------- */
+function openSheet(id){
+  activeProduct = products.find(p => p.id === id);
+  sheetSize = null;
+  sheetQty = 1;
+  document.getElementById('sheetName').textContent = activeProduct.name;
+  document.getElementById('sheetPrice').textContent = `₹${activeProduct.price.toLocaleString('en-IN')}`;
+  document.getElementById('sheetQty').textContent = '1';
+
+  const sizeBlock = document.getElementById('sheetSizeBlock');
+  if(activeProduct.sizes.length === 1 && activeProduct.sizes[0] === 'Free Size'){
+    sheetSize = 'Free Size';
+    sizeBlock.style.display = 'none';
+  } else {
+    sizeBlock.style.display = 'block';
+    document.getElementById('sizeOptions').innerHTML = activeProduct.sizes.map(s =>
+      `<button class="size-opt" data-size="${s}" onclick="selectSize('${s}')">${s}</button>`
+    ).join('');
+  }
+  updateSheetAddBtn();
+  document.getElementById('sheet').classList.add('open');
+  document.getElementById('sheetOverlay').classList.add('open');
+}
+
+function closeSheet(){
+  document.getElementById('sheet').classList.remove('open');
+  document.getElementById('sheetOverlay').classList.remove('open');
+}
+
+function selectSize(s){
+  sheetSize = s;
+  document.querySelectorAll('.size-opt').forEach(el => el.classList.toggle('selected', el.dataset.size === s));
+  updateSheetAddBtn();
+}
+
+function changeSheetQty(delta){
+  sheetQty = Math.max(1, sheetQty + delta);
+  document.getElementById('sheetQty').textContent = sheetQty;
+}
+
+function updateSheetAddBtn(){
+  const btn = document.getElementById('sheetAddBtn');
+  const needsSize = !(activeProduct.sizes.length === 1 && activeProduct.sizes[0] === 'Free Size');
+  btn.disabled = needsSize && !sheetSize;
+  btn.textContent = (needsSize && !sheetSize) ? 'Select a size' : 'Add to Bag';
+}
+
+function confirmAddToCart(){
+  if(!activeProduct) return;
+  const needsSize = !(activeProduct.sizes.length === 1 && activeProduct.sizes[0] === 'Free Size');
+  if(needsSize && !sheetSize) return;
+  const size = sheetSize || 'Free Size';
+  const lineId = `${activeProduct.id}-${size}`;
+  const existing = cart.find(c => c.lineId === lineId);
+  if(existing) existing.qty += sheetQty;
+  else cart.push({lineId, id:activeProduct.id, name:activeProduct.name, cat:activeProduct.cat, price:activeProduct.price, size, qty:sheetQty});
+  saveCart();
+  showToast(`${activeProduct.name} (${size}) added to bag`);
+  closeSheet();
+}
+
+/* ---------- SIZE GUIDE ---------- */
+function openSizeGuideFromSheet(){
+  if(activeProduct && activeProduct.guide) openSizeGuide(activeProduct.guide);
+  else showToast('No size chart needed for this item');
+}
+
+function openSizeGuide(key){
+  const g = sizeGuides[key];
+  if(!g) return;
+  document.getElementById('guideTitle').textContent = g.title;
+  document.getElementById('guideSub').textContent = g.sub;
+  document.getElementById('guideTable').innerHTML =
+    `<tr>${g.head.map(h => `<th>${h}</th>`).join('')}</tr>` +
+    g.rows.map(r => `<tr>${r.map(cell => `<td>${cell}</td>`).join('')}</tr>`).join('');
+  document.getElementById('sizeGuideOverlay').classList.add('open');
+}
+
+function closeSizeGuide(e){
+  if(e && e.target !== e.currentTarget) return;
+  document.getElementById('sizeGuideOverlay').classList.remove('open');
+}
+
+/* ---------- CART ---------- */
+function saveCart(){
+  sessionStorage.setItem('egosynk_cart', JSON.stringify(cart));
+  updateCartUI();
+}
+
+function changeQty(lineId, delta){
+  const item = cart.find(c => c.lineId === lineId);
+  if(!item) return;
+  item.qty += delta;
+  if(item.qty <= 0) cart = cart.filter(c => c.lineId !== lineId);
+  saveCart();
+}
+
+function removeItem(lineId){
+  cart = cart.filter(c => c.lineId !== lineId);
+  saveCart();
+}
+
+function updateCartUI(){
+  const count = cart.reduce((s,c) => s + c.qty, 0);
+  document.getElementById('cartCount').textContent = count;
+  const drawerItems = document.getElementById('drawerItems');
+  if(cart.length === 0){
+    drawerItems.innerHTML = '<div class="empty-cart">Your bag is empty.<br>Add something built to last.</div>';
+  } else {
+    drawerItems.innerHTML = cart.map(item => `
+      <div class="drawer-item">
+        <div class="thumb">ES</div>
+        <div class="drawer-item-info">
+          <h5>${item.name}</h5>
+          <div class="meta size-line">Size: ${item.size}</div>
+          <div class="qty-row">
+            <button class="qty-btn" onclick="changeQty('${item.lineId}',-1)">−</button>
+            <span class="mono" style="font-size:12px;">${item.qty}</span>
+            <button class="qty-btn" onclick="changeQty('${item.lineId}',1)">+</button>
+          </div>
+          <div class="remove-btn" onclick="removeItem('${item.lineId}')">Remove</div>
+        </div>
+        <div class="price">₹${(item.price*item.qty).toLocaleString('en-IN')}</div>
+      </div>
+    `).join('');
+  }
+  const subtotal = cart.reduce((s,c) => s + c.price*c.qty, 0);
+  document.getElementById('subtotal').textContent = `₹${subtotal.toLocaleString('en-IN')}`;
+}
+
+function toggleCart(open){
+  document.getElementById('drawer').classList.toggle('open', open);
+  document.getElementById('overlay').classList.toggle('open', open);
+}
+
+function showToast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(window._toastTimer);
+  window._toastTimer = setTimeout(() => t.classList.remove('show'), 2200);
+}
+
+function checkout(){
+  if(cart.length === 0){ showToast('Your bag is empty'); return; }
+  showToast('Checkout connects once Razorpay is wired in');
+}
+
+/* ---------- INIT ---------- */
+renderCatRail();
+renderFilterRow();
+renderProducts();
+updateCartUI();
+</script>
+</body>
+</html>
