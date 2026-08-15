@@ -23,6 +23,8 @@ exports.handler = async () => {
     };
   } catch (err) {
     console.error(err);
-    return { statusCode: 500, body: JSON.stringify({ error: 'Could not load catalog' }) };
+    // TEMPORARY: surfacing the real error for live debugging — revert to a generic
+    // message once the Blobs runtime issue is diagnosed.
+    return { statusCode: 500, body: JSON.stringify({ error: 'Could not load catalog', debug: err.message, stack: String(err.stack).split('\n').slice(0, 6) }) };
   }
 };
