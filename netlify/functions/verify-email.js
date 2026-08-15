@@ -1,4 +1,4 @@
-const { getStore } = require('@netlify/blobs');
+const { getStore } = require('../lib/blob-store');
 const { consumeToken } = require('../lib/tokens');
 const { logEvent } = require('../lib/audit');
 

@@ -1,4 +1,4 @@
-const { getStore } = require('@netlify/blobs');
+const { getStore } = require('../lib/blob-store');
 
 // Used by order-confirmation.html to render the receipt after a successful, verified payment.
 // Only returns paid orders — a pending/abandoned order id shouldn't be browsable.

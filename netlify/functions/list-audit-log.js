@@ -1,4 +1,4 @@
-const { getStore } = require('@netlify/blobs');
+const { getStore } = require('../lib/blob-store');
 const { isAdminAuthorized } = require('../lib/admin-auth');
 
 // Same shared-secret gate as list-orders.js. Returns the most recent 500 events across

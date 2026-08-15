@@ -1,4 +1,4 @@
-const { getStore } = require('@netlify/blobs');
+const { getStore } = require('../lib/blob-store');
 const { getSessionUser } = require('../lib/session');
 
 // Order history for the logged-in user's account.html. Matches by userId (attached at

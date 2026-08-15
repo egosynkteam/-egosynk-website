@@ -1,5 +1,5 @@
 const Razorpay = require('razorpay');
-const { getStore } = require('@netlify/blobs');
+const { getStore } = require('../lib/blob-store');
 const { getSessionUser } = require('../lib/session');
 const { logEvent } = require('../lib/audit');
 

@@ -1,4 +1,4 @@
-const { getStore } = require('@netlify/blobs');
+const { getStore } = require('./blob-store');
 
 // Login brute-force protection. Deliberately keyed by email (not IP — Netlify Functions
 // don't get a stable client IP in every runtime, and email-based lockout also stops

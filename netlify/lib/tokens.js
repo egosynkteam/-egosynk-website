@@ -1,5 +1,5 @@
 const crypto = require('crypto');
-const { getStore } = require('@netlify/blobs');
+const { getStore } = require('./blob-store');
 
 // Generic short-lived, single-use token helper shared by password reset and email
 // verification. Storing `used:true` instead of deleting on consume means a replayed

@@ -1,5 +1,5 @@
 const crypto = require('crypto');
-const { getStore } = require('@netlify/blobs');
+const { getStore } = require('./blob-store');
 
 // One append-only trail for every meaningful account/order event — signups, logins,
 // failed logins, orders created/paid. Never blocks the caller: a logging failure

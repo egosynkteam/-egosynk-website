@@ -1,6 +1,6 @@
 const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
-const { getStore } = require('@netlify/blobs');
+const { getStore } = require('../lib/blob-store');
 const { sessionCookie, SESSION_MAX_AGE_SECONDS } = require('../lib/cookies');
 const { logEvent } = require('../lib/audit');
 const { createToken } = require('../lib/tokens');

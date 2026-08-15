@@ -1,4 +1,4 @@
-const { getStore } = require('@netlify/blobs');
+const { getStore } = require('../lib/blob-store');
 const { createToken } = require('../lib/tokens');
 const { sendEmail, emailWrapper, buttonHtml, escapeHtml } = require('../lib/email');
 const { logEvent } = require('../lib/audit');

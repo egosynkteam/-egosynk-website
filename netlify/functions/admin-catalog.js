@@ -1,4 +1,4 @@
-const { getStore } = require('@netlify/blobs');
+const { getStore } = require('../lib/blob-store');
 const { isAdminAuthorized } = require('../lib/admin-auth');
 const { logEvent } = require('../lib/audit');
 

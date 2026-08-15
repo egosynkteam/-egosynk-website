@@ -1,4 +1,4 @@
-const { getStore } = require('@netlify/blobs');
+const { getStore } = require('../lib/blob-store');
 const { parseCookies, clearSessionCookie } = require('../lib/cookies');
 const { logEvent } = require('../lib/audit');
 

@@ -1,5 +1,5 @@
 const crypto = require('crypto');
-const { getStore } = require('@netlify/blobs');
+const { getStore } = require('../lib/blob-store');
 const { logEvent } = require('../lib/audit');
 const { sendEmail, emailWrapper, escapeHtml } = require('../lib/email');
 

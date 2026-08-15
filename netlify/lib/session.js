@@ -1,4 +1,4 @@
-const { getStore } = require('@netlify/blobs');
+const { getStore } = require('./blob-store');
 const { parseCookies } = require('./cookies');
 
 // Resolves the egosynk_session cookie -> session record -> full user record.

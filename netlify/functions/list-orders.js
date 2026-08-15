@@ -1,4 +1,4 @@
-const { getStore } = require('@netlify/blobs');
+const { getStore } = require('../lib/blob-store');
 const { isAdminAuthorized } = require('../lib/admin-auth');
 
 // Protected endpoint backing admin.html's Orders tab. Gate is a shared-secret header

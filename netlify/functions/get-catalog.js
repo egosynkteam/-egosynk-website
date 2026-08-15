@@ -1,4 +1,4 @@
-const { getStore } = require('@netlify/blobs');
+const { getStore } = require('../lib/blob-store');
 
 // Public endpoint — the storefront (index.html) fetches the live catalog from here on
 // every page load instead of using a hardcoded product list. This is what keeps the

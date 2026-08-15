@@ -1,5 +1,5 @@
 const bcrypt = require('bcryptjs');
-const { getStore } = require('@netlify/blobs');
+const { getStore } = require('../lib/blob-store');
 const { consumeToken } = require('../lib/tokens');
 const { clearLoginFailures } = require('../lib/rate-limit');
 const { logEvent } = require('../lib/audit');
