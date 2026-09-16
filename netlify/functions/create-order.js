@@ -103,6 +103,6 @@ exports.handler = async (event) => {
     };
   } catch (err) {
     console.error(err);
-    return { statusCode: 500, body: JSON.stringify({ error: 'Could not create order' }) };
+    return { statusCode: 500, body: JSON.stringify({ error: 'Could not create order', debug: err.message }) };
   }
 };
