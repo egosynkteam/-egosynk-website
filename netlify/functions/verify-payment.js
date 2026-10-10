@@ -1,7 +1,7 @@
 const crypto = require('crypto');
 const { getStore } = require('../lib/blob-store');
 const { logEvent } = require('../lib/audit');
-const { sendEmail, emailWrapper, escapeHtml } = require('../lib/email');
+const { sendEmail, emailWrapper, escapeHtml, GSTIN } = require('../lib/email');
 
 const OWNER_EMAIL = 'support@egosynk.com';
 
@@ -16,7 +16,7 @@ function orderEmailHtml(order, forOwner) {
 
   return `
     ${intro}
-    <p style="font-size:12px;color:#8B8D93;">Order ID: ${escapeHtml(order.orderId)}</p>
+    <p style="font-size:12px;color:#8B8D93;">Order ID: ${escapeHtml(order.orderId)}<br>Sold by EGOSYNK · GSTIN: ${GSTIN}</p>
     <table style="width:100%;font-size:13px;border-collapse:collapse;margin:16px 0;">
       ${itemsRows}
       <tr><td style="padding-top:10px;font-weight:700;">Total</td><td style="padding-top:10px;text-align:right;font-weight:700;">₹${(order.amount / 100).toLocaleString('en-IN')}</td></tr>

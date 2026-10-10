@@ -3,6 +3,7 @@
 // Never throws: a broken/missing email config must not block signup, checkout, or
 // password reset from completing — those are all more important than the email itself.
 const FROM = 'EGOSYNK <support@egosynk.com>';
+const GSTIN = '27AKHPY6964E1ZI';
 
 async function sendEmail({ to, subject, html }) {
   if (!process.env.RESEND_API_KEY) {
@@ -60,4 +61,4 @@ function escapeHtml(str) {
     .replace(/'/g, '&#39;');
 }
 
-module.exports = { sendEmail, emailWrapper, buttonHtml, escapeHtml };
+module.exports = { sendEmail, emailWrapper, buttonHtml, escapeHtml, GSTIN };
