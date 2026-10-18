@@ -987,6 +987,7 @@ function renderOrders(orders){
           <input id="ft-${id}" placeholder="Tracking no." value="${esc(f.tracking || '')}">
           <button class="secondary" onclick="saveFulfilment('${id}')">Save</button>
           ${fstatus === 'cancelled' ? '<span class="muted">Refund + credit note needed</span>' : ''}
+          ${['shipped','delivered'].includes(fstatus) ? `<span class="muted">${(f.notified || {})[fstatus] ? 'Customer emailed' : 'Not emailed yet'}</span>` : ''}
         </div>`
       : `<button class="danger" onclick="deleteOrder('${id}')">Delete</button>`;
     return `
@@ -1027,7 +1028,10 @@ async function saveFulfilment(orderId){
     courier: document.getElementById('fc-' + orderId).value.trim(),
     tracking: document.getElementById('ft-' + orderId).value.trim(),
   });
-  if(ok) loadOrders();
+  if(!ok) return;
+  if(ok.email && ok.email.reason === 'not_configured') alert('Saved, but the customer was NOT emailed: email sending (RESEND_API_KEY) is not set up yet.');
+  else if(ok.email && ['api_error','exception'].includes(ok.email.reason)) alert('Saved, but the email to the customer failed. Check the function logs.');
+  loadOrders();
 }
 
 async function deleteOrder(orderId){

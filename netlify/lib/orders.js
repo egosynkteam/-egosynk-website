@@ -1,8 +1,9 @@
 const { getStore } = require('./blob-store');
 const { logEvent } = require('./audit');
-const { sendEmail, emailWrapper, escapeHtml, GSTIN } = require('./email');
+const { sendEmail, emailWrapper, buttonHtml, escapeHtml, GSTIN } = require('./email');
 const { ensureInvoice } = require('./gst');
 const { recordCouponUse } = require('./coupons');
+const { getSettings } = require('./settings');
 
 const OWNER_EMAIL = 'egosynkteam@gmail.com';
 
@@ -97,4 +98,57 @@ async function markOrderPaid(orderId, paymentId, event, source) {
   return { order, newlyPaid: true };
 }
 
-module.exports = { markOrderPaid, stockLeft };
+function itemsLine(order) {
+  return order.items
+    .map((i) => `${escapeHtml(i.name)}${i.size ? ' (' + escapeHtml(i.size) + ')' : ''} × ${i.qty}`)
+    .join('<br>');
+}
+
+function shippedEmailHtml(order) {
+  const f = order.fulfilment;
+  const tracking = f.tracking
+    ? `<p style="font-size:14px;line-height:1.6;">Courier: <strong>${escapeHtml(f.courier || '—')}</strong><br>Tracking number: <strong>${escapeHtml(f.tracking)}</strong></p>
+       <p style="font-size:12px;color:#8B8D93;line-height:1.6;">Use this number on the courier's website to follow your parcel.</p>`
+    : `<p style="font-size:14px;line-height:1.6;">We'll send the tracking number as soon as the courier assigns it.</p>`;
+  return `
+    <p style="font-size:14px;line-height:1.6;">Good news, ${escapeHtml(order.shipping.name)} — your order is on its way.</p>
+    ${tracking}
+    <p style="font-size:13px;line-height:1.6;">${itemsLine(order)}</p>
+    <p style="font-size:12px;color:#8B8D93;">Order ID: ${escapeHtml(order.orderId)}</p>
+    ${order.userId ? buttonHtml('https://egosynk.com/account.html', 'View my orders') : ''}
+  `;
+}
+
+function deliveredEmailHtml(order, settings) {
+  const insta = settings.social && settings.social.instagram;
+  return `
+    <p style="font-size:14px;line-height:1.6;">Your order has been delivered, ${escapeHtml(order.shipping.name)}. Hope the fit is right.</p>
+    <p style="font-size:14px;line-height:1.6;"><strong>Wrong size?</strong> You can exchange unused items within 7 days of delivery. Just reply to this email with the size you need.</p>
+    <p style="font-size:14px;line-height:1.6;"><strong>How was it?</strong> Reply and tell us — we read every message.${insta ? ' Training in it? Tag us on <a href="' + escapeHtml(insta) + '" style="color:#C41E3A;">Instagram</a>.' : ''}</p>
+    <p style="font-size:13px;line-height:1.6;">${itemsLine(order)}</p>
+    <p style="font-size:12px;color:#8B8D93;">Order ID: ${escapeHtml(order.orderId)}</p>
+  `;
+}
+
+// Emails the customer when admin marks an order shipped or delivered. Each status is sent
+// once (recorded in fulfilment.notified); a shipped email goes again only when a new
+// tracking number is added, so fixing a typo in the courier name doesn't re-email them.
+// A send skipped because email isn't configured isn't recorded, so a later save retries.
+async function notifyFulfilment(order, prevTracking) {
+  const f = order.fulfilment;
+  const email = order.shipping && order.shipping.email;
+  if (!email || !['shipped', 'delivered'].includes(f.status)) return { sent: false, reason: 'not_applicable' };
+
+  const notified = f.notified || {};
+  const newTracking = f.status === 'shipped' && f.tracking && f.tracking !== prevTracking;
+  if (notified[f.status] && !newTracking) return { sent: false, reason: 'already_sent' };
+
+  const result = f.status === 'shipped'
+    ? await sendEmail({ to: email, subject: `Shipped — ${order.orderId}`, html: emailWrapper(shippedEmailHtml(order)) })
+    : await sendEmail({ to: email, subject: `Delivered — ${order.orderId}`, html: emailWrapper(deliveredEmailHtml(order, await getSettings())) });
+
+  if (result.sent) f.notified = { ...notified, [f.status]: new Date().toISOString() };
+  return result;
+}
+
+module.exports = { markOrderPaid, notifyFulfilment, stockLeft };

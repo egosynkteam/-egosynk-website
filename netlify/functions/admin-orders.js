@@ -1,6 +1,7 @@
 const { getStore } = require('../lib/blob-store');
 const { isAdminAuthorized } = require('../lib/admin-auth');
 const { logEvent } = require('../lib/audit');
+const { notifyFulfilment } = require('../lib/orders');
 
 const FULFILMENT_STATUSES = ['processing', 'shipped', 'delivered', 'cancelled'];
 
@@ -38,10 +39,12 @@ exports.handler = async (event) => {
         tracking: body.tracking ? String(body.tracking).slice(0, 80) : prev.tracking || null,
         updatedAt: now,
         history: [...(prev.history || []), { status: body.status, at: now }],
+        notified: prev.notified || {},
       };
+      const email = await notifyFulfilment(order, prev.tracking);
       await orders.setJSON(order.orderId, order);
-      await logEvent('order_fulfilment', 'admin', { orderId: order.orderId, status: body.status }, event);
-      return ok({ order });
+      await logEvent('order_fulfilment', 'admin', { orderId: order.orderId, status: body.status, emailed: email.sent }, event);
+      return ok({ order, email });
     }
 
     if (body.action === 'delete') {
