@@ -235,6 +235,11 @@
   .card-body .price-row > span{display:flex;flex-wrap:wrap;align-items:baseline;gap:2px 6px;min-width:0;}
   .card-body .price-row .mrp,.card-body .price-row .off{margin-left:0;}
   .card-body .add-btn{flex:none;}
+  .card-rating{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--steel);margin:-4px 0 8px;}
+  .stars{position:relative;display:inline-block;font-size:11px;letter-spacing:1px;line-height:1;color:var(--line);}
+  .stars::before{content:'★★★★★';}
+  .stars span{position:absolute;inset:0;overflow:hidden;white-space:nowrap;color:var(--rust-bright);}
+  .stars span::before{content:'★★★★★';}
   .grid-msg{grid-column:1/-1;padding:40px 0;text-align:center;color:var(--bone-dim);font-size:14px;}
   .grid-msg button{margin-left:8px;background:none;border:1px solid var(--bone-dim);color:var(--bone);padding:8px 14px;border-radius:2px;cursor:pointer;font-weight:700;}
   .card-img{overflow:hidden;}
@@ -932,6 +937,7 @@ function renderProducts(){
         <h4>${esc(p.name)}</h4>
         <div class="cat">${esc((categories.find(c=>c.id===p.cat) || {}).name || '')}</div>
         ${p.colour ? `<div class="colour">${esc(p.colour)}</div>` : ''}
+        ${p.rating ? `<div class="card-rating"><span class="stars" aria-label="${p.rating.avg} out of 5"><span style="width:${p.rating.avg / 5 * 100}%"></span></span>${p.rating.avg.toFixed(1)} (${p.rating.count})</div>` : ''}
         <div class="price-row">
           <span>${priceHtml(p)}</span>
           <button class="add-btn" aria-label="Quick add" ${p.available === false ? 'disabled' : ''} onclick="event.preventDefault();event.stopPropagation();openSheet(${p.id})">${p.available === false ? '×' : '+'}</button>

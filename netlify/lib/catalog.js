@@ -1,5 +1,6 @@
 const { getStore } = require('./blob-store');
 const { getCategories } = require('./settings');
+const { getSummary } = require('./reviews');
 
 // Product page URLs are /p/<name-slug>-<id>. Only the trailing id is used to find the
 // product, so a rename keeps old links working (they redirect to the new slug).
@@ -15,14 +16,15 @@ const idFromSlug = (slug) => { const m = /-(\d+)$/.exec(String(slug || '')) || /
 async function getPublicCatalog() {
   const store = getStore('catalog');
   const { blobs } = await store.list();
-  const [all, categories] = await Promise.all([
+  const [all, categories, ratings] = await Promise.all([
     Promise.all(blobs.map((b) => store.get(b.key, { type: 'json' }))),
     getCategories(),
+    getSummary(),
   ]);
   const shownCats = new Set(categories.filter((c) => c.visible !== false).map((c) => c.id));
   const products = all
     .filter((p) => p && p.visible !== false && shownCats.has(p.cat))
-    .map(({ hsn, gstRate, stock, ...p }) => ({ ...p, slug: productSlug(p) }))
+    .map(({ hsn, gstRate, stock, ...p }) => ({ ...p, slug: productSlug(p), rating: ratings[p.id] || null }))
     .sort((a, b) => (a.sortOrder ?? a.id) - (b.sortOrder ?? b.id) || a.id - b.id);
   return { products, categories: categories.filter((c) => c.visible !== false) };
 }

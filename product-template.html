@@ -116,6 +116,44 @@
   .sticky-buy .add-btn{height:46px;}
   @media(min-width:860px){.sticky-buy{display:none;}}
 
+  /* stars: a grey row with a red row clipped to the rating on top */
+  .stars{position:relative;display:inline-block;font-size:14px;letter-spacing:2px;line-height:1;color:var(--line);}
+  .stars::before{content:'★★★★★';}
+  .stars span{position:absolute;inset:0;overflow:hidden;white-space:nowrap;color:var(--rust-bright);}
+  .stars span::before{content:'★★★★★';}
+  .rating-line{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--bone-dim);margin:-2px 0 12px;}
+  .rating-line a{text-decoration:underline;}
+  .reviews{margin-top:64px;scroll-margin-top:90px;}
+  .reviews h2{font-family:'Archivo Black',sans-serif;text-transform:uppercase;font-size:24px;margin-bottom:20px;}
+  .rev-top{display:grid;gap:24px;margin-bottom:28px;}
+  @media(min-width:700px){.rev-top{grid-template-columns:240px 1fr auto;align-items:center;}}
+  .rev-score{font-family:'Archivo Black',sans-serif;font-size:44px;line-height:1;}
+  .rev-score small{font-family:'Inter',sans-serif;font-size:12px;color:var(--steel);display:block;margin-top:8px;font-weight:400;}
+  .rev-bars div{display:grid;grid-template-columns:28px 1fr 28px;gap:8px;align-items:center;font-size:11px;color:var(--steel);margin:4px 0;}
+  .rev-bars i{display:block;height:6px;background:var(--line);border-radius:3px;overflow:hidden;}
+  .rev-bars i b{display:block;height:100%;background:var(--rust-bright);}
+  .ghost-btn{background:none;border:1px solid var(--bone-dim);color:var(--bone);padding:12px 18px;border-radius:2px;font-weight:700;font-size:12px;
+    letter-spacing:.06em;text-transform:uppercase;cursor:pointer;}
+  .ghost-btn:hover{border-color:var(--bone);}
+  .rev{border-top:1px solid var(--line);padding:18px 0;}
+  .rev-head{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:6px;}
+  .rev-head strong{font-size:14px;}
+  .rev-meta{font-size:11px;color:var(--steel);}
+  .rev p{font-size:13px;color:var(--bone-dim);line-height:1.65;white-space:pre-line;}
+  .rev .verified{color:var(--ok);font-size:11px;font-weight:600;}
+  .rev-reply{margin-top:10px;padding:10px 12px;border-left:2px solid var(--rust);background:var(--surface);font-size:12px;color:var(--bone-dim);}
+  .rev-form{background:var(--surface);border:1px solid var(--line);border-radius:4px;padding:20px;margin-bottom:28px;display:grid;gap:12px;}
+  .rev-form label{font-size:11px;color:var(--steel);text-transform:uppercase;letter-spacing:.08em;display:block;margin-bottom:6px;}
+  .rev-form input,.rev-form textarea{width:100%;background:var(--bg);border:1px solid var(--line);color:var(--bone);padding:11px 12px;border-radius:2px;font:inherit;font-size:14px;}
+  .rev-form input:focus,.rev-form textarea:focus{outline:none;border-color:var(--rust);}
+  .rev-form .row{display:grid;gap:12px;}
+  @media(min-width:700px){.rev-form .row{grid-template-columns:1fr 1fr;}}
+  .star-pick{display:flex;gap:4px;}
+  .star-pick button{background:none;border:none;font-size:28px;color:var(--line);cursor:pointer;padding:0 2px;transition:color .15s, transform .15s;}
+  .star-pick button.on{color:var(--rust-bright);}
+  .star-pick button:hover{transform:scale(1.12);}
+  .rev-msg{font-size:13px;}
+  .rev-msg.err{color:var(--rust-bright);} .rev-msg.ok{color:var(--ok);}
   .related{margin-top:72px;}
   .related h2{font-family:'Archivo Black',sans-serif;text-transform:uppercase;font-size:24px;margin-bottom:20px;}
   .grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;}
@@ -256,6 +294,7 @@ function render(){
         <h1 class="reveal" style="--i:3">${esc(P.name)}</h1>
         <div class="price-line reveal" style="--i:4">${priceHtml(P)}</div>
         <div class="tax-note reveal" style="--i:4">Inclusive of all taxes</div>
+        ${P.rating ? `<div class="rating-line reveal" style="--i:4">${starsHtml(P.rating.avg)}<span>${P.rating.avg.toFixed(1)}</span><a href="#reviews">${P.rating.count} review${P.rating.count === 1 ? '' : 's'}</a></div>` : ''}
         <div class="reveal" style="--i:5">
           ${isFreeSize(P) ? '' : `
             <div class="label"><span>Select size</span>${DATA.sizeGuide ? '<button class="link" onclick="openGuide()">Size guide</button>' : ''}</div>
@@ -284,6 +323,7 @@ function render(){
           : 'Exchange for another size within 7 days of delivery, unused with tags.'} <a href="/refund-policy.html">Full policy</a></p></details>
       </div>
     </div>
+    ${reviewsHtml()}
     ${DATA.related.length ? `
     <section class="related">
       <h2 class="reveal">More in ${esc(cat ? cat.name : 'the drop')}</h2>
@@ -298,6 +338,83 @@ function render(){
   wireGallery();
   updateButtons();
   reveal();
+}
+
+/* ---------- reviews ---------- */
+function starsHtml(v){ return `<span class="stars" role="img" aria-label="${v} out of 5"><span style="width:${Math.max(0, Math.min(5, v)) / 5 * 100}%"></span></span>`; }
+
+function reviewsHtml(){
+  const list = DATA.reviews || [];
+  const n = list.length;
+  const avg = n ? list.reduce((a, r) => a + r.rating, 0) / n : 0;
+  const dist = [5, 4, 3, 2, 1].map(k => [k, list.filter(r => r.rating === k).length]);
+  return `
+    <section class="reviews" id="reviews">
+      <h2 class="reveal">Reviews</h2>
+      <div class="rev-top reveal">
+        ${n ? `<div><div class="rev-score">${avg.toFixed(1)}<small>${starsHtml(avg)} · ${n} verified review${n === 1 ? '' : 's'}</small></div></div>
+        <div class="rev-bars">${dist.map(([k, c]) => `<div><span>${k}★</span><i><b style="width:${n ? c / n * 100 : 0}%"></b></i><span>${c}</span></div>`).join('')}</div>`
+        : '<div style="grid-column:1/-2;color:var(--bone-dim);font-size:14px;">No reviews yet. Bought this? Be the first to review it.</div>'}
+        <div><button class="ghost-btn" onclick="toggleReviewForm(true)">Write a review</button></div>
+      </div>
+      <form class="rev-form" id="revForm" hidden onsubmit="submitReview(event)">
+        <div><label>Your rating</label><div class="star-pick" id="starPick">${[1,2,3,4,5].map(k => `<button type="button" data-k="${k}" aria-label="${k} star${k > 1 ? 's' : ''}" onclick="setStars(${k})">★</button>`).join('')}</div></div>
+        <div><label for="rv-title">Headline (optional)</label><input id="rv-title" maxlength="80" placeholder="Holds up under a heavy session"></div>
+        <div><label for="rv-body">Your review</label><textarea id="rv-body" rows="4" maxlength="1500" required placeholder="Fit, feel, how it held up…"></textarea></div>
+        <div class="row">
+          <div><label for="rv-order">Order ID</label><input id="rv-order" required placeholder="order_…" autocomplete="off"></div>
+          <div><label for="rv-email">Email used for the order</label><input id="rv-email" type="email" required autocomplete="email"></div>
+        </div>
+        <div><label for="rv-name">Name to show (optional)</label><input id="rv-name" maxlength="40" placeholder="Shown as first name + initial"></div>
+        <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;">
+          <button class="add-btn" style="flex:none;padding:0 28px;" id="rvSubmit" type="submit">Submit review</button>
+          <span class="rev-msg" id="rvMsg"></span>
+        </div>
+        <div class="tax-note" style="margin:0">Only verified buyers can review. Your order ID is in your order confirmation and in My Account. Reviews appear after a quick check.</div>
+      </form>
+      <div>${list.map(r => `
+        <div class="rev reveal">
+          <div class="rev-head"><div>${starsHtml(r.rating)} ${r.title ? `<strong style="margin-left:8px">${esc(r.title)}</strong>` : ''}</div>
+            <span class="rev-meta">${new Date(r.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</span></div>
+          <p>${esc(r.body)}</p>
+          <div class="rev-meta" style="margin-top:8px">${esc(r.name)} · <span class="verified">✓ Verified buyer</span>${r.size ? ' · Size ' + esc(r.size) : ''}</div>
+          ${r.reply ? `<div class="rev-reply"><strong style="color:var(--bone)">EGOSYNK:</strong> ${esc(r.reply)}</div>` : ''}
+        </div>`).join('')}</div>
+    </section>`;
+}
+
+let reviewStars = 0;
+function setStars(k){
+  reviewStars = k;
+  document.querySelectorAll('#starPick button').forEach(b => b.classList.toggle('on', Number(b.dataset.k) <= k));
+}
+function toggleReviewForm(open){
+  const f = document.getElementById('revForm');
+  f.hidden = !open;
+  if(open) f.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'start' });
+}
+async function submitReview(e){
+  e.preventDefault();
+  const msg = document.getElementById('rvMsg');
+  const btn = document.getElementById('rvSubmit');
+  msg.className = 'rev-msg err';
+  if(!reviewStars){ msg.textContent = 'Pick a star rating.'; return; }
+  const val = (id) => document.getElementById(id).value;
+  btn.disabled = true; msg.textContent = '';
+  try{
+    const res = await fetch('/.netlify/functions/submit-review', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ productId: P.id, rating: reviewStars, title: val('rv-title'), body: val('rv-body'),
+        orderId: val('rv-order').trim(), email: val('rv-email').trim(), name: val('rv-name') })
+    });
+    const out = await res.json().catch(() => ({}));
+    if(!res.ok) throw new Error(out.error || 'Could not submit');
+    e.target.reset(); setStars(0);
+    msg.className = 'rev-msg ok';
+    msg.textContent = out.edited ? 'Thanks — your updated review will appear after a quick check.' : 'Thanks! Your review will appear after a quick check.';
+  } catch(err){
+    msg.textContent = err.message;
+  } finally { btn.disabled = false; }
 }
 
 function pickSize(sz){
@@ -416,6 +533,8 @@ function stickyBar(){
 if(P){
   render();
   stickyBar();
+  const reviewOrder = new URLSearchParams(location.search).get('review');
+  if(reviewOrder){ toggleReviewForm(true); document.getElementById('rv-order').value = reviewOrder; }
   if(size && !isFreeSize(P)) pickSize(size);
 }
 updateCount(false);

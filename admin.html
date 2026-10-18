@@ -29,6 +29,10 @@
   .gate input{width:100%;margin:6px 0;}
   .gate form{margin-top:12px;}
   .gate form button{margin-top:8px;}
+  .review-card{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:14px;margin-bottom:12px;}
+  .review-card .stars-txt{color:var(--rust-bright);letter-spacing:2px;}
+  .review-card p{font-size:13px;color:var(--bone-dim);margin:8px 0;white-space:pre-line;line-height:1.55;}
+  .review-card textarea{margin-top:6px;}
   .team-row{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--line);font-size:13px;}
   .gate button{width:100%;}
 
@@ -141,6 +145,7 @@
     <button class="tab-btn active" data-tab="catalog" onclick="switchTab('catalog')">Catalog</button>
     <button class="tab-btn" data-tab="categories" onclick="switchTab('categories')">Categories</button>
     <button class="tab-btn" data-tab="orders" onclick="switchTab('orders')">Orders</button>
+    <button class="tab-btn" data-tab="reviews" onclick="switchTab('reviews');loadReviews()">Reviews <span id="pendingBadge" class="status pending" hidden></span></button>
     <button class="tab-btn" data-tab="coupons" onclick="switchTab('coupons')">Coupons</button>
     <button class="tab-btn" data-tab="guides" onclick="switchTab('guides')">Size Guides</button>
     <button class="tab-btn" data-tab="settings" onclick="switchTab('settings')">Settings</button>
@@ -171,6 +176,24 @@
     <p class="muted" style="margin-bottom:10px;">Order here = order on the store. Hiding a category hides its products too. GST default applies to every product in the category unless the product overrides it. The ID can't change after products use it.</p>
     <div class="form-error" id="catError"></div>
     <div id="categoriesWrap"><div class="msg">Loading…</div></div>
+  </div>
+
+  <!-- REVIEWS -->
+  <div class="panel" id="panel-reviews">
+    <div class="toolbar">
+      <h2 style="margin:0;">Reviews</h2>
+      <div class="row-actions">
+        <select id="reviewFilter" onchange="loadReviews()">
+          <option value="pending">Waiting for approval</option>
+          <option value="approved">Approved</option>
+          <option value="rejected">Rejected</option>
+          <option value="">All</option>
+        </select>
+        <button class="secondary" onclick="loadReviews()">Refresh</button>
+      </div>
+    </div>
+    <p class="muted" style="margin-bottom:10px;">Only verified buyers (order ID + order email) can submit. Approved reviews show on the product page and in Google results. A public reply shows under the review.</p>
+    <div id="reviewsWrap"><div class="msg">Loading…</div></div>
   </div>
 
   <!-- COUPONS -->
@@ -490,6 +513,7 @@ function enterApp(admin){
   loadCatalog();
   loadOrders();
   loadAudit();
+  refreshPendingBadge();
   if(admin.role === 'owner') loadTeam();
 }
 
@@ -1021,6 +1045,62 @@ async function saveSection(section, data, errEl){
 function fillGuideSelect(selected){
   document.getElementById('p-guide').innerHTML = '<option value="">Category default</option>' +
     sizeGuideKeys.map(k => `<option value="${esc(k)}" ${k === selected ? 'selected' : ''}>${esc((guidesCache[k] || {}).title || k)}</option>`).join('');
+}
+
+/* ---------- REVIEWS ---------- */
+async function loadReviews(){
+  const wrap = document.getElementById('reviewsWrap');
+  const status = document.getElementById('reviewFilter').value;
+  try{
+    const res = await adminFetch('/.netlify/functions/admin-reviews' + (status ? '?status=' + status : ''));
+    if(res.status === 401){ handleUnauthorized(); return; }
+    const { reviews } = await res.json();
+    if(status === 'pending') setPendingBadge(reviews.length);
+    const name = (id) => (catalogCache.find(p => p.id === id) || {}).name || `Product #${id}`;
+    wrap.innerHTML = reviews.length ? reviews.map(r => `
+      <div class="review-card">
+        <div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;">
+          <div><span class="stars-txt">${'★'.repeat(r.rating)}${'☆'.repeat(5 - r.rating)}</span> <strong>${esc(r.title || '')}</strong></div>
+          <span class="status ${r.status === 'approved' ? 'paid' : 'pending'}">${r.status}</span>
+        </div>
+        <div class="muted">${esc(name(r.productId))}${r.size ? ' · size ' + esc(r.size) : ''} · ${esc(r.name)} · ${esc(r.email)} · ${esc(r.orderId)} · ${new Date(r.createdAt).toLocaleString('en-IN')}</div>
+        <p>${esc(r.body)}</p>
+        <textarea rows="2" id="reply-${esc(r.key)}" placeholder="Optional public reply from EGOSYNK">${esc(r.reply || '')}</textarea>
+        <div class="row-actions" style="margin-top:8px;">
+          <button onclick="moderateReview('${esc(r.key)}','approved')">${r.status === 'approved' ? 'Save reply' : 'Approve'}</button>
+          ${r.status !== 'rejected' ? `<button class="secondary" onclick="moderateReview('${esc(r.key)}','rejected')">Reject</button>` : ''}
+          <button class="danger" onclick="deleteReview('${esc(r.key)}')">Delete</button>
+        </div>
+      </div>`).join('') : '<div class="msg">No reviews here.</div>';
+  } catch(err){
+    wrap.innerHTML = '<div class="msg">Could not load reviews.</div>';
+  }
+}
+function setPendingBadge(n){
+  const b = document.getElementById('pendingBadge');
+  b.hidden = !n; b.textContent = n;
+}
+async function reviewAction(payload){
+  const res = await adminFetch('/.netlify/functions/admin-reviews', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(payload) });
+  if(res.status === 401){ handleUnauthorized(); return false; }
+  const out = await res.json().catch(() => ({}));
+  if(!res.ok){ alert(out.error || 'Failed'); return false; }
+  return true;
+}
+async function moderateReview(key, status){
+  const reply = document.getElementById('reply-' + key).value;
+  if(await reviewAction({ action: 'moderate', key, status, reply })){ flash(`Review ${status}`); loadReviews(); }
+}
+async function deleteReview(key){
+  if(!confirm('Delete this review permanently?')) return;
+  if(await reviewAction({ action: 'delete', key })){ flash('Review deleted'); loadReviews(); }
+}
+// Show how many reviews are waiting as soon as the portal opens.
+async function refreshPendingBadge(){
+  try{
+    const res = await adminFetch('/.netlify/functions/admin-reviews?status=pending');
+    if(res.ok) setPendingBadge((await res.json()).reviews.length);
+  } catch(e){}
 }
 
 /* ---------- SETTINGS ---------- */

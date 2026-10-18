@@ -30,6 +30,7 @@
   .order-card{border:1px solid var(--line);border-radius:6px;padding:14px 16px;margin-bottom:12px;}
   .order-head{display:flex;justify-content:space-between;font-size:12px;color:var(--steel);margin-bottom:8px;font-family:'JetBrains Mono',monospace;}
   .order-item{font-size:13px;color:var(--bone-dim);padding:2px 0;}
+  .review-link{font-size:11px;color:var(--rust-bright);margin-left:8px;text-decoration:underline;}
   .order-total{display:flex;justify-content:flex-end;align-items:baseline;gap:14px;font-weight:700;margin-top:8px;font-size:14px;}
   .order-status{margin-top:8px;font-size:11px;text-transform:uppercase;letter-spacing:0.06em;color:var(--steel);font-family:'JetBrains Mono',monospace;}
   .order-status .mono{text-transform:none;color:var(--bone-dim);}
@@ -118,7 +119,7 @@ function render(user, orders){
     : orders.map((o, idx) => `
       <div class="order-card">
         <div class="order-head"><span>${new Date(o.paidAt).toLocaleDateString('en-IN', {day:'numeric', month:'short', year:'numeric'})}</span><span>${esc(o.orderId)}</span></div>
-        ${o.items.map(i => `<div class="order-item">${esc(i.name)}${i.size ? ' ('+esc(i.size)+')' : ''} × ${i.qty}</div>`).join('')}
+        ${o.items.map(i => `<div class="order-item">${esc(i.name)}${i.size ? ' ('+esc(i.size)+')' : ''} × ${i.qty} <a class="review-link" href="/p/${encodeURIComponent(i.id)}?review=${encodeURIComponent(o.orderId)}#reviews">Review</a></div>`).join('')}
         <div class="order-status">${esc(o.fulfilment.status)}${o.fulfilment.tracking ? ` · ${o.fulfilment.courier ? esc(o.fulfilment.courier) + ' ' : ''}<span class="mono">${esc(o.fulfilment.tracking)}</span>` : ''}</div>
         <div class="order-total">${o.invoiceNumber ? `<a class="order-invoice" href="/invoice.html?id=${encodeURIComponent(o.orderId)}">Invoice ${esc(o.invoiceNumber)}</a>` : ''}₹${(o.amount/100).toLocaleString('en-IN')}</div>
         ${exchangeHtml(o, idx)}

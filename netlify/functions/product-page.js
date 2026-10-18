@@ -2,6 +2,7 @@ const fs = require('fs');
 const path = require('path');
 const { getSettings, getSizeGuides } = require('../lib/settings');
 const { getPublicCatalog, idFromSlug } = require('../lib/catalog');
+const { listReviews, publicReview } = require('../lib/reviews');
 
 // Server-renders /p/<slug> (rewritten here in netlify.toml) from product-template.html,
 // putting the product's own title, description, share image and Product structured data
@@ -42,10 +43,15 @@ exports.handler = async (event) => {
     }
     // Renamed products: send old links to the current URL.
     if (product.slug !== slug) {
-      return { statusCode: 301, headers: { Location: `/p/${product.slug}`, 'Cache-Control': 'public, max-age=300' }, body: '' };
+      // Keep any ?query (e.g. ?review=<order> from My Orders) across the redirect.
+      const qs = new URLSearchParams(event.queryStringParameters || {});
+      qs.delete('slug');
+      const q = qs.toString();
+      return { statusCode: 301, headers: { Location: `/p/${product.slug}${q ? '?' + q : ''}`, 'Cache-Control': 'public, max-age=300' }, body: '' };
     }
 
     const category = categories.find((c) => c.id === product.cat) || null;
+    const reviews = (await listReviews({ productId: product.id, status: 'approved' })).slice(0, 50).map(publicReview);
     const guideKey = product.guide || (category && category.guide);
     const related = products.filter((p) => p.cat === product.cat && p.id !== product.id).slice(0, 4);
     const url = `${SITE}/p/${product.slug}`;
@@ -58,6 +64,8 @@ exports.handler = async (event) => {
       '@context': 'https://schema.org', '@type': 'Product', name: product.name, description: desc, url,
       image: (product.images || []).map((k) => `${SITE}/media/${k}`), brand: { '@type': 'Brand', name: 'EGOSYNK' },
       category: category && category.name, color: product.colour || undefined, sku: String(product.id),
+      ...(product.rating ? { aggregateRating: { '@type': 'AggregateRating', ratingValue: product.rating.avg, reviewCount: product.rating.count, bestRating: 5, worstRating: 1 } } : {}),
+      ...(reviews.length ? { review: reviews.slice(0, 5).map((r) => ({ '@type': 'Review', author: { '@type': 'Person', name: r.name }, datePublished: r.createdAt.slice(0, 10), reviewBody: r.body, name: r.title || undefined, reviewRating: { '@type': 'Rating', ratingValue: r.rating, bestRating: 5 } })) } : {}),
       offers: { '@type': 'Offer', url, priceCurrency: 'INR', price: product.price,
         availability: inStock ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
         seller: { '@type': 'Organization', name: 'EGOSYNK' } },
@@ -77,7 +85,7 @@ exports.handler = async (event) => {
 <script type="application/ld+json">${safeJson(ld)}</script>`;
 
     const { shippingFee, freeShippingThreshold, social } = settings;
-    const data = { product, category, related, sizeGuide: guideKey ? sizeGuides[guideKey] || null : null,
+    const data = { product, category, related, reviews, sizeGuide: guideKey ? sizeGuides[guideKey] || null : null,
       settings: { shippingFee, freeShippingThreshold, social } };
 
     // Function replacers, so "$" in product text isn't read as a replace pattern.
