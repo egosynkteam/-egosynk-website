@@ -127,6 +127,7 @@ function render(order){
 
     <div class="section-label">Items</div>
     ${itemsHtml}
+    ${order.discount ? `<div class="item-row"><div>Discount${order.coupon ? ' · ' + escapeHtml(order.coupon) : ''}</div><div class="mono">−₹${order.discount.toLocaleString('en-IN')}</div></div>` : ''}
     ${order.shippingFee != null ? `<div class="item-row"><div>Shipping</div><div class="mono">${order.shippingFee ? '₹' + order.shippingFee : 'Free'}</div></div>` : ''}
     <div class="total-row"><span>Total</span><span class="mono">₹${(order.amount/100).toLocaleString('en-IN')}</span></div>
 

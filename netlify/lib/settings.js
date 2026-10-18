@@ -33,7 +33,19 @@ const DEFAULT_CATEGORIES = [
   { id: 'bottoms', name: 'Bottoms', desc: 'Gym shorts, built for reps', guide: 'apparel', hsn: '6103', tax: 'textile' },
 ].map((c) => ({ ...c, visible: true }));
 
-const SIZE_GUIDES = ['apparel', 'sleeves', 'underwear', 'socks', 'belt'];
+// Size charts shown from the product sheet; editable in admin → Size Guides.
+const DEFAULT_SIZE_GUIDES = {
+  apparel: { title: 'Apparel Size Chart', sub: 'Chest / waist · inches', head: ['Size', 'Chest (in)', 'Waist (in)'],
+    rows: [['S', '36–38', '30–32'], ['M', '38–40', '32–34'], ['L', '40–42', '34–36'], ['XL', '42–44', '36–38'], ['XXL', '44–46', '38–40']] },
+  sleeves: { title: 'Sleeve Size Chart', sub: 'Bicep measurement · inches', head: ['Size', 'Bicep (in)'],
+    rows: [['S', '10–11'], ['M', '11–13'], ['L', '13–15'], ['XL', '15–17']] },
+  underwear: { title: 'Innerwear Size Chart', sub: 'Waist measurement · inches', head: ['Size', 'Waist (in)'],
+    rows: [['S', '28–30'], ['M', '32–34'], ['L', '36–38'], ['XL', '40–42'], ['XXL', '44–46']] },
+  socks: { title: 'Socks Size Chart', sub: 'Indian / UK shoe size', head: ['Fit', 'UK Size'],
+    rows: [['Free Size', '6–11 (fits most)']] },
+  belt: { title: 'Lifting Belt Size Chart', sub: 'Waist measurement · inches', head: ['Size', 'Waist (in)'],
+    rows: [['S', '28–32'], ['M', '32–36'], ['L', '36–40']] },
+};
 
 async function getSettings() {
   const saved = (await getStore('settings').get('store', { type: 'json' })) || {};
@@ -46,6 +58,10 @@ async function getSettings() {
   };
 }
 
+async function getSizeGuides() {
+  return (await getStore('settings').get('sizeGuides', { type: 'json' })) || DEFAULT_SIZE_GUIDES;
+}
+
 async function getCategories() {
   return (await getStore('settings').get('categories', { type: 'json' })) || DEFAULT_CATEGORIES;
 }
@@ -54,4 +70,4 @@ function shippingFor(subtotal, settings) {
   return subtotal >= settings.freeShippingThreshold ? 0 : settings.shippingFee;
 }
 
-module.exports = { DEFAULTS, DEFAULT_CATEGORIES, SIZE_GUIDES, getSettings, getCategories, shippingFor };
+module.exports = { DEFAULTS, DEFAULT_CATEGORIES, DEFAULT_SIZE_GUIDES, getSettings, getCategories, getSizeGuides, shippingFor };

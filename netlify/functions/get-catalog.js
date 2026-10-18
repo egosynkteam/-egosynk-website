@@ -1,5 +1,5 @@
 const { getStore } = require('../lib/blob-store');
-const { getSettings, getCategories } = require('../lib/settings');
+const { getSettings, getCategories, getSizeGuides } = require('../lib/settings');
 
 // Public endpoint — the storefront (index.html) fetches the live catalog from here on
 // every page load instead of using a hardcoded product list. This is what keeps the
@@ -14,10 +14,11 @@ exports.handler = async () => {
 
     // Read every product at once rather than one after another — this list is on the
     // storefront's critical path.
-    const [all, settings, categories] = await Promise.all([
+    const [all, settings, categories, sizeGuides] = await Promise.all([
       Promise.all(blobs.map((b) => store.get(b.key, { type: 'json' }))),
       getSettings(),
       getCategories(),
+      getSizeGuides(),
     ]);
     // Hiding a category in admin hides its products too.
     const shownCats = new Set(categories.filter((c) => c.visible !== false).map((c) => c.id));
@@ -34,6 +35,7 @@ exports.handler = async () => {
         products,
         categories: categories.filter((c) => c.visible !== false).map(({ id, name, desc, guide }) => ({ id, name, desc, guide })),
         settings: { shippingFee, freeShippingThreshold, announcement, hero, social },
+        sizeGuides,
       }),
     };
   } catch (err) {

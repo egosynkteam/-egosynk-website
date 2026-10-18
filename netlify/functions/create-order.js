@@ -6,6 +6,7 @@ const { stateCodeFor, taxInfoFor } = require('../lib/gst');
 const { getSettings, getCategories, shippingFor } = require('../lib/settings');
 const { stockLeft } = require('../lib/orders');
 const { allowRequest } = require('../lib/rate-limit');
+const { findAndEvaluate, allocateDiscount } = require('../lib/coupons');
 
 const REQUIRED_SHIPPING_FIELDS = ['name', 'phone', 'email', 'address1', 'city', 'state', 'pincode'];
 
@@ -19,7 +20,7 @@ exports.handler = async (event) => {
     if (!(await allowRequest('create-order', event, 20, 10 * 60 * 1000))) {
       return { statusCode: 429, body: JSON.stringify({ error: 'Too many checkout attempts — please wait a few minutes' }) };
     }
-    const { cart, shipping } = JSON.parse(event.body || '{}');
+    const { cart, shipping, couponCode } = JSON.parse(event.body || '{}');
 
     // Optional: if the buyer is logged in, the order gets tied to their account for
     // order history (my-orders.js). Guest checkout (no session) still works fine —
@@ -56,7 +57,8 @@ exports.handler = async (event) => {
     const catalogStore = getStore('catalog');
     const categories = await getCategories();
     let amount = 0;
-    const items = [];
+    let items = [];
+    const products = {};
     for (const item of cart) {
       const product = await catalogStore.get(String(item.id), { type: 'json' });
       // Hidden products are off the storefront, so they can't be bought either.
@@ -74,6 +76,7 @@ exports.handler = async (event) => {
         return { statusCode: 400, body: JSON.stringify({ error: left > 0 ? `Only ${left} left of ${what}` : `${what} is sold out` }) };
       }
       amount += product.price * item.qty;
+      products[item.id] = product;
       items.push({
         id: item.id,
         name: product.name,
@@ -81,13 +84,29 @@ exports.handler = async (event) => {
         qty: item.qty,
         price: product.price,
         cat: product.cat,
-        ...taxInfoFor(product, product.price, categories),
       });
     }
 
     const subtotal = amount;
-    const shippingFee = shippingFor(subtotal, await getSettings());
-    amount += shippingFee;
+
+    // The coupon is re-checked here (never trusted from the bag), split across the items,
+    // and each item's GST is then worked out on its discounted value.
+    let discount = 0;
+    let coupon = null;
+    if (couponCode) {
+      const result = await findAndEvaluate(couponCode, subtotal);
+      if (result.error) return { statusCode: 400, body: JSON.stringify({ error: result.error }) };
+      discount = result.discount;
+      coupon = result.coupon.code;
+    }
+    items = allocateDiscount(items, discount).map((i) => ({
+      ...i,
+      ...taxInfoFor(products[i.id], (i.price * i.qty - i.discount) / i.qty, categories),
+    }));
+
+    // Free shipping is judged on what the customer actually pays for the goods.
+    const shippingFee = shippingFor(subtotal - discount, await getSettings());
+    amount = subtotal - discount + shippingFee;
 
     const razorpay = new Razorpay({
       key_id: process.env.RAZORPAY_KEY_ID,
@@ -109,6 +128,8 @@ exports.handler = async (event) => {
       userId: session ? session.user.id : null,
       items,
       subtotal,
+      discount,
+      coupon,
       shippingFee,
       amount: amount * 100,
       currency: 'INR',

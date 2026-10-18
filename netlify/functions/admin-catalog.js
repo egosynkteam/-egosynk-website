@@ -1,7 +1,7 @@
 const { getStore } = require('../lib/blob-store');
 const { isAdminAuthorized } = require('../lib/admin-auth');
 const { logEvent } = require('../lib/audit');
-const { getCategories, SIZE_GUIDES } = require('../lib/settings');
+const { getCategories, getSizeGuides } = require('../lib/settings');
 
 const MEDIA_KEY = /^[a-f0-9]{16}\.(webp|jpg|png)$/;
 const str = (v, max) => String(v == null ? '' : v).trim().slice(0, max);
@@ -52,7 +52,8 @@ exports.handler = async (event) => {
 
     if (event.httpMethod === 'POST') {
       const body = JSON.parse(event.body || '{}');
-      const categoryIds = (await getCategories()).map((c) => c.id);
+      const [cats, guides] = await Promise.all([getCategories(), getSizeGuides()]);
+      const categoryIds = cats.map((c) => c.id);
       const err = validateProduct(body, categoryIds);
       if (err) return { statusCode: 400, body: JSON.stringify({ error: err }) };
 
@@ -89,7 +90,7 @@ exports.handler = async (event) => {
         highlights: (Array.isArray(body.highlights) ? body.highlights : []).map((h) => str(h, 120)).filter(Boolean).slice(0, 8),
         images: (Array.isArray(body.images) ? body.images : []).filter((k) => MEDIA_KEY.test(k)).slice(0, 8),
         sizes,
-        guide: SIZE_GUIDES.includes(body.guide) ? body.guide : null,
+        guide: guides[body.guide] ? body.guide : null,
         available: body.available !== false,
         visible: body.visible !== false,
         sortOrder: Number.isFinite(Number(body.sortOrder)) && body.sortOrder !== '' && body.sortOrder != null ? Number(body.sortOrder) : null,

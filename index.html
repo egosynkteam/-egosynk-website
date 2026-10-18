@@ -324,6 +324,17 @@
   .subtotal-row.ship-row{margin-top:-8px;color:var(--bone-dim);font-size:13px;}
   .subtotal-row.total-row{border-top:1px solid var(--line);padding-top:12px;}
   .ship-progress{margin-bottom:14px;}
+  .coupon-box{margin-bottom:14px;}
+  .coupon-form{display:flex;gap:8px;}
+  .coupon-form input{flex:1;min-width:0;background:var(--surface);border:1px solid var(--line);color:var(--bone);padding:10px 12px;border-radius:2px;font-family:'JetBrains Mono',monospace;font-size:13px;text-transform:uppercase;}
+  .coupon-form input:focus{outline:none;border-color:var(--rust);}
+  .coupon-form button{background:transparent;border:1px solid var(--bone-dim);color:var(--bone);padding:0 16px;border-radius:2px;font-weight:700;font-size:12px;text-transform:uppercase;letter-spacing:.05em;cursor:pointer;}
+  .coupon-form button:disabled{opacity:.5;}
+  .coupon-applied{display:flex;justify-content:space-between;align-items:center;font-size:12px;border:1px dashed var(--ok, #3FA96A);padding:9px 12px;border-radius:2px;color:var(--bone);}
+  .coupon-applied .mono{color:var(--ok, #3FA96A);font-weight:700;}
+  .coupon-applied button{background:none;border:none;color:var(--bone-dim);text-decoration:underline;cursor:pointer;font-size:11px;}
+  .coupon-error{font-size:11px;color:var(--rust-bright);margin-top:6px;min-height:0;}
+  .coupon-error:empty{display:none;}
   .ship-msg{font-size:12px;color:var(--bone-dim);margin-bottom:6px;}
   .ship-msg strong{color:var(--bone);}
   .ship-bar{height:4px;background:var(--line);border-radius:2px;overflow:hidden;}
@@ -507,6 +518,14 @@
   </div>
   <div class="drawer-items" id="drawerItems"></div>
   <div class="drawer-foot">
+    <div class="coupon-box" id="couponBox" hidden>
+      <form class="coupon-form" id="couponForm" onsubmit="applyCoupon(event)">
+        <input id="couponInput" placeholder="Discount code" autocomplete="off" aria-label="Discount code">
+        <button type="submit" id="couponBtn">Apply</button>
+      </form>
+      <div class="coupon-applied" id="couponApplied" hidden></div>
+      <div class="coupon-error" id="couponError"></div>
+    </div>
     <div class="ship-progress" id="shipProgress" hidden>
       <div class="ship-msg" id="shipMsg"></div>
       <div class="ship-bar"><span id="shipBar"></span></div>
@@ -514,6 +533,10 @@
     <div class="subtotal-row">
       <span>Subtotal</span>
       <span class="amt" id="subtotal">₹0</span>
+    </div>
+    <div class="subtotal-row ship-row" id="discountRow" hidden>
+      <span id="discountLabel">Discount</span>
+      <span id="discountAmt" style="color:var(--ok, #3FA96A)"></span>
     </div>
     <div class="subtotal-row ship-row">
       <span>Shipping</span>
@@ -733,6 +756,7 @@ async function loadCatalog(){
     products = data.products || [];
     if(data.settings) storeSettings = data.settings;
     if(Array.isArray(data.categories) && data.categories.length) categories = data.categories;
+    if(data.sizeGuides && Object.keys(data.sizeGuides).length) sizeGuides = data.sizeGuides;
     applySettings(storeSettings);
     publishProductData(products);
   } catch(err){
@@ -770,7 +794,8 @@ function sizeLeft(product, size){
   return m && Number.isFinite(m[size]) ? m[size] : Infinity;
 }
 
-const sizeGuides = {
+// Size charts come from admin (get-catalog); these are the fallback.
+let sizeGuides = {
   apparel:   {title:'Apparel Size Chart', sub:'CHEST / WAIST · INCHES', head:['Size','Chest (in)','Waist (in)'],
               rows:[['S','36–38','30–32'],['M','38–40','32–34'],['L','40–42','34–36'],['XL','42–44','36–38'],['XXL','44–46','38–40']]},
   sleeves:   {title:'Sleeve Size Chart', sub:'BICEP MEASUREMENT · INCHES', head:['Size','Bicep (in)'],
@@ -965,7 +990,8 @@ function removeItem(lineId){
   saveCart();
 }
 
-function updateCartUI(){
+function updateCartUI(fromRecheck){
+  if(!fromRecheck) recheckCoupon();
   const count = cart.reduce((s,c) => s + c.qty, 0);
   document.getElementById('cartCount').textContent = count;
   const drawerItems = document.getElementById('drawerItems');
@@ -990,21 +1016,92 @@ function updateCartUI(){
     `).join('');
   }
   const subtotal = cart.reduce((s,c) => s + c.price*c.qty, 0);
+  if(cart.length === 0) appliedCoupon = null;
+  const discount = appliedCoupon ? Math.min(appliedCoupon.discount, subtotal) : 0;
   const { shippingFee, freeShippingThreshold } = storeSettings;
-  // Mirrors create-order's rule; the server recomputes it, so this is display only.
-  const shipping = cart.length === 0 || subtotal >= freeShippingThreshold ? 0 : shippingFee;
+  // Mirrors create-order's rule (free shipping judged after discount); the server
+  // recomputes it, so this is display only.
+  const shipping = cart.length === 0 || subtotal - discount >= freeShippingThreshold ? 0 : shippingFee;
+  document.getElementById('couponBox').hidden = cart.length === 0;
+  document.getElementById('couponForm').hidden = !!appliedCoupon;
+  const applied = document.getElementById('couponApplied');
+  applied.hidden = !appliedCoupon;
+  if(appliedCoupon){
+    applied.innerHTML = `<span><span class="mono">${esc(appliedCoupon.code)}</span> applied · you save ${inr(discount)}</span><button type="button" onclick="removeCoupon()">Remove</button>`;
+    document.getElementById('couponError').textContent = '';
+  }
+  document.getElementById('discountRow').hidden = !discount;
+  document.getElementById('discountLabel').textContent = appliedCoupon ? `Discount (${appliedCoupon.code})` : 'Discount';
+  document.getElementById('discountAmt').textContent = `−${inr(discount)}`;
   document.getElementById('subtotal').textContent = `₹${subtotal.toLocaleString('en-IN')}`;
   document.getElementById('shippingAmt').textContent = cart.length === 0 ? '—' : (shipping ? `₹${shipping}` : 'Free');
-  document.getElementById('cartTotal').textContent = `₹${(subtotal + shipping).toLocaleString('en-IN')}`;
+  document.getElementById('cartTotal').textContent = `₹${(subtotal - discount + shipping).toLocaleString('en-IN')}`;
   const prog = document.getElementById('shipProgress');
   prog.hidden = cart.length === 0;
   if(cart.length){
-    const gap = freeShippingThreshold - subtotal;
+    const gap = freeShippingThreshold - (subtotal - discount);
     document.getElementById('shipMsg').innerHTML = gap > 0
       ? `Add <strong>₹${gap.toLocaleString('en-IN')}</strong> more for free shipping`
       : '<strong>You’ve unlocked free shipping</strong>';
-    document.getElementById('shipBar').style.width = `${Math.min(100, subtotal / freeShippingThreshold * 100)}%`;
+    document.getElementById('shipBar').style.width = `${Math.min(100, (subtotal - discount) / freeShippingThreshold * 100)}%`;
   }
+}
+
+/* ---------- COUPONS ---------- */
+// The server prices the bag and checks the code; create-order checks it again at payment.
+let appliedCoupon = null; // { code, discount }
+
+async function requestCoupon(code){
+  const res = await fetch('/.netlify/functions/apply-coupon', {
+    method: 'POST', headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({ code, cart: cart.map(c => ({ id: c.id, qty: c.qty })) })
+  });
+  const data = await res.json().catch(() => ({}));
+  if(!res.ok) throw new Error(data.error || 'Could not apply that code');
+  return data;
+}
+
+async function applyCoupon(e){
+  e.preventDefault();
+  const input = document.getElementById('couponInput');
+  const btn = document.getElementById('couponBtn');
+  const errEl = document.getElementById('couponError');
+  const code = input.value.trim();
+  if(!code) return;
+  btn.disabled = true;
+  errEl.textContent = '';
+  try{
+    appliedCoupon = await requestCoupon(code);
+    input.value = '';
+    updateCartUI();
+  } catch(err){
+    errEl.textContent = err.message;
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+function removeCoupon(){
+  appliedCoupon = null;
+  updateCartUI();
+}
+
+// The saving depends on the bag, so re-check it whenever the bag changes.
+let couponRecheck;
+function recheckCoupon(){
+  if(!appliedCoupon) return;
+  clearTimeout(couponRecheck);
+  couponRecheck = setTimeout(async () => {
+    const code = appliedCoupon && appliedCoupon.code;
+    if(!code) return;
+    try{
+      appliedCoupon = await requestCoupon(code);
+    } catch(err){
+      appliedCoupon = null;
+      document.getElementById('couponError').textContent = err.message;
+    }
+    updateCartUI(true);
+  }, 400);
 }
 
 function toggleCart(open){
@@ -1088,6 +1185,7 @@ async function proceedToPayment(){
       headers: {'Content-Type':'application/json'},
       body: JSON.stringify({
         cart: cart.map(c => ({id:c.id, name:c.name, size:c.size, qty:c.qty})),
+        couponCode: appliedCoupon ? appliedCoupon.code : null,
         shipping: shippingInfo
       })
     });

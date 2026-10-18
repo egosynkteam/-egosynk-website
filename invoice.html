@@ -113,12 +113,14 @@ function render({ orderId, paymentId, invoice: inv }){
     ? { head: '<th>CGST</th><th>SGST</th>', cell: (l) => `<td class="mono">${l.gstRate/2}%<br>${inr(l.cgst)}</td><td class="mono">${l.gstRate/2}%<br>${inr(l.sgst)}</td>`, foot: `<td class="mono">${inr(t.cgst)}</td><td class="mono">${inr(t.sgst)}</td>` }
     : { head: '<th>IGST</th>', cell: (l) => `<td class="mono">${l.gstRate}%<br>${inr(l.igst)}</td>`, foot: `<td class="mono">${inr(t.igst)}</td>` };
 
+  const hasDisc = (t.discount || 0) > 0;
   const rows = inv.lines.map((l, i) => `
     <tr>
       <td>${i + 1}</td>
       <td>${escapeHtml(l.name)}${l.size ? '<br><span style="color:var(--muted)">Size: ' + escapeHtml(l.size) + '</span>' : ''}</td>
       <td class="mono">${escapeHtml(l.hsn || '—')}</td>
       <td>${l.qty}</td>
+      ${hasDisc ? `<td class="mono">${inr(l.gross ?? l.total)}</td><td class="mono">${l.discount ? '−' + inr(l.discount) : '—'}</td>` : ''}
       <td class="mono">${inr(l.taxable)}</td>
       ${taxCols.cell(l)}
       <td class="mono">${inr(l.total)}</td>
@@ -175,9 +177,9 @@ function render({ orderId, paymentId, invoice: inv }){
 
       <div class="table-wrap">
         <table>
-          <thead><tr><th>#</th><th>Item</th><th>HSN</th><th>Qty</th><th>Taxable value</th>${taxCols.head}<th>Amount</th></tr></thead>
+          <thead><tr><th>#</th><th>Item</th><th>HSN</th><th>Qty</th>${hasDisc ? '<th>Gross</th><th>Discount</th>' : ''}<th>Taxable value</th>${taxCols.head}<th>Amount</th></tr></thead>
           <tbody>${rows}</tbody>
-          <tfoot><tr><td></td><td>Total</td><td></td><td>${inv.lines.reduce((a, l) => a + l.qty, 0)}</td><td class="mono">${inr(t.taxable)}</td>${taxCols.foot}<td class="mono">${inr(t.total)}</td></tr></tfoot>
+          <tfoot><tr><td></td><td>Total</td><td></td><td>${inv.lines.reduce((a, l) => a + l.qty, 0)}</td>${hasDisc ? `<td class="mono">${inr(t.gross)}</td><td class="mono">−${inr(t.discount)}</td>` : ''}<td class="mono">${inr(t.taxable)}</td>${taxCols.foot}<td class="mono">${inr(t.total)}</td></tr></tfoot>
         </table>
       </div>
 
@@ -187,6 +189,7 @@ function render({ orderId, paymentId, invoice: inv }){
           ${amountInWords(t.total)}
         </div>
         <div class="totals">
+          ${hasDisc ? `<div><span>Discount${inv.coupon ? ' (' + escapeHtml(inv.coupon) + ')' : ''}</span><span class="mono">−${inr(t.discount)}</span></div>` : ''}
           <div><span>Taxable value</span><span class="mono">${inr(t.taxable)}</span></div>
           ${taxLines}
           <div class="grand"><span>Total (incl. GST)</span><span class="mono">${inr(t.total)}</span></div>

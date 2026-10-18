@@ -97,7 +97,8 @@
   .settings-card h4{margin-bottom:12px;font-size:14px;}
   .flash{position:fixed;bottom:24px;left:50%;transform:translate(-50%,20px);background:var(--ok);color:#06140c;font-weight:700;font-size:13px;padding:10px 18px;border-radius:4px;opacity:0;pointer-events:none;transition:all .25s;z-index:100;}
   .flash.show{opacity:1;transform:translate(-50%,0);}
-  #panel-categories{overflow-x:auto;}
+  #panel-categories,#panel-coupons{overflow-x:auto;}
+  #guidesWrap textarea{font-family:'JetBrains Mono',monospace;font-size:12px;}
   .form-error{color:var(--rust-bright);font-size:12px;margin-bottom:10px;display:none;}
 </style>
 </head>
@@ -121,6 +122,8 @@
     <button class="tab-btn active" data-tab="catalog" onclick="switchTab('catalog')">Catalog</button>
     <button class="tab-btn" data-tab="categories" onclick="switchTab('categories')">Categories</button>
     <button class="tab-btn" data-tab="orders" onclick="switchTab('orders')">Orders</button>
+    <button class="tab-btn" data-tab="coupons" onclick="switchTab('coupons')">Coupons</button>
+    <button class="tab-btn" data-tab="guides" onclick="switchTab('guides')">Size Guides</button>
     <button class="tab-btn" data-tab="settings" onclick="switchTab('settings')">Settings</button>
     <button class="tab-btn" data-tab="audit" onclick="switchTab('audit')">Audit Log</button>
   </div>
@@ -149,6 +152,34 @@
     <p class="muted" style="margin-bottom:10px;">Order here = order on the store. Hiding a category hides its products too. GST default applies to every product in the category unless the product overrides it. The ID can't change after products use it.</p>
     <div class="form-error" id="catError"></div>
     <div id="categoriesWrap"><div class="msg">Loading…</div></div>
+  </div>
+
+  <!-- COUPONS -->
+  <div class="panel" id="panel-coupons">
+    <div class="toolbar">
+      <h2 style="margin:0;">Coupons</h2>
+      <div class="row-actions">
+        <button class="secondary" onclick="addCouponRow()">+ Add Coupon</button>
+        <button onclick="saveCoupons()">Save Coupons</button>
+      </div>
+    </div>
+    <p class="muted" style="margin-bottom:10px;">Codes are case-insensitive. Discounts come off the items (not shipping) and reduce the GST taxable value on the invoice. "Used" counts paid orders only. Expiry is end of that day, IST.</p>
+    <div class="form-error" id="couponError"></div>
+    <div id="couponsWrap"><div class="msg">Loading…</div></div>
+  </div>
+
+  <!-- SIZE GUIDES -->
+  <div class="panel" id="panel-guides">
+    <div class="toolbar">
+      <h2 style="margin:0;">Size Guides</h2>
+      <div class="row-actions">
+        <button class="secondary" onclick="addGuide()">+ Add Guide</button>
+        <button onclick="saveGuides()">Save Size Guides</button>
+      </div>
+    </div>
+    <p class="muted" style="margin-bottom:10px;">Shown from "Size guide" on a product. Pick a guide per category (Categories tab) or per product. Rows: one per line, columns separated by <code>|</code>.</p>
+    <div class="form-error" id="guideError"></div>
+    <div class="settings-grid" id="guidesWrap"><div class="msg">Loading…</div></div>
   </div>
 
   <!-- SETTINGS -->
@@ -408,7 +439,7 @@ async function loadCatalog(){
     catalogCache = data.products || [];
     renderCatalog();
     // Category rows show how many products use them, so refresh once products arrive.
-    if(categoriesCache.length) renderCategories();
+    if(categoriesCache.length){ renderCategories(); renderGuides(); }
   } catch(err){
     wrap.innerHTML = '<div class="msg">Could not load catalog.</div>';
   }
@@ -568,7 +599,7 @@ function openProductForm(product){
   document.getElementById('p-stock').value = formatStock(p.stockBySize);
   document.getElementById('p-tag').value = p.tag || '';
   document.getElementById('p-sort').value = p.sortOrder ?? '';
-  document.getElementById('p-guide').value = p.guide || '';
+  fillGuideSelect(p.guide);
   document.getElementById('p-hsn').value = p.hsn || '';
   document.getElementById('p-gst').value = p.gstRate ?? '';
   document.getElementById('p-available').checked = p.available !== false;
@@ -640,7 +671,11 @@ async function loadSettings(){
     if(res.status === 401){ handleUnauthorized(); return; }
     const data = await res.json();
     categoriesCache = data.categories || [];
-    sizeGuideKeys = data.sizeGuides || sizeGuideKeys;
+    guidesCache = data.sizeGuides || {};
+    sizeGuideKeys = Object.keys(guidesCache);
+    couponsCache = data.coupons || [];
+    renderCoupons();
+    renderGuides();
     renderCategories();
     fillSettingsForm(data.settings || {});
     if(catalogCache.length) renderCatalog();
@@ -704,6 +739,128 @@ async function saveCategories(){
   categoriesCache = out.categories;
   renderCategories();
   flash('Categories saved');
+}
+
+/* ---------- COUPONS ---------- */
+let couponsCache = [];
+
+function renderCoupons(){
+  const wrap = document.getElementById('couponsWrap');
+  if(!couponsCache.length){ wrap.innerHTML = '<div class="msg">No coupons yet. Click "+ Add Coupon".</div>'; return; }
+  const today = new Date().toISOString().slice(0, 10);
+  wrap.innerHTML = `
+    <table class="cat-table">
+      <thead><tr><th>Code</th><th>Type</th><th>Value</th><th>Min order ₹</th><th>Max discount ₹</th><th>Expires</th><th>Usage limit</th><th>Used</th><th>Active</th><th></th></tr></thead>
+      <tbody>${couponsCache.map((c, i) => {
+        const expired = c.expiresAt && c.expiresAt < today;
+        const usedUp = c.usageLimit && (c.usedCount || 0) >= c.usageLimit;
+        return `
+        <tr>
+          <td><input data-i="${i}" data-k="code" value="${esc(c.code)}" oninput="couponEdit(this)" style="width:120px;text-transform:uppercase"></td>
+          <td><select data-i="${i}" data-k="type" onchange="couponEdit(this);renderCoupons()">
+            <option value="percent" ${c.type !== 'flat' ? 'selected' : ''}>% off</option>
+            <option value="flat" ${c.type === 'flat' ? 'selected' : ''}>₹ off</option>
+          </select></td>
+          <td><input type="number" min="1" data-i="${i}" data-k="value" value="${c.value ?? ''}" oninput="couponEdit(this)" style="width:70px"></td>
+          <td><input type="number" min="0" data-i="${i}" data-k="minSubtotal" value="${c.minSubtotal || ''}" oninput="couponEdit(this)" style="width:90px"></td>
+          <td>${c.type === 'flat' ? '<span class="muted">—</span>' : `<input type="number" min="0" data-i="${i}" data-k="maxDiscount" value="${c.maxDiscount || ''}" placeholder="No cap" oninput="couponEdit(this)" style="width:90px">`}</td>
+          <td><input type="date" data-i="${i}" data-k="expiresAt" value="${c.expiresAt || ''}" onchange="couponEdit(this)"></td>
+          <td><input type="number" min="0" data-i="${i}" data-k="usageLimit" value="${c.usageLimit || ''}" placeholder="Unlimited" oninput="couponEdit(this)" style="width:90px"></td>
+          <td class="muted">${c.usedCount || 0}${usedUp ? '<br><span class="status pending">used up</span>' : ''}</td>
+          <td><input type="checkbox" data-i="${i}" data-k="active" ${c.active !== false ? 'checked' : ''} onchange="couponEdit(this)">${expired ? '<br><span class="status pending">expired</span>' : ''}</td>
+          <td><button class="danger" onclick="couponsCache.splice(${i},1);renderCoupons()">Remove</button></td>
+        </tr>`;
+      }).join('')}</tbody>
+    </table>`;
+}
+
+function couponEdit(el){
+  const c = couponsCache[Number(el.dataset.i)];
+  const k = el.dataset.k;
+  c[k] = el.type === 'checkbox' ? el.checked : el.type === 'number' ? (el.value === '' ? null : Number(el.value)) : el.value;
+}
+function addCouponRow(){
+  couponsCache.push({ code: '', type: 'percent', value: 10, minSubtotal: 0, maxDiscount: null, expiresAt: '', usageLimit: null, usedCount: 0, active: true });
+  renderCoupons();
+}
+async function saveCoupons(){
+  const errEl = document.getElementById('couponError');
+  errEl.style.display = 'none';
+  const out = await saveSection('coupons', couponsCache, errEl);
+  if(out){ couponsCache = out.coupons; renderCoupons(); flash('Coupons saved'); }
+}
+
+/* ---------- SIZE GUIDES ---------- */
+let guidesCache = {};
+
+function renderGuides(){
+  const used = (key) => categoriesCache.filter(c => c.guide === key).length + catalogCache.filter(p => p.guide === key).length;
+  document.getElementById('guidesWrap').innerHTML = Object.entries(guidesCache).map(([key, g]) => `
+    <section class="settings-card" data-key="${esc(key)}">
+      <div class="field-row">
+        <div class="field"><label>ID</label><input class="g-key" value="${esc(key)}" ${used(key) ? 'readonly title="In use"' : ''}></div>
+        <div class="field"><label>Title</label><input class="g-title" value="${esc(g.title)}"></div>
+      </div>
+      <div class="field"><label>Sub-heading</label><input class="g-sub" value="${esc(g.sub || '')}"></div>
+      <div class="field"><label>Columns (comma-separated)</label><input class="g-head" value="${esc(g.head.join(', '))}"></div>
+      <div class="field"><label>Rows (one per line, columns split by |)</label>
+        <textarea class="g-rows" rows="6">${esc(g.rows.map(r => r.join(' | ')).join('\n'))}</textarea></div>
+      ${used(key) ? `<span class="muted">Used by ${used(key)} categor${used(key) === 1 ? 'y/product' : 'ies/products'}</span>`
+        : `<button class="danger" onclick="removeGuide('${esc(key)}')">Remove guide</button>`}
+    </section>`).join('') || '<div class="msg">No size guides.</div>';
+}
+
+// Reads the cards back into an object (keys can be renamed while unused).
+function collectGuides(){
+  const out = {};
+  document.querySelectorAll('#guidesWrap .settings-card').forEach(card => {
+    const key = card.querySelector('.g-key').value.trim();
+    out[key] = {
+      title: card.querySelector('.g-title').value,
+      sub: card.querySelector('.g-sub').value,
+      head: card.querySelector('.g-head').value.split(',').map(s => s.trim()).filter(Boolean),
+      rows: card.querySelector('.g-rows').value.split('\n').filter(l => l.trim()).map(l => l.split('|').map(s => s.trim())),
+    };
+  });
+  return out;
+}
+function addGuide(){
+  guidesCache = collectGuides();
+  let n = 1; while(guidesCache[`guide-${n}`]) n++;
+  guidesCache[`guide-${n}`] = { title: 'New Size Chart', sub: '', head: ['Size', 'Measurement'], rows: [['M', '']] };
+  renderGuides();
+}
+function removeGuide(key){
+  guidesCache = collectGuides();
+  delete guidesCache[key];
+  renderGuides();
+}
+async function saveGuides(){
+  const errEl = document.getElementById('guideError');
+  errEl.style.display = 'none';
+  const out = await saveSection('sizeGuides', collectGuides(), errEl);
+  if(out){
+    guidesCache = out.sizeGuides;
+    sizeGuideKeys = Object.keys(guidesCache);
+    renderGuides(); renderCategories();
+    flash('Size guides saved');
+  }
+}
+
+async function saveSection(section, data, errEl){
+  const res = await adminFetch('/.netlify/functions/admin-settings', {
+    method: 'POST', headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({ section, data })
+  });
+  if(res.status === 401){ handleUnauthorized(); return null; }
+  const out = await res.json();
+  if(!res.ok){ errEl.textContent = out.error || 'Could not save'; errEl.style.display = 'block'; return null; }
+  return out;
+}
+
+function fillGuideSelect(selected){
+  document.getElementById('p-guide').innerHTML = '<option value="">Category default</option>' +
+    sizeGuideKeys.map(k => `<option value="${esc(k)}" ${k === selected ? 'selected' : ''}>${esc((guidesCache[k] || {}).title || k)}</option>`).join('');
 }
 
 /* ---------- SETTINGS ---------- */

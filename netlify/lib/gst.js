@@ -96,7 +96,10 @@ function buildInvoiceBody(order, items) {
     });
   }
   const lines = billable.map((i) => {
-    const total = i.price * i.qty;
+    // A discount shown on the invoice reduces the value tax is charged on.
+    const gross = i.price * i.qty;
+    const discount = i.discount || 0;
+    const total = Math.round((gross - discount) * 100) / 100;
     // CGST and SGST are each computed at half the rate so the two always match to the
     // paisa; any rounding remainder lands in the taxable value instead.
     const half = round2((total * i.gstRate) / 2 / (100 + i.gstRate));
@@ -106,7 +109,7 @@ function buildInvoiceBody(order, items) {
     const taxable = round2(total - cgst - sgst - igst);
     return {
       name: i.name, size: i.size, hsn: i.hsn, qty: i.qty, unitPrice: i.price,
-      gstRate: i.gstRate, taxable, cgst, sgst, igst, total,
+      gross, discount, gstRate: i.gstRate, taxable, cgst, sgst, igst, total,
     };
   });
   const sum = (k) => round2(lines.reduce((a, l) => a + l[k], 0));
@@ -116,8 +119,10 @@ function buildInvoiceBody(order, items) {
     placeOfSupply: { state: order.shipping.state, code: posCode },
     intraState,
     reverseCharge: false,
+    coupon: order.coupon || null,
     lines,
     totals: {
+      gross: sum('gross'), discount: sum('discount'),
       taxable: sum('taxable'), cgst: sum('cgst'), sgst: sum('sgst'), igst: sum('igst'),
       total: sum('total'),
     },

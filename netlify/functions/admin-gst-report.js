@@ -63,11 +63,11 @@ exports.handler = async (event) => {
     let rows;
     if (q.type === 'register') {
       rows = [['Invoice No', 'Invoice Date', 'Order ID', 'Payment ID', 'Customer', 'Place Of Supply',
-        'Item', 'Size', 'HSN', 'Qty', 'Rate %', 'Taxable Value', 'CGST', 'SGST', 'IGST', 'Line Total',
+        'Item', 'Size', 'HSN', 'Qty', 'Rate %', 'Gross', 'Discount', 'Taxable Value', 'CGST', 'SGST', 'IGST', 'Line Total',
         'Fulfilment', 'Note']];
       for (const l of lines) {
         rows.push([l.inv.number, istDate(l.inv.date), l.order.orderId, l.order.paymentId, l.inv.buyer.name,
-          l.pos, l.name, l.size, l.hsn, l.qty, l.gstRate, l.taxable, l.cgst, l.sgst, l.igst, l.total,
+          l.pos, l.name, l.size, l.hsn, l.qty, l.gstRate, l.gross ?? l.total, l.discount || 0, l.taxable, l.cgst, l.sgst, l.igst, l.total,
           (l.order.fulfilment && l.order.fulfilment.status) || 'processing',
           [l.b2cl ? 'B2CL (report in Table 5)' : '',
             l.order.fulfilment && l.order.fulfilment.status === 'cancelled' ? 'Cancelled: needs credit note' : '']

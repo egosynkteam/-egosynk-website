@@ -2,6 +2,7 @@ const { getStore } = require('./blob-store');
 const { logEvent } = require('./audit');
 const { sendEmail, emailWrapper, escapeHtml, GSTIN } = require('./email');
 const { ensureInvoice } = require('./gst');
+const { recordCouponUse } = require('./coupons');
 
 const OWNER_EMAIL = 'egosynkteam@gmail.com';
 
@@ -29,6 +30,9 @@ function orderEmailHtml(order, forOwner) {
   const itemsRows = order.items
     .map((i) => `<tr><td style="padding:6px 0;">${escapeHtml(i.name)}${i.size ? ' (' + escapeHtml(i.size) + ')' : ''} × ${i.qty}</td><td style="padding:6px 0;text-align:right;">${money(i.price * i.qty)}</td></tr>`)
     .join('');
+  const discountRow = order.discount
+    ? `<tr><td style="padding:6px 0;">Discount${order.coupon ? ' (' + escapeHtml(order.coupon) + ')' : ''}</td><td style="padding:6px 0;text-align:right;">−${money(order.discount)}</td></tr>`
+    : '';
   const shippingRow = order.shippingFee != null
     ? `<tr><td style="padding:6px 0;">Shipping</td><td style="padding:6px 0;text-align:right;">${order.shippingFee ? money(order.shippingFee) : 'Free'}</td></tr>`
     : '';
@@ -42,6 +46,7 @@ function orderEmailHtml(order, forOwner) {
     <p style="font-size:12px;color:#8B8D93;">Order ID: ${escapeHtml(order.orderId)}${order.invoice ? '<br>Invoice: ' + escapeHtml(order.invoice.number) : ''}<br>Sold by EGOSYNK · GSTIN: ${GSTIN}</p>
     <table style="width:100%;font-size:13px;border-collapse:collapse;margin:16px 0;">
       ${itemsRows}
+      ${discountRow}
       ${shippingRow}
       <tr><td style="padding-top:10px;font-weight:700;">Total</td><td style="padding-top:10px;text-align:right;font-weight:700;">${money(order.amount / 100)}</td></tr>
     </table>
@@ -74,6 +79,7 @@ async function markOrderPaid(orderId, paymentId, event, source) {
   // Nothing below may undo a confirmed payment: each step logs and carries on.
   try { await ensureInvoice(order); } catch (err) { console.error('Invoice generation failed:', err); }
   try { await decrementStock(order.items); } catch (err) { console.error('Stock update failed:', err); }
+  try { await recordCouponUse(order.coupon); } catch (err) { console.error('Coupon count failed:', err); }
   await logEvent('order_paid', order.shipping && order.shipping.email, { orderId, paymentId, source }, event);
 
   if (order.shipping && order.shipping.email) {
