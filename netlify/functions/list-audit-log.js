@@ -4,7 +4,7 @@ const { isAdminAuthorized } = require('../lib/admin-auth');
 // Same shared-secret gate as list-orders.js. Returns the most recent 500 events across
 // signup/login/login_failed/logout/order_created/order_paid for audit/troubleshooting.
 exports.handler = async (event) => {
-  if (!isAdminAuthorized(event)) {
+  if (!(await isAdminAuthorized(event))) {
     return { statusCode: 401, body: JSON.stringify({ error: 'Unauthorized' }) };
   }
 

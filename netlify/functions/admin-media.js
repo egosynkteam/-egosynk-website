@@ -13,7 +13,7 @@ const TYPES = { 'image/webp': 'webp', 'image/jpeg': 'jpg', 'image/png': 'png' };
 const MAX_BYTES = 1.5 * 1024 * 1024;
 
 exports.handler = async (event) => {
-  if (!isAdminAuthorized(event)) {
+  if (!(await isAdminAuthorized(event))) {
     return { statusCode: 401, body: JSON.stringify({ error: 'Unauthorized' }) };
   }
   const store = getStore('media');

@@ -14,7 +14,8 @@ async function logEvent(type, actor, detail, event) {
       null;
     await store.setJSON(id, {
       type,
-      actor: actor || 'guest',
+      // Admin actions record which admin account did them.
+      actor: actor === 'admin' && event && event.admin ? event.admin.email : (actor || 'guest'),
       detail: detail || {},
       ip,
       timestamp: new Date().toISOString(),

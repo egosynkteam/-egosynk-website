@@ -5,7 +5,7 @@ const { isAdminAuthorized } = require('../lib/admin-auth');
 // checked against an env var — set ADMIN_SECRET in Netlify before using this.
 // Not a real auth system: fine for a solo founder checking orders, not for a multi-user team.
 exports.handler = async (event) => {
-  if (!isAdminAuthorized(event)) {
+  if (!(await isAdminAuthorized(event))) {
     return { statusCode: 401, body: JSON.stringify({ error: 'Unauthorized' }) };
   }
 

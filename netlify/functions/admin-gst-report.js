@@ -38,7 +38,7 @@ function groupSum(items, keyFn, sums) {
 }
 
 exports.handler = async (event) => {
-  if (!isAdminAuthorized(event)) {
+  if (!(await isAdminAuthorized(event))) {
     return { statusCode: 401, body: JSON.stringify({ error: 'Unauthorized' }) };
   }
   const q = event.queryStringParameters || {};

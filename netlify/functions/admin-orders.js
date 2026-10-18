@@ -12,7 +12,7 @@ const FULFILMENT_STATUSES = ['processing', 'shipped', 'delivered', 'cancelled'];
 //   reset-test — wipe every order and the invoice series; refused unless the site is
 //                on Razorpay test keys, so it can't run once real sales exist
 exports.handler = async (event) => {
-  if (!isAdminAuthorized(event)) {
+  if (!(await isAdminAuthorized(event))) {
     return { statusCode: 401, body: JSON.stringify({ error: 'Unauthorized' }) };
   }
   if (event.httpMethod !== 'POST') {

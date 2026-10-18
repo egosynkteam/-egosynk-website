@@ -36,7 +36,7 @@ function validateProduct(p, categoryIds) {
 // POST   -> create a new product, or update an existing one if `id` is supplied
 // DELETE -> remove a product by id
 exports.handler = async (event) => {
-  if (!isAdminAuthorized(event)) {
+  if (!(await isAdminAuthorized(event))) {
     return { statusCode: 401, body: JSON.stringify({ error: 'Unauthorized' }) };
   }
 

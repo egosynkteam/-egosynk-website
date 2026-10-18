@@ -26,7 +26,7 @@ const SEED_PRODUCTS = [
 ];
 
 exports.handler = async (event) => {
-  if (!isAdminAuthorized(event)) {
+  if (!(await isAdminAuthorized(event))) {
     return { statusCode: 401, body: JSON.stringify({ error: 'Unauthorized' }) };
   }
   if (event.httpMethod !== 'POST') {
