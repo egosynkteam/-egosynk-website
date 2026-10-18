@@ -108,7 +108,9 @@ exports.handler = async (event) => {
 
     return {
       statusCode: 200,
-      body: JSON.stringify({ orderId: order.id, amount: order.amount }),
+      // The browser must open checkout with the same key that created the order, so it
+      // takes the key id from here rather than a copy hardcoded in index.html.
+      body: JSON.stringify({ orderId: order.id, amount: order.amount, keyId: process.env.RAZORPAY_KEY_ID }),
     };
   } catch (err) {
     console.error(err);

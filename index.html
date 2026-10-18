@@ -647,10 +647,8 @@ const sizeGuides = {
 };
 
 /* ---------- PAYMENT CONFIG ---------- */
-// Public "key_id" — safe to expose client-side. This is TEST mode; swap to your rzp_live_ key at launch.
-// The secret key never goes in this file — it lives only in Netlify's environment variables,
-// used by the serverless functions in netlify/functions/.
-const RAZORPAY_KEY_ID = 'rzp_test_TQ6IJxnMQ5MbGm';
+// The Razorpay key id comes back from create-order (RAZORPAY_KEY_ID in Netlify), so the
+// storefront always matches the key that created the order. Neither key lives in this file.
 
 /* ---------- STATE ---------- */
 let cart = JSON.parse(sessionStorage.getItem('egosynk_cart') || '[]');
@@ -931,10 +929,10 @@ async function proceedToPayment(){
       const errBody = await orderRes.json().catch(() => ({}));
       throw new Error(errBody.error || 'Order creation failed');
     }
-    const { orderId, amount } = await orderRes.json();
+    const { orderId, amount, keyId } = await orderRes.json();
 
     const rzp = new Razorpay({
-      key: RAZORPAY_KEY_ID,
+      key: keyId,
       order_id: orderId,
       amount: amount,
       currency: 'INR',
