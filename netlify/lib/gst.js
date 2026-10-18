@@ -9,9 +9,9 @@ const { getStore } = require('./blob-store');
 
 const SUPPLIER = {
   tradeName: 'EGOSYNK',
-  legalName: 'ASHISHKUMAR LALBAHADUR YADAV',
   gstin: '27AKHPY6964E1ZI',
-  address: 'D-102, Floor-1, Plot-567, D Wing, Manik II, Bhawani Shankar Road, Saitan Chowky, Dadar (W), Mumbai 400028',
+  // Shortened from the full registered PPOB at the founder's request; confirm with the CA.
+  address: 'Dadar (W), Mumbai, Maharashtra 400028',
   state: 'Maharashtra',
   stateCode: '27',
   email: 'support@egosynk.com',
@@ -83,11 +83,13 @@ function buildInvoiceBody(order, items) {
   const intraState = posCode === SUPPLIER.stateCode;
   const lines = items.map((i) => {
     const total = i.price * i.qty;
-    const taxable = round2(total / (1 + i.gstRate / 100));
-    const tax = round2(total - taxable);
-    const cgst = intraState ? round2(tax / 2) : 0;
-    const sgst = intraState ? round2(tax - cgst) : 0;
-    const igst = intraState ? 0 : tax;
+    // CGST and SGST are each computed at half the rate so the two always match to the
+    // paisa; any rounding remainder lands in the taxable value instead.
+    const half = round2((total * i.gstRate) / 2 / (100 + i.gstRate));
+    const igst = intraState ? 0 : round2((total * i.gstRate) / (100 + i.gstRate));
+    const cgst = intraState ? half : 0;
+    const sgst = intraState ? half : 0;
+    const taxable = round2(total - cgst - sgst - igst);
     return {
       name: i.name, size: i.size, hsn: i.hsn, qty: i.qty, unitPrice: i.price,
       gstRate: i.gstRate, taxable, cgst, sgst, igst, total,

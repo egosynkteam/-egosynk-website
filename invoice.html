@@ -133,7 +133,6 @@ function render({ orderId, paymentId, invoice: inv }){
         <div>
           <div class="logo"><span>EGO</span>SYNK</div>
           <div class="supplier">
-            ${escapeHtml(sup.legalName)} (trading as ${escapeHtml(sup.tradeName)})<br>
             ${escapeHtml(sup.address)}<br>
             State: ${escapeHtml(sup.state)} (${sup.stateCode}) · ${escapeHtml(sup.email)}<br>
             <strong style="color:var(--ink)">GSTIN: <span class="mono">${escapeHtml(sup.gstin)}</span></strong>

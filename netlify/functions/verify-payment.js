@@ -58,7 +58,9 @@ exports.handler = async (event) => {
     if (verified) {
       const store = getStore('orders');
       const order = await store.get(razorpay_order_id, { type: 'json' });
-      if (order) {
+      // The confirmation URL carries the payment params, so a page reload re-verifies.
+      // Only the first verification records the payment and sends emails.
+      if (order && order.status !== 'paid') {
         order.status = 'paid';
         order.paymentId = razorpay_payment_id;
         order.paidAt = new Date().toISOString();

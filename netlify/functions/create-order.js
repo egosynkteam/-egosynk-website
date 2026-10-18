@@ -4,7 +4,7 @@ const { getSessionUser } = require('../lib/session');
 const { logEvent } = require('../lib/audit');
 const { stateCodeFor, taxInfoFor } = require('../lib/gst');
 
-const REQUIRED_SHIPPING_FIELDS = ['name', 'phone', 'address1', 'city', 'state', 'pincode'];
+const REQUIRED_SHIPPING_FIELDS = ['name', 'phone', 'email', 'address1', 'city', 'state', 'pincode'];
 
 exports.handler = async (event) => {
   if (event.httpMethod !== 'POST') {
@@ -30,6 +30,9 @@ exports.handler = async (event) => {
     }
     if (!/^\d{6}$/.test(shipping.pincode)) {
       return { statusCode: 400, body: JSON.stringify({ error: 'Enter a valid 6-digit pincode' }) };
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(shipping.email).trim())) {
+      return { statusCode: 400, body: JSON.stringify({ error: 'Enter a valid email address' }) };
     }
     if (!/^[6-9]\d{9}$/.test(shipping.phone)) {
       return { statusCode: 400, body: JSON.stringify({ error: 'Enter a valid 10-digit mobile number' }) };

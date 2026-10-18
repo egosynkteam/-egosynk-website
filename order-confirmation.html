@@ -121,7 +121,7 @@ function render(order){
   document.getElementById('card').innerHTML = `
     <div class="status-icon">✓</div>
     <h1>Order Confirmed</h1>
-    <div class="sub">Thanks for the order — we're getting it ready. A confirmation will be sent to ${s.email ? escapeHtml(s.email) : 'your phone number'} shortly.</div>
+    <div class="sub">Thanks for the order — we're getting it ready.${s.email ? ' Your receipt will be emailed to ' + escapeHtml(s.email) + '.' : ''} You can download your GST invoice below.</div>
     <div class="order-id mono">${escapeHtml(order.orderId)}</div>
 
     <div class="section-label">Items</div>
