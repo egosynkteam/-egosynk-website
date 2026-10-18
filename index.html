@@ -1373,6 +1373,35 @@ function openBagFromHash(){ if(location.hash === '#bag'){ toggleCart(true); hist
 addEventListener('hashchange', openBagFromHash);
 // The bag changed in another tab (e.g. a product page) — pick it up.
 addEventListener('storage', (e) => { if(e.key === 'egosynk_cart'){ cart = readCart(); updateCartUI(); } });
+
+// Reminder emails link to /?restore=<token>: put those items back in the bag, priced
+// from the live catalog, then open the bag.
+async function restoreFromLink(){
+  const t = new URLSearchParams(location.search).get('restore');
+  if(!t) return;
+  history.replaceState(null, '', location.pathname);
+  try{
+    const res = await fetch('/.netlify/functions/restore-cart?t=' + encodeURIComponent(t));
+    const data = await res.json().catch(() => ({}));
+    if(!res.ok){ showToast(data.error || 'That link has expired'); return; }
+    for(let n = 0; n < 50 && !products.length; n++) await new Promise(r => setTimeout(r, 100)); // wait for the catalog
+    let added = 0;
+    for(const it of data.items){
+      const p = products.find(x => x.id === it.id);
+      if(!p || p.available === false) continue;
+      const lineId = `${p.id}-${it.size}`;
+      const line = cart.find(c => c.lineId === lineId);
+      if(line) line.qty = Math.max(line.qty, it.qty);
+      else cart.push({ lineId, id: p.id, name: p.name, cat: p.cat, price: p.price, size: it.size, qty: it.qty, image: (p.images || [])[0] || null });
+      added++;
+    }
+    saveCart();
+    updateCartUI();
+    toggleCart(true);
+    showToast(added ? 'Your bag is back' : 'Those items are no longer available');
+  } catch(err){ console.error(err); }
+}
+restoreFromLink();
 applySettings({ announcement: { items: ['Compression sleeves','Performance compression wear','Training accessories','Free shipping over ₹999'] } });
 loadCatalog(); // fetches live products, then calls renderProducts() itself
 updateCartUI();

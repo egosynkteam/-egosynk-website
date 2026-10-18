@@ -43,6 +43,11 @@ function cleanStore(d) {
         facebook: str(s.facebook, 200),
       },
       ogImageKey: mediaKey(d.ogImageKey),
+      abandonedCart: {
+        enabled: !(d.abandonedCart && d.abandonedCart.enabled === false),
+        delayHours: Math.min(24, Math.max(1, Math.round(Number(d.abandonedCart && d.abandonedCart.delayHours) || 1))),
+        couponCode: str(d.abandonedCart && d.abandonedCart.couponCode, 20).toUpperCase().replace(/[^A-Z0-9-]/g, ''),
+      },
       analytics: {
         ga4Id: /^G-[A-Z0-9]{4,15}$/.test(str(d.analytics && d.analytics.ga4Id, 20).toUpperCase()) ? str(d.analytics.ga4Id, 20).toUpperCase() : null,
         metaPixelId: /^\d{10,20}$/.test(str(d.analytics && d.analytics.metaPixelId, 20)) ? str(d.analytics.metaPixelId, 20) : null,

@@ -58,3 +58,7 @@
   node_bundler = "esbuild"
   # product-page.js reads this template at runtime.
   included_files = ["product-template.html"]
+
+# Abandoned-checkout reminder emails (netlify/lib/abandoned.js), every 30 minutes.
+[functions."abandoned-carts"]
+  schedule = "*/30 * * * *"

@@ -331,6 +331,16 @@
       </section>
 
       <section class="settings-card">
+        <h4>Abandoned-bag emails</h4>
+        <p class="muted">One reminder to shoppers who reached checkout but didn't pay, with a link that refills their bag. Not sent if they've since ordered or unsubscribed, or after 2 days. Needs email (Resend) set up to actually send.</p>
+        <div class="checkbox-field"><input type="checkbox" id="s-ac-on"><label for="s-ac-on" style="margin:0;">Send reminders</label></div>
+        <div class="field-row">
+          <div class="field"><label for="s-ac-delay">Send after (hours)</label><input id="s-ac-delay" type="number" min="1" max="24"></div>
+          <div class="field"><label for="s-ac-code">Include coupon code (optional)</label><input id="s-ac-code" placeholder="e.g. COMEBACK10"></div>
+        </div>
+      </section>
+
+      <section class="settings-card">
         <h4>Analytics</h4>
         <p class="muted">Loaded only for visitors who accept the cookie banner. Leave blank to turn off (no banner is shown then).</p>
         <div class="field"><label for="s-ga4">Google Analytics 4 Measurement ID</label><input id="s-ga4" placeholder="G-XXXXXXXXXX"></div>
@@ -1152,6 +1162,9 @@ function fillSettingsForm(st){
   set('s-eyebrow', h.eyebrow); set('s-headline', h.headline); set('s-video', h.videoUrl); set('s-accent', h.accent); set('s-sub', h.sub);
   const so = st.social || {};
   set('s-ig', so.instagram); set('s-wa', so.whatsapp); set('s-yt', so.youtube); set('s-fb', so.facebook);
+  const ac = st.abandonedCart || {};
+  document.getElementById('s-ac-on').checked = ac.enabled !== false;
+  set('s-ac-delay', ac.delayHours || 1); set('s-ac-code', ac.couponCode);
   const an = st.analytics || {};
   set('s-ga4', an.ga4Id); set('s-pixel', an.metaPixelId);
   settingsImages = { hero: h.imageKey || null, og: st.ogImageKey || null };
@@ -1192,6 +1205,7 @@ async function saveSettings(){
     hero: { eyebrow: val('s-eyebrow'), headline: val('s-headline'), accent: val('s-accent'), sub: val('s-sub'), imageKey: settingsImages.hero, videoUrl: val('s-video').trim() },
     social: { instagram: val('s-ig'), whatsapp: val('s-wa'), youtube: val('s-yt'), facebook: val('s-fb') },
     analytics: { ga4Id: val('s-ga4').trim(), metaPixelId: val('s-pixel').trim() },
+    abandonedCart: { enabled: document.getElementById('s-ac-on').checked, delayHours: Number(val('s-ac-delay')) || 1, couponCode: val('s-ac-code').trim() },
     ogImageKey: settingsImages.og,
   };
   const res = await adminFetch('/.netlify/functions/admin-settings', {
