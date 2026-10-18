@@ -3,6 +3,8 @@
 // Never throws: a broken/missing email config must not block signup, checkout, or
 // password reset from completing — those are all more important than the email itself.
 const FROM = 'EGOSYNK <support@egosynk.com>';
+// Replies go straight to Gmail so they don't depend on the Titan mailbox.
+const REPLY_TO = 'egosynkteam@gmail.com';
 const GSTIN = '27AKHPY6964E1ZI';
 
 async function sendEmail({ to, subject, html }) {
@@ -17,7 +19,7 @@ async function sendEmail({ to, subject, html }) {
         Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ from: FROM, to, subject, html }),
+      body: JSON.stringify({ from: FROM, reply_to: REPLY_TO, to, subject, html }),
     });
     if (!res.ok) {
       console.error('Resend send failed:', res.status, await res.text());

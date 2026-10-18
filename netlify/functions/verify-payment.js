@@ -3,7 +3,7 @@ const { getStore } = require('../lib/blob-store');
 const { logEvent } = require('../lib/audit');
 const { sendEmail, emailWrapper, escapeHtml, GSTIN } = require('../lib/email');
 
-const OWNER_EMAIL = 'support@egosynk.com';
+const OWNER_EMAIL = 'egosynkteam@gmail.com';
 
 function orderEmailHtml(order, forOwner) {
   const itemsRows = order.items
