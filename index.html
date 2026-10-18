@@ -2,7 +2,18 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Compression gear, gym sleeves, training shorts, lifting accessories and fragrance built for lifters. Made in India. Free shipping over ₹999.">
+<link rel="canonical" href="https://egosynk.com/">
+<meta name="theme-color" content="#0D0E10">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="EGOSYNK">
+<meta property="og:url" content="https://egosynk.com/">
+<meta property="og:title" content="EGOSYNK — Compression Engineered for the Grind">
+<meta property="og:description" content="Compression gear, gym sleeves, training shorts, lifting accessories and fragrance built for lifters. Made in India. Free shipping over ₹999.">
+<meta name="twitter:card" content="summary">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"Organization","name":"EGOSYNK","url":"https://egosynk.com/","email":"support@egosynk.com","address":{"@type":"PostalAddress","addressLocality":"Mumbai","addressRegion":"Maharashtra","postalCode":"400028","addressCountry":"IN"}}</script>
 <title>EGOSYNK — Compression Engineered for the Grind</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
@@ -233,6 +244,8 @@
   @media(min-width:700px){.footer-grid{grid-template-columns:2fr 1fr 1fr;}}
   .footer-grid h5{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--rust-bright);letter-spacing:0.1em;margin-bottom:16px;text-transform:uppercase;}
   .footer-grid ul{list-style:none;}
+  .footer-grid li a{color:inherit;text-decoration:none;}
+  .footer-grid li a:hover{color:var(--bone);}
   .footer-grid li{margin-bottom:10px;font-size:13px;color:var(--bone-dim);}
   .footer-bottom{
     max-width:1200px;margin:0 auto;padding-top:24px;border-top:1px solid var(--line);
@@ -281,6 +294,14 @@
   .remove-btn{background:none;border:none;color:var(--steel);font-size:11px;cursor:pointer;text-decoration:underline;margin-top:4px;}
   .drawer-foot{padding:20px;border-top:1px solid var(--line);}
   .subtotal-row{display:flex;justify-content:space-between;margin-bottom:16px;font-size:14px;}
+  .subtotal-row.ship-row{margin-top:-8px;color:var(--bone-dim);font-size:13px;}
+  .subtotal-row.total-row{border-top:1px solid var(--line);padding-top:12px;}
+  .ship-progress{margin-bottom:14px;}
+  .ship-msg{font-size:12px;color:var(--bone-dim);margin-bottom:6px;}
+  .ship-msg strong{color:var(--bone);}
+  .ship-bar{height:4px;background:var(--line);border-radius:2px;overflow:hidden;}
+  .ship-bar span{display:block;height:100%;background:var(--rust);width:0;transition:width .4s ease;}
+  .size-opt.out{opacity:.35;text-decoration:line-through;cursor:not-allowed;}
   .subtotal-row .amt{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:18px;}
   .checkout-btn{
     width:100%;background:var(--rust);color:var(--bone);border:none;
@@ -449,7 +470,7 @@
     </div>
     <div>
       <h5>Support</h5>
-      <ul><li>Size Guide</li><li>Shipping</li><li>Returns</li><li><a href="mailto:support@egosynk.com">Contact</a></li><li><a href="/privacy-policy.html">Privacy Policy</a></li></ul>
+      <ul><li><a href="/shipping-policy.html">Shipping</a></li><li><a href="/refund-policy.html">Returns &amp; Exchanges</a></li><li><a href="/terms.html">Terms &amp; Conditions</a></li><li><a href="/privacy-policy.html">Privacy Policy</a></li><li><a href="/contact.html">Contact &amp; Grievances</a></li></ul>
     </div>
   </div>
   <div class="footer-bottom">
@@ -467,9 +488,21 @@
   </div>
   <div class="drawer-items" id="drawerItems"></div>
   <div class="drawer-foot">
+    <div class="ship-progress" id="shipProgress" hidden>
+      <div class="ship-msg" id="shipMsg"></div>
+      <div class="ship-bar"><span id="shipBar"></span></div>
+    </div>
     <div class="subtotal-row">
       <span>Subtotal</span>
       <span class="amt" id="subtotal">₹0</span>
+    </div>
+    <div class="subtotal-row ship-row">
+      <span>Shipping</span>
+      <span id="shippingAmt">—</span>
+    </div>
+    <div class="subtotal-row total-row">
+      <span>Total</span>
+      <span class="amt" id="cartTotal">₹0</span>
     </div>
     <button class="checkout-btn" id="checkoutBtn" onclick="checkout()">Checkout</button>
     <div class="checkout-note">Secure checkout via Razorpay · UPI, Cards &amp; Netbanking</div>
@@ -620,17 +653,45 @@ const categories = [
 // `catalog` Blobs store) instead of being hardcoded here — this is what keeps the storefront
 // in sync with whatever the admin portal has configured (price, availability, new/removed items).
 let products = [];
+let storeSettings = { shippingFee: 79, freeShippingThreshold: 999 };
 
 async function loadCatalog(){
   try{
     const res = await fetch('/.netlify/functions/get-catalog');
     const data = await res.json();
     products = data.products || [];
+    if(data.settings) storeSettings = data.settings;
+    publishProductData(products);
   } catch(err){
     console.error('Could not load catalog', err);
     products = [];
   }
   renderProducts();
+  updateCartUI();
+}
+
+// Product rich results for search engines, generated from the live catalog.
+function publishProductData(list){
+  const ld = {
+    '@context': 'https://schema.org', '@type': 'ItemList',
+    itemListElement: list.map((p, i) => ({
+      '@type': 'ListItem', position: i + 1,
+      item: { '@type': 'Product', name: p.name, brand: { '@type': 'Brand', name: 'EGOSYNK' }, category: p.cat,
+        offers: { '@type': 'Offer', priceCurrency: 'INR', price: p.price, url: 'https://egosynk.com/#shop',
+          availability: p.available === false ? 'https://schema.org/OutOfStock' : 'https://schema.org/InStock' } },
+    })),
+  };
+  const el = document.createElement('script');
+  el.type = 'application/ld+json';
+  el.textContent = JSON.stringify(ld);
+  document.head.appendChild(el);
+}
+
+// Per-size stock: a size listed in stockBySize with 0 left can't be picked. Sizes not
+// listed (or products without stockBySize) are untracked and always available.
+function sizeLeft(product, size){
+  const m = product.stockBySize;
+  return m && Number.isFinite(m[size]) ? m[size] : Infinity;
 }
 
 const sizeGuides = {
@@ -721,7 +782,9 @@ function openSheet(id){
   } else {
     sizeBlock.style.display = 'block';
     document.getElementById('sizeOptions').innerHTML = activeProduct.sizes.map(s =>
-      `<button class="size-opt" data-size="${s}" onclick="selectSize('${s}')">${s}</button>`
+      sizeLeft(activeProduct, s) <= 0
+        ? `<button class="size-opt out" data-size="${s}" disabled title="Sold out">${s}</button>`
+        : `<button class="size-opt" data-size="${s}" onclick="selectSize('${s}')">${s}</button>`
     ).join('');
   }
   updateSheetAddBtn();
@@ -838,7 +901,21 @@ function updateCartUI(){
     `).join('');
   }
   const subtotal = cart.reduce((s,c) => s + c.price*c.qty, 0);
+  const { shippingFee, freeShippingThreshold } = storeSettings;
+  // Mirrors create-order's rule; the server recomputes it, so this is display only.
+  const shipping = cart.length === 0 || subtotal >= freeShippingThreshold ? 0 : shippingFee;
   document.getElementById('subtotal').textContent = `₹${subtotal.toLocaleString('en-IN')}`;
+  document.getElementById('shippingAmt').textContent = cart.length === 0 ? '—' : (shipping ? `₹${shipping}` : 'Free');
+  document.getElementById('cartTotal').textContent = `₹${(subtotal + shipping).toLocaleString('en-IN')}`;
+  const prog = document.getElementById('shipProgress');
+  prog.hidden = cart.length === 0;
+  if(cart.length){
+    const gap = freeShippingThreshold - subtotal;
+    document.getElementById('shipMsg').innerHTML = gap > 0
+      ? `Add <strong>₹${gap.toLocaleString('en-IN')}</strong> more for free shipping`
+      : '<strong>You’ve unlocked free shipping</strong>';
+    document.getElementById('shipBar').style.width = `${Math.min(100, subtotal / freeShippingThreshold * 100)}%`;
+  }
 }
 
 function toggleCart(open){

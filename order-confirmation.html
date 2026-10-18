@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Order Confirmed — EGOSYNK</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -126,6 +127,7 @@ function render(order){
 
     <div class="section-label">Items</div>
     ${itemsHtml}
+    ${order.shippingFee != null ? `<div class="item-row"><div>Shipping</div><div class="mono">${order.shippingFee ? '₹' + order.shippingFee : 'Free'}</div></div>` : ''}
     <div class="total-row"><span>Total</span><span class="mono">₹${(order.amount/100).toLocaleString('en-IN')}</span></div>
 
     <div class="section-label">Delivering to</div>

@@ -3,6 +3,9 @@ const { getStore } = require('../lib/blob-store');
 const { getSessionUser } = require('../lib/session');
 const { logEvent } = require('../lib/audit');
 const { stateCodeFor, taxInfoFor } = require('../lib/gst');
+const { getSettings, shippingFor } = require('../lib/settings');
+const { stockLeft } = require('../lib/orders');
+const { allowRequest } = require('../lib/rate-limit');
 
 const REQUIRED_SHIPPING_FIELDS = ['name', 'phone', 'email', 'address1', 'city', 'state', 'pincode'];
 
@@ -12,6 +15,10 @@ exports.handler = async (event) => {
   }
 
   try {
+    // Each attempt creates a real Razorpay order, so cap how fast one client can make them.
+    if (!(await allowRequest('create-order', event, 20, 10 * 60 * 1000))) {
+      return { statusCode: 429, body: JSON.stringify({ error: 'Too many checkout attempts — please wait a few minutes' }) };
+    }
     const { cart, shipping } = JSON.parse(event.body || '{}');
 
     // Optional: if the buyer is logged in, the order gets tied to their account for
@@ -57,6 +64,11 @@ exports.handler = async (event) => {
       if (product.available === false) {
         return { statusCode: 400, body: JSON.stringify({ error: `${product.name} is currently sold out` }) };
       }
+      const left = stockLeft(product, item.size);
+      if (left < item.qty) {
+        const what = `${product.name}${item.size ? ' (' + item.size + ')' : ''}`;
+        return { statusCode: 400, body: JSON.stringify({ error: left > 0 ? `Only ${left} left of ${what}` : `${what} is sold out` }) };
+      }
       amount += product.price * item.qty;
       items.push({
         id: item.id,
@@ -68,6 +80,10 @@ exports.handler = async (event) => {
         ...taxInfoFor(product, product.price),
       });
     }
+
+    const subtotal = amount;
+    const shippingFee = shippingFor(subtotal, await getSettings());
+    amount += shippingFee;
 
     const razorpay = new Razorpay({
       key_id: process.env.RAZORPAY_KEY_ID,
@@ -88,6 +104,8 @@ exports.handler = async (event) => {
       status: 'pending',
       userId: session ? session.user.id : null,
       items,
+      subtotal,
+      shippingFee,
       amount: amount * 100,
       currency: 'INR',
       shipping: {

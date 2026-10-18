@@ -4,6 +4,18 @@ const { logEvent } = require('../lib/audit');
 
 const VALID_CATS = ['sleeves', 'innerwear', 'socks', 'compression', 'accessories', 'fragrance', 'bottoms'];
 
+// { S: 10, M: 0 } — only sizes the product actually has, whole numbers ≥ 0. Returns null
+// (untracked) when nothing was entered.
+function normaliseStock(raw, sizes) {
+  if (!raw || typeof raw !== 'object') return null;
+  const out = {};
+  for (const size of sizes) {
+    const n = Number(raw[size]);
+    if (raw[size] !== '' && raw[size] != null && Number.isFinite(n)) out[size] = Math.max(0, Math.floor(n));
+  }
+  return Object.keys(out).length ? out : null;
+}
+
 function validateProduct(p) {
   if (!p.name || !String(p.name).trim()) return 'Name is required';
   if (!VALID_CATS.includes(p.cat)) return `Category must be one of: ${VALID_CATS.join(', ')}`;
@@ -54,16 +66,21 @@ exports.handler = async (event) => {
         isNew = !existing;
       }
 
+      // Keep fields this form doesn't manage (future images, descriptions…) instead of
+      // silently wiping them on every save.
+      const existing = isNew ? {} : ((await store.get(String(id), { type: 'json' })) || {});
+      const sizes = body.sizes.map((s) => String(s).slice(0, 20)).slice(0, 12);
       const product = {
+        ...existing,
         id,
         name: String(body.name).slice(0, 150),
         cat: body.cat,
         price: Math.round(body.price),
         tag: body.tag ? String(body.tag).slice(0, 30) : null,
-        sizes: body.sizes.map((s) => String(s).slice(0, 20)).slice(0, 12),
+        sizes,
         guide: body.guide ? String(body.guide).slice(0, 30) : null,
         available: body.available !== false,
-        stock: Number.isFinite(body.stock) ? body.stock : null,
+        stockBySize: normaliseStock(body.stockBySize, sizes),
         updatedAt: new Date().toISOString(),
       };
       await store.setJSON(String(id), product);

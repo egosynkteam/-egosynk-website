@@ -39,4 +39,26 @@ async function clearLoginFailures(email) {
   await store.delete(key(email));
 }
 
-module.exports = { checkLoginLock, recordLoginFailure, clearLoginFailures, MAX_ATTEMPTS };
+// General per-client request cap (fixed window), keyed by the caller's IP. Fails open:
+// if the IP is unknown or the store errors, the request is allowed rather than blocking
+// real customers.
+async function allowRequest(bucket, event, limit, windowMs) {
+  const ip = event && event.headers &&
+    (event.headers['x-nf-client-connection-ip'] || event.headers['client-ip']);
+  if (!ip) return true;
+  try {
+    const store = getStore('security');
+    const k = `rl:${bucket}:${ip}`;
+    const now = Date.now();
+    let rec = await store.get(k, { type: 'json' });
+    if (!rec || now - rec.start > windowMs) rec = { start: now, count: 0 };
+    rec.count++;
+    await store.setJSON(k, rec);
+    return rec.count <= limit;
+  } catch (err) {
+    console.error('rate limit check failed', err);
+    return true;
+  }
+}
+
+module.exports = { checkLoginLock, recordLoginFailure, clearLoginFailures, allowRequest, MAX_ATTEMPTS };

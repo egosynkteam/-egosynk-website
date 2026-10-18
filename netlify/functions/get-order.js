@@ -22,6 +22,7 @@ exports.handler = async (event) => {
         orderId: order.orderId,
         items: order.items,
         amount: order.amount,
+        shippingFee: order.shippingFee,
         currency: order.currency,
         shipping: order.shipping,
         paidAt: order.paidAt,

@@ -5,6 +5,7 @@ const { sessionCookie, SESSION_MAX_AGE_SECONDS } = require('../lib/cookies');
 const { logEvent } = require('../lib/audit');
 const { createToken } = require('../lib/tokens');
 const { sendEmail, emailWrapper, buttonHtml, escapeHtml: escapeForEmail } = require('../lib/email');
+const { allowRequest } = require('../lib/rate-limit');
 
 const SITE_URL = process.env.SITE_URL || 'https://egosynk.com';
 
@@ -20,6 +21,9 @@ exports.handler = async (event) => {
   }
 
   try {
+    if (!(await allowRequest('signup', event, 5, 60 * 60 * 1000))) {
+      return { statusCode: 429, body: JSON.stringify({ error: 'Too many sign-ups from this network — try again later' }) };
+    }
     const { name, email, phone, password } = JSON.parse(event.body || '{}');
     const emailNorm = normEmail(email);
 

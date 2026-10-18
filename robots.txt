@@ -1,0 +1,9 @@
+User-agent: *
+Disallow: /admin.html
+Disallow: /admin-orders.html
+Disallow: /account.html
+Disallow: /invoice.html
+Disallow: /order-confirmation.html
+Disallow: /.netlify/
+
+Sitemap: https://egosynk.com/sitemap.xml

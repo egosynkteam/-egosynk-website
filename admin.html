@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>EGOSYNK Admin Portal</title>
 <meta name="robots" content="noindex, nofollow">
@@ -188,8 +189,8 @@
           <input id="p-tag" placeholder="NEW / BESTSELLER">
         </div>
         <div class="field">
-          <label for="p-stock">Stock (optional)</label>
-          <input id="p-stock" type="number" min="0" placeholder="Leave blank = untracked">
+          <label for="p-stock">Stock per size (optional)</label>
+          <input id="p-stock" type="text" placeholder="S:10, M:8, L:0 — blank = untracked">
         </div>
       </div>
       <div class="field">
@@ -279,7 +280,7 @@ function renderCatalog(){
       <td>${esc(p.cat)}</td>
       <td>₹${p.price.toLocaleString('en-IN')}</td>
       <td>${esc((p.sizes||[]).join(', '))}</td>
-      <td>${p.stock === null || p.stock === undefined ? '<span class="muted">—</span>' : p.stock}</td>
+      <td>${p.stockBySize ? esc(formatStock(p.stockBySize)) : '<span class="muted">untracked</span>'}</td>
       <td><span class="status ${p.available}">${p.available ? 'Available' : 'Sold Out'}</span></td>
       <td class="row-actions">
         <button class="secondary" onclick="toggleAvailability(${p.id})">${p.available ? 'Mark Sold Out' : 'Mark Available'}</button>
@@ -303,6 +304,19 @@ async function seedCatalog(){
   else { alert(data.reason || 'Catalog already has products.'); }
 }
 
+// "S:10, M:8" <-> { S: 10, M: 8 }. Sizes left out stay untracked.
+function parseStock(text){
+  const out = {};
+  for(const part of String(text).split(',')){
+    const [size, qty] = part.split(':').map(x => x && x.trim());
+    if(size && qty !== undefined && qty !== '' && !isNaN(qty)) out[size] = Number(qty);
+  }
+  return Object.keys(out).length ? out : null;
+}
+function formatStock(map){
+  return map ? Object.entries(map).map(([s, q]) => `${s}:${q}`).join(', ') : '';
+}
+
 function openProductForm(product){
   document.getElementById('productFormError').style.display = 'none';
   document.getElementById('productForm').reset();
@@ -314,7 +328,7 @@ function openProductForm(product){
     document.getElementById('p-cat').value = product.cat;
     document.getElementById('p-price').value = product.price;
     document.getElementById('p-tag').value = product.tag || '';
-    document.getElementById('p-stock').value = product.stock === null || product.stock === undefined ? '' : product.stock;
+    document.getElementById('p-stock').value = formatStock(product.stockBySize);
     document.getElementById('p-sizes').value = (product.sizes || []).join(', ');
     document.getElementById('p-guide').value = product.guide || '';
     document.getElementById('p-available').checked = product.available !== false;
@@ -347,7 +361,7 @@ async function submitProductForm(e){
     cat: document.getElementById('p-cat').value,
     price: Number(document.getElementById('p-price').value),
     tag: document.getElementById('p-tag').value.trim() || null,
-    stock: document.getElementById('p-stock').value === '' ? null : Number(document.getElementById('p-stock').value),
+    stockBySize: parseStock(document.getElementById('p-stock').value),
     sizes: document.getElementById('p-sizes').value.split(',').map(s => s.trim()).filter(Boolean),
     guide: document.getElementById('p-guide').value || null,
     available: document.getElementById('p-available').checked,

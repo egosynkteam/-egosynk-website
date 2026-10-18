@@ -81,7 +81,16 @@ function fyLabel(date) {
 function buildInvoiceBody(order, items) {
   const posCode = stateCodeFor(order.shipping.state) || order.shipping.stateCode || null;
   const intraState = posCode === SUPPLIER.stateCode;
-  const lines = items.map((i) => {
+  // Delivery is part of the same supply, so it's taxed at the rate of the principal
+  // goods — taken as the highest item rate in the order (CA to confirm).
+  const billable = [...items];
+  if (order.shippingFee > 0) {
+    billable.push({
+      name: 'Shipping & handling', size: null, hsn: '9965', qty: 1, price: order.shippingFee,
+      gstRate: Math.max(...items.map((i) => i.gstRate)),
+    });
+  }
+  const lines = billable.map((i) => {
     const total = i.price * i.qty;
     // CGST and SGST are each computed at half the rate so the two always match to the
     // paisa; any rounding remainder lands in the taxable value instead.

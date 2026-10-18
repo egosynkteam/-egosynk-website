@@ -9,5 +9,27 @@
   # explicitly rather than rely on the account default.
   NODE_VERSION = "20"
 
+# Baseline security headers for every page. No Content-Security-Policy yet: the pages use
+# inline scripts and Razorpay's checkout loads from several of its own domains, so a
+# strict CSP needs the inline scripts moved out first.
+[[headers]]
+  for = "/*"
+  [headers.values]
+    Strict-Transport-Security = "max-age=31536000"
+    X-Content-Type-Options = "nosniff"
+    X-Frame-Options = "SAMEORIGIN"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    Permissions-Policy = "camera=(), microphone=(), geolocation=()"
+
+# Pages with personal or admin data must never be indexed.
+[[headers]]
+  for = "/admin.html"
+  [headers.values]
+    X-Robots-Tag = "noindex, nofollow"
+[[headers]]
+  for = "/invoice.html"
+  [headers.values]
+    X-Robots-Tag = "noindex, nofollow"
+
 [functions]
   node_bundler = "esbuild"
