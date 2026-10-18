@@ -34,6 +34,21 @@
   .order-status{margin-top:8px;font-size:11px;text-transform:uppercase;letter-spacing:0.06em;color:var(--steel);font-family:'JetBrains Mono',monospace;}
   .order-status .mono{text-transform:none;color:var(--bone-dim);}
   .order-invoice{margin-right:auto;font-weight:500;font-size:12px;color:var(--rust-bright);font-family:'JetBrains Mono',monospace;}
+  .exchange-box{margin-top:12px;padding:10px 12px;border:1px solid var(--line);border-radius:4px;font-size:12px;color:var(--bone-dim);line-height:1.6;}
+  .exchange-box b{color:var(--bone);text-transform:uppercase;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.06em;}
+  .exchange-btn{margin-top:10px;background:none;border:1px solid var(--rust);color:var(--rust-bright);padding:7px 14px;border-radius:2px;cursor:pointer;font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;}
+  .exchange-form{display:none;margin-top:12px;padding:14px;border:1px solid var(--line);border-radius:4px;font-size:13px;}
+  .exchange-form.open{display:block;}
+  .exchange-form label{display:block;font-size:11px;color:var(--steel);text-transform:uppercase;letter-spacing:0.06em;margin:12px 0 6px;font-family:'JetBrains Mono',monospace;}
+  .exchange-form label:first-child{margin-top:0;}
+  .exchange-form select,.exchange-form textarea{width:100%;background:var(--surface-2);border:1px solid var(--line);color:var(--bone);padding:8px;border-radius:2px;font:inherit;font-size:13px;}
+  .exchange-form .ex-item{display:flex;align-items:center;gap:10px;padding:6px 0;}
+  .exchange-form .ex-item input{accent-color:var(--rust);width:16px;height:16px;}
+  .exchange-form .ex-item span{flex:1;}
+  .exchange-form .ex-item select{width:auto;min-width:90px;}
+  .exchange-form .hint{font-size:12px;color:var(--steel);margin-top:8px;line-height:1.5;}
+  .exchange-form .err{color:var(--rust-bright);font-size:12px;margin-top:8px;}
+  .exchange-form .submit{margin-top:12px;background:var(--rust);color:var(--bone);border:none;padding:9px 18px;border-radius:2px;cursor:pointer;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;}
   .empty{color:var(--steel);font-size:13px;text-align:center;padding:20px 0;}
   .loading{color:var(--bone-dim);font-size:13px;}
   .verify-banner{
@@ -90,6 +105,7 @@ async function resendVerification(){
 }
 
 function render(user, orders){
+  ordersCache = orders;
   const verifyBanner = user.emailVerified ? '' : `
     <div class="verify-banner">
       <span>⚠ Your email isn't verified yet.</span>
@@ -99,12 +115,13 @@ function render(user, orders){
 
   const ordersHtml = orders.length === 0
     ? '<div class="empty">No orders yet. <a href="/">Start shopping</a>.</div>'
-    : orders.map(o => `
+    : orders.map((o, idx) => `
       <div class="order-card">
         <div class="order-head"><span>${new Date(o.paidAt).toLocaleDateString('en-IN', {day:'numeric', month:'short', year:'numeric'})}</span><span>${esc(o.orderId)}</span></div>
         ${o.items.map(i => `<div class="order-item">${esc(i.name)}${i.size ? ' ('+esc(i.size)+')' : ''} × ${i.qty}</div>`).join('')}
         <div class="order-status">${esc(o.fulfilment.status)}${o.fulfilment.tracking ? ` · ${o.fulfilment.courier ? esc(o.fulfilment.courier) + ' ' : ''}<span class="mono">${esc(o.fulfilment.tracking)}</span>` : ''}</div>
         <div class="order-total">${o.invoiceNumber ? `<a class="order-invoice" href="/invoice.html?id=${encodeURIComponent(o.orderId)}">Invoice ${esc(o.invoiceNumber)}</a>` : ''}₹${(o.amount/100).toLocaleString('en-IN')}</div>
+        ${exchangeHtml(o, idx)}
       </div>
     `).join('');
 
@@ -121,6 +138,90 @@ function render(user, orders){
       ${ordersHtml}
     </div>
   `;
+}
+
+// Exchange / issue request on a delivered order. The server decides which reasons are
+// still open (7 days for size, 48 hours for damaged/wrong item) and re-checks on submit.
+const EX_STATUS = { requested: 'Request received', approved: 'Approved', rejected: 'Not approved', completed: 'Completed' };
+let ordersCache = [];
+
+function exchangeHtml(o, idx){
+  let html = '';
+  if(o.exchange){
+    html += `<div class="exchange-box"><b>${esc(EX_STATUS[o.exchange.status] || o.exchange.status)}</b> · ${esc(o.exchange.reason)}<br>
+      ${o.exchange.items.map(i => `${esc(i.name)} (${esc(i.size || '—')})${i.newSize ? ' → ' + esc(i.newSize) : ''}`).join('<br>')}
+      ${o.exchange.note ? `<br>${esc(o.exchange.note)}` : ''}</div>`;
+  }
+  const opts = o.exchangeOptions;
+  if(!opts) return html;
+  const fmt = iso => new Date(iso).toLocaleString('en-IN', {day:'numeric', month:'short', hour:'numeric', minute:'2-digit'});
+  return html + `
+    <button class="exchange-btn" onclick="toggleExchange(${idx})">Exchange or report a problem</button>
+    <div class="exchange-form" id="ex-${idx}">
+      <label for="ex-reason-${idx}">Reason</label>
+      <select id="ex-reason-${idx}" onchange="exchangeReasonChanged(${idx})">
+        ${opts.reasons.map(r => `<option value="${esc(r.id)}">${esc(r.label)} (until ${esc(fmt(r.until))})</option>`).join('')}
+      </select>
+      <label>Items</label>
+      ${o.items.map((i, n) => {
+        const sizes = (opts.sizesByItem[n] || []).filter(s => s !== i.size);
+        return `<div class="ex-item">
+          <input type="checkbox" id="ex-${idx}-${n}" ${o.items.length === 1 ? 'checked' : ''}>
+          <span><label for="ex-${idx}-${n}" style="display:inline;margin:0;font:inherit;text-transform:none;letter-spacing:0;color:var(--bone-dim);">${esc(i.name)}${i.size ? ' (' + esc(i.size) + ')' : ''} × ${i.qty}</label></span>
+          <select class="ex-size" id="ex-size-${idx}-${n}" aria-label="New size for ${esc(i.name)}">
+            <option value="">New size</option>
+            ${sizes.map(s => `<option>${esc(s)}</option>`).join('')}
+          </select>
+        </div>`;
+      }).join('')}
+      <label for="ex-note-${idx}">Anything we should know? (optional)</label>
+      <textarea id="ex-note-${idx}" rows="2" maxlength="500"></textarea>
+      <div class="hint" id="ex-hint-${idx}"></div>
+      <div class="err" id="ex-err-${idx}"></div>
+      <button class="submit" id="ex-submit-${idx}" onclick="submitExchange(${idx})">Submit request</button>
+    </div>`;
+}
+
+function toggleExchange(idx){
+  document.getElementById('ex-' + idx).classList.toggle('open');
+  exchangeReasonChanged(idx);
+}
+
+function exchangeReasonChanged(idx){
+  const isSize = document.getElementById('ex-reason-' + idx).value === 'size';
+  document.querySelectorAll(`#ex-${idx} .ex-size`).forEach(s => { s.style.display = isSize ? '' : 'none'; });
+  document.getElementById('ex-hint-' + idx).textContent = isSize
+    ? 'Items must be unused with tags on. Exchanges depend on stock.'
+    : "After you submit, reply to our email with photos of the item and packaging. We'll send a replacement or a full refund.";
+}
+
+async function submitExchange(idx){
+  const o = ordersCache[idx];
+  const reason = document.getElementById('ex-reason-' + idx).value;
+  const err = document.getElementById('ex-err-' + idx);
+  const items = [];
+  o.items.forEach((i, n) => {
+    if(document.getElementById(`ex-${idx}-${n}`).checked){
+      items.push({ index: n, newSize: document.getElementById(`ex-size-${idx}-${n}`).value });
+    }
+  });
+  if(!items.length){ err.textContent = 'Tick the item(s) this is about.'; return; }
+  if(reason === 'size' && items.some(i => !i.newSize)){ err.textContent = 'Pick the new size for each ticked item.'; return; }
+
+  const btn = document.getElementById('ex-submit-' + idx);
+  btn.disabled = true; btn.textContent = 'Sending…'; err.textContent = '';
+  try{
+    const res = await fetch('/.netlify/functions/request-exchange', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ orderId: o.orderId, reason, items, note: document.getElementById('ex-note-' + idx).value }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if(!res.ok){ throw new Error(data.error || 'Could not send the request'); }
+    init();
+  } catch(e){
+    err.textContent = e.message;
+    btn.disabled = false; btn.textContent = 'Submit request';
+  }
 }
 
 async function logout(){
