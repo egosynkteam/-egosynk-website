@@ -25,6 +25,7 @@ exports.handler = async (event) => {
         currency: order.currency,
         shipping: order.shipping,
         paidAt: order.paidAt,
+        invoiceNumber: order.invoice ? order.invoice.number : null,
       }),
     };
   } catch (err) {

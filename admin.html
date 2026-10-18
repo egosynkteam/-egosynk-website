@@ -375,12 +375,12 @@ function renderOrders(orders){
       <td>${esc(o.shipping.city)}, ${esc(o.shipping.state)} ${esc(o.shipping.pincode)}</td>
       <td class="muted">${o.items.map(i => `${esc(i.name)}${i.size ? ' ('+esc(i.size)+')' : ''} x${i.qty}`).join('<br>')}</td>
       <td>₹${(o.amount/100).toLocaleString('en-IN')}</td>
-      <td class="muted">${esc(o.orderId)}</td>
+      <td class="muted">${esc(o.orderId)}${o.invoice ? `<br><a href="/invoice.html?id=${encodeURIComponent(o.orderId)}" target="_blank" rel="noopener">${esc(o.invoice.number)}</a>` : ''}</td>
     </tr>
   `).join('');
   wrap.innerHTML = `
     <table>
-      <thead><tr><th>Date</th><th>Status</th><th>Customer</th><th>Location</th><th>Items</th><th>Amount</th><th>Order ID</th></tr></thead>
+      <thead><tr><th>Date</th><th>Status</th><th>Customer</th><th>Location</th><th>Items</th><th>Amount</th><th>Order / Invoice</th></tr></thead>
       <tbody>${rows}</tbody>
     </table>
   `;

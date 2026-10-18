@@ -2,6 +2,7 @@ const crypto = require('crypto');
 const { getStore } = require('../lib/blob-store');
 const { logEvent } = require('../lib/audit');
 const { sendEmail, emailWrapper, escapeHtml, GSTIN } = require('../lib/email');
+const { ensureInvoice } = require('../lib/gst');
 
 const OWNER_EMAIL = 'egosynkteam@gmail.com';
 
@@ -16,7 +17,7 @@ function orderEmailHtml(order, forOwner) {
 
   return `
     ${intro}
-    <p style="font-size:12px;color:#8B8D93;">Order ID: ${escapeHtml(order.orderId)}<br>Sold by EGOSYNK · GSTIN: ${GSTIN}</p>
+    <p style="font-size:12px;color:#8B8D93;">Order ID: ${escapeHtml(order.orderId)}${order.invoice ? '<br>Invoice: ' + escapeHtml(order.invoice.number) : ''}<br>Sold by EGOSYNK · GSTIN: ${GSTIN}</p>
     <table style="width:100%;font-size:13px;border-collapse:collapse;margin:16px 0;">
       ${itemsRows}
       <tr><td style="padding-top:10px;font-weight:700;">Total</td><td style="padding-top:10px;text-align:right;font-weight:700;">₹${(order.amount / 100).toLocaleString('en-IN')}</td></tr>
@@ -28,6 +29,7 @@ function orderEmailHtml(order, forOwner) {
       ${escapeHtml(s.city)}, ${escapeHtml(s.state)} ${escapeHtml(s.pincode)}<br>
       ${escapeHtml(s.phone)}
     </p>
+    ${order.invoice ? `<p style="font-size:13px;"><a href="https://egosynk.com/invoice.html?id=${encodeURIComponent(order.orderId)}" style="color:#C41E3A;">View / download GST tax invoice</a></p>` : ''}
   `;
 }
 
@@ -61,6 +63,12 @@ exports.handler = async (event) => {
         order.paymentId = razorpay_payment_id;
         order.paidAt = new Date().toISOString();
         await store.setJSON(razorpay_order_id, order);
+        // A failed invoice must not undo a confirmed payment — get-invoice retries lazily.
+        try {
+          await ensureInvoice(order);
+        } catch (err) {
+          console.error('Invoice generation failed:', err);
+        }
         await logEvent('order_paid', order.shipping && order.shipping.email, { orderId: razorpay_order_id, paymentId: razorpay_payment_id }, event);
 
         // Fire-and-forget: a customer receipt (if they gave an email) + an owner alert so

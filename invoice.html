@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>Tax Invoice — EGOSYNK</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+  /* A tax invoice is a document people print or save as PDF, so it's black-on-white
+     paper rather than the storefront's dark theme. */
+  :root{ --ink:#111214; --muted:#5C5E63; --line:#D9D7D2; --rust:#C41E3A; --paper:#FFFFFF; --bg:#EDEAE3; }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{background:var(--bg);color:var(--ink);font-family:'Inter',sans-serif;font-size:13px;padding:32px 16px;}
+  .toolbar{max-width:820px;margin:0 auto 16px;display:flex;justify-content:space-between;gap:12px;align-items:center;}
+  .toolbar[hidden]{display:none;}
+  .toolbar a{color:var(--muted);font-size:12px;}
+  .btn{background:var(--rust);color:#fff;border:0;border-radius:2px;padding:10px 18px;font-weight:700;font-size:12px;letter-spacing:0.05em;text-transform:uppercase;cursor:pointer;font-family:inherit;}
+  .sheet{background:var(--paper);max-width:820px;margin:0 auto;padding:36px 32px;border:1px solid var(--line);}
+  .head{display:flex;justify-content:space-between;gap:24px;flex-wrap:wrap;border-bottom:2px solid var(--ink);padding-bottom:18px;margin-bottom:18px;}
+  .logo{font-family:'Archivo Black',sans-serif;font-size:22px;text-transform:uppercase;}
+  .logo span{color:var(--rust);}
+  .supplier{color:var(--muted);font-size:12px;line-height:1.6;max-width:380px;margin-top:6px;}
+  .doc-title{text-align:right;}
+  .doc-title h1{font-family:'Archivo Black',sans-serif;font-size:20px;text-transform:uppercase;letter-spacing:0.02em;}
+  .doc-title .sub{color:var(--muted);font-size:11px;margin-top:2px;}
+  .mono{font-family:'JetBrains Mono',monospace;}
+  .meta{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:18px;margin-bottom:20px;}
+  .label{font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);margin-bottom:4px;font-weight:600;}
+  .kv{line-height:1.7;font-size:12px;}
+  .table-wrap{overflow-x:auto;}
+  table{width:100%;border-collapse:collapse;font-size:12px;min-width:640px;}
+  th,td{padding:8px 6px;border-bottom:1px solid var(--line);text-align:right;vertical-align:top;}
+  th{font-size:10px;letter-spacing:0.06em;text-transform:uppercase;color:var(--muted);font-weight:600;border-bottom:1px solid var(--ink);}
+  th:first-child,td:first-child,th:nth-child(2),td:nth-child(2){text-align:left;}
+  tfoot td{font-weight:700;border-bottom:0;border-top:1px solid var(--ink);}
+  .summary{display:flex;justify-content:space-between;gap:24px;flex-wrap:wrap;margin-top:20px;}
+  .words{max-width:420px;font-size:12px;line-height:1.6;}
+  .totals{min-width:260px;font-size:12px;}
+  .totals div{display:flex;justify-content:space-between;padding:4px 0;}
+  .totals .grand{border-top:2px solid var(--ink);margin-top:6px;padding-top:8px;font-weight:700;font-size:15px;}
+  .foot{margin-top:28px;display:flex;justify-content:space-between;gap:24px;flex-wrap:wrap;font-size:11px;color:var(--muted);line-height:1.6;}
+  .sign{text-align:right;color:var(--ink);}
+  .state{max-width:820px;margin:40px auto;text-align:center;color:var(--muted);}
+  @media print{
+    body{background:#fff;padding:0;}
+    .toolbar{display:none;}
+    .sheet{border:0;max-width:none;padding:0;}
+    table{min-width:0;}
+  }
+</style>
+</head>
+<body>
+
+<div class="toolbar" id="toolbar" hidden>
+  <a href="/">← egosynk.com</a>
+  <button class="btn" onclick="window.print()">Download / Print</button>
+</div>
+<div id="root"><div class="state">Loading invoice…</div></div>
+
+<script>
+const inr = (n) => '₹' + Number(n).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+function escapeHtml(str){
+  const d = document.createElement('div');
+  d.textContent = str == null ? '' : String(str);
+  return d.innerHTML;
+}
+
+// Indian-system amount in words, e.g. 1249.5 -> "One Thousand Two Hundred Forty Nine Rupees and Fifty Paise Only".
+function amountInWords(amount){
+  const ones = ['','One','Two','Three','Four','Five','Six','Seven','Eight','Nine','Ten','Eleven','Twelve','Thirteen','Fourteen','Fifteen','Sixteen','Seventeen','Eighteen','Nineteen'];
+  const tens = ['','','Twenty','Thirty','Forty','Fifty','Sixty','Seventy','Eighty','Ninety'];
+  const two = (n) => n < 20 ? ones[n] : tens[Math.floor(n/10)] + (n%10 ? ' ' + ones[n%10] : '');
+  const three = (n) => (n >= 100 ? ones[Math.floor(n/100)] + ' Hundred' + (n%100 ? ' ' : '') : '') + (n%100 ? two(n%100) : '');
+  const words = (n) => {
+    if(n === 0) return 'Zero';
+    const parts = [];
+    const crore = Math.floor(n/1e7); n %= 1e7;
+    const lakh = Math.floor(n/1e5); n %= 1e5;
+    const thousand = Math.floor(n/1e3); n %= 1e3;
+    if(crore) parts.push(words(crore) + ' Crore');
+    if(lakh) parts.push(two(lakh) + ' Lakh');
+    if(thousand) parts.push(two(thousand) + ' Thousand');
+    if(n) parts.push(three(n));
+    return parts.join(' ');
+  };
+  const rupees = Math.floor(amount);
+  const paise = Math.round((amount - rupees) * 100);
+  return words(rupees) + ' Rupees' + (paise ? ' and ' + two(paise) + ' Paise' : '') + ' Only';
+}
+
+async function init(){
+  const id = new URLSearchParams(location.search).get('id');
+  const root = document.getElementById('root');
+  if(!id){ root.innerHTML = '<div class="state">No order reference given.</div>'; return; }
+  try{
+    const res = await fetch(`/.netlify/functions/get-invoice?id=${encodeURIComponent(id)}`);
+    if(!res.ok){ root.innerHTML = '<div class="state">Invoice not found. Contact support@egosynk.com with your order ID.</div>'; return; }
+    const data = await res.json();
+    render(data);
+  }catch(err){
+    root.innerHTML = '<div class="state">Could not load the invoice. Please try again.</div>';
+  }
+}
+
+function render({ orderId, paymentId, invoice: inv }){
+  const sup = inv.supplier, b = inv.buyer, t = inv.totals;
+  document.title = `Tax Invoice ${inv.number} — EGOSYNK`;
+  const taxCols = inv.intraState
+    ? { head: '<th>CGST</th><th>SGST</th>', cell: (l) => `<td class="mono">${l.gstRate/2}%<br>${inr(l.cgst)}</td><td class="mono">${l.gstRate/2}%<br>${inr(l.sgst)}</td>`, foot: `<td class="mono">${inr(t.cgst)}</td><td class="mono">${inr(t.sgst)}</td>` }
+    : { head: '<th>IGST</th>', cell: (l) => `<td class="mono">${l.gstRate}%<br>${inr(l.igst)}</td>`, foot: `<td class="mono">${inr(t.igst)}</td>` };
+
+  const rows = inv.lines.map((l, i) => `
+    <tr>
+      <td>${i + 1}</td>
+      <td>${escapeHtml(l.name)}${l.size ? '<br><span style="color:var(--muted)">Size: ' + escapeHtml(l.size) + '</span>' : ''}</td>
+      <td class="mono">${escapeHtml(l.hsn || '—')}</td>
+      <td>${l.qty}</td>
+      <td class="mono">${inr(l.taxable)}</td>
+      ${taxCols.cell(l)}
+      <td class="mono">${inr(l.total)}</td>
+    </tr>`).join('');
+
+  const taxLines = inv.intraState
+    ? `<div><span>CGST</span><span class="mono">${inr(t.cgst)}</span></div><div><span>SGST</span><span class="mono">${inr(t.sgst)}</span></div>`
+    : `<div><span>IGST</span><span class="mono">${inr(t.igst)}</span></div>`;
+
+  document.getElementById('root').innerHTML = `
+    <div class="sheet">
+      <div class="head">
+        <div>
+          <div class="logo"><span>EGO</span>SYNK</div>
+          <div class="supplier">
+            ${escapeHtml(sup.legalName)} (trading as ${escapeHtml(sup.tradeName)})<br>
+            ${escapeHtml(sup.address)}<br>
+            State: ${escapeHtml(sup.state)} (${sup.stateCode}) · ${escapeHtml(sup.email)}<br>
+            <strong style="color:var(--ink)">GSTIN: <span class="mono">${escapeHtml(sup.gstin)}</span></strong>
+          </div>
+        </div>
+        <div class="doc-title">
+          <h1>Tax Invoice</h1>
+          <div class="sub">Original for recipient</div>
+        </div>
+      </div>
+
+      <div class="meta">
+        <div>
+          <div class="label">Invoice</div>
+          <div class="kv">
+            No: <strong class="mono">${escapeHtml(inv.number)}</strong><br>
+            Date: ${new Date(inv.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', timeZone: 'Asia/Kolkata' })}<br>
+            Order: <span class="mono">${escapeHtml(orderId)}</span><br>
+            ${paymentId ? 'Payment: <span class="mono">' + escapeHtml(paymentId) + '</span>' : ''}
+          </div>
+        </div>
+        <div>
+          <div class="label">Billed &amp; shipped to</div>
+          <div class="kv">
+            ${escapeHtml(b.name)}<br>
+            ${escapeHtml(b.address1)}${b.address2 ? ', ' + escapeHtml(b.address2) : ''}<br>
+            ${escapeHtml(b.city)}, ${escapeHtml(b.state)} ${escapeHtml(b.pincode)}<br>
+            ${escapeHtml(b.phone)}
+          </div>
+        </div>
+        <div>
+          <div class="label">Place of supply</div>
+          <div class="kv">
+            ${escapeHtml(inv.placeOfSupply.state)}${inv.placeOfSupply.code ? ' (' + escapeHtml(inv.placeOfSupply.code) + ')' : ''}<br>
+            Reverse charge: ${inv.reverseCharge ? 'Yes' : 'No'}
+          </div>
+        </div>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>#</th><th>Item</th><th>HSN</th><th>Qty</th><th>Taxable value</th>${taxCols.head}<th>Amount</th></tr></thead>
+          <tbody>${rows}</tbody>
+          <tfoot><tr><td></td><td>Total</td><td></td><td>${inv.lines.reduce((a, l) => a + l.qty, 0)}</td><td class="mono">${inr(t.taxable)}</td>${taxCols.foot}<td class="mono">${inr(t.total)}</td></tr></tfoot>
+        </table>
+      </div>
+
+      <div class="summary">
+        <div class="words">
+          <div class="label">Amount in words</div>
+          ${amountInWords(t.total)}
+        </div>
+        <div class="totals">
+          <div><span>Taxable value</span><span class="mono">${inr(t.taxable)}</span></div>
+          ${taxLines}
+          <div class="grand"><span>Total (incl. GST)</span><span class="mono">${inr(t.total)}</span></div>
+        </div>
+      </div>
+
+      <div class="foot">
+        <div>Prices are inclusive of GST. Paid online via Razorpay.<br>This is a computer-generated invoice and does not require a physical signature.</div>
+        <div class="sign">For ${escapeHtml(sup.tradeName)}<br><br>Authorised Signatory</div>
+      </div>
+    </div>
+  `;
+  document.getElementById('toolbar').hidden = false;
+}
+
+init();
+</script>
+</body>
+</html>

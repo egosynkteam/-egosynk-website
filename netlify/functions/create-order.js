@@ -2,6 +2,7 @@ const Razorpay = require('razorpay');
 const { getStore } = require('../lib/blob-store');
 const { getSessionUser } = require('../lib/session');
 const { logEvent } = require('../lib/audit');
+const { stateCodeFor, taxInfoFor } = require('../lib/gst');
 
 const REQUIRED_SHIPPING_FIELDS = ['name', 'phone', 'address1', 'city', 'state', 'pincode'];
 
@@ -33,6 +34,11 @@ exports.handler = async (event) => {
     if (!/^[6-9]\d{9}$/.test(shipping.phone)) {
       return { statusCode: 400, body: JSON.stringify({ error: 'Enter a valid 10-digit mobile number' }) };
     }
+    // Place of supply decides CGST+SGST vs IGST on the tax invoice, so it must be a real state.
+    const stateCode = stateCodeFor(shipping.state);
+    if (!stateCode) {
+      return { statusCode: 400, body: JSON.stringify({ error: 'Select a valid state' }) };
+    }
 
     // Prices AND availability are read live from the `catalog` store — the same store the
     // admin portal writes to — so a price change or "mark sold out" in the admin portal is
@@ -55,6 +61,8 @@ exports.handler = async (event) => {
         size: item.size ? String(item.size).slice(0, 20) : null,
         qty: item.qty,
         price: product.price,
+        cat: product.cat,
+        ...taxInfoFor(product, product.price),
       });
     }
 
@@ -88,6 +96,7 @@ exports.handler = async (event) => {
         address2: shipping.address2 ? String(shipping.address2).slice(0, 200) : null,
         city: String(shipping.city).slice(0, 100),
         state: String(shipping.state).slice(0, 100),
+        stateCode,
         pincode: shipping.pincode,
       },
       paymentId: null,

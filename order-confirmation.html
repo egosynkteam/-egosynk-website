@@ -47,6 +47,8 @@
     padding:14px;border-radius:2px;text-transform:uppercase;letter-spacing:0.05em;
     font-weight:700;font-size:13px;margin-top:28px;text-decoration:none;
   }
+  .btn-outline{background:transparent;border:1px solid var(--line);}
+  .btn-outline + .btn{margin-top:10px;}
   .support-note{margin-top:16px;font-size:11px;color:var(--steel);text-align:center;font-family:'JetBrains Mono',monospace;}
   .loading, .error-state{color:var(--bone-dim);font-size:13px;}
   .error-state{color:var(--rust-bright);}
@@ -134,6 +136,7 @@ function render(order){
       ${escapeHtml(s.phone)}
     </div>
 
+    ${order.invoiceNumber ? `<a class="btn btn-outline" href="/invoice.html?id=${encodeURIComponent(order.orderId)}">Download GST Invoice · ${escapeHtml(order.invoiceNumber)}</a>` : ''}
     <a class="btn" href="/">Continue Shopping</a>
     <div class="support-note">Sold by EGOSYNK · GSTIN: 27AKHPY6964E1ZI<br>Questions? support@egosynk.com</div>
   `;
