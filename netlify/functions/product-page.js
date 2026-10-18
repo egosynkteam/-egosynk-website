@@ -28,7 +28,9 @@ const attr = (s) => String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/"
 const safeJson = (v) => JSON.stringify(v).replace(/</g, '\\u003c');
 
 exports.handler = async (event) => {
-  const slug = (event.queryStringParameters && event.queryStringParameters.slug) || '';
+  // /p/<slug> arrives via a path rewrite; ?slug= kept for direct calls.
+  const slug = (event.queryStringParameters && event.queryStringParameters.slug) ||
+    decodeURIComponent(String(event.path || '').split('/').filter(Boolean).pop() || '');
   const id = idFromSlug(slug);
   try {
     const [{ products, categories }, settings, sizeGuides, template] = await Promise.all([

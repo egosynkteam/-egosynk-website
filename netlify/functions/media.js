@@ -4,13 +4,18 @@ const { getSettings } = require('../lib/settings');
 // Public image server. /media/<key> is rewritten here (netlify.toml). Keys are random and
 // never reused, so responses can be cached for a year. /og-image serves whichever image
 // the admin picked as the social-share preview (crawlers need a fixed URL in the HTML).
+const MEDIA_KEY = /^[a-f0-9]{16}\.(webp|jpg|png)$/;
+
 exports.handler = async (event) => {
   try {
+    // /media/<key> and /og-image arrive via path rewrites (Netlify doesn't pass query
+    // params added in a rewrite's `to`); ?key= / ?og=1 still work for direct calls.
     const q = event.queryStringParameters || {};
-    let key = q.key;
-    const isOg = !key && q.og === '1';
+    const last = decodeURIComponent(String(event.path || '').split('/').filter(Boolean).pop() || '');
+    let key = q.key || (MEDIA_KEY.test(last) ? last : null);
+    const isOg = !key && (q.og === '1' || last === 'og-image');
     if (isOg) key = (await getSettings()).ogImageKey;
-    if (!key || !/^[a-f0-9]{16}\.(webp|jpg|png)$/.test(key)) return { statusCode: 404, body: 'Not found' };
+    if (!key || !MEDIA_KEY.test(key)) return { statusCode: 404, body: 'Not found' };
 
     const found = await getStore('media').getWithMetadata(key, { type: 'arrayBuffer' });
     if (!found || !found.data) return { statusCode: 404, body: 'Not found' };

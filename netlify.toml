@@ -9,10 +9,11 @@
   # explicitly rather than rely on the account default.
   NODE_VERSION = "20"
 
-# Product pages, server-rendered by netlify/functions/product-page.js.
+# Product pages, server-rendered by netlify/functions/product-page.js. Values travel in
+# the path, not a ?query on `to` — Netlify doesn't pass query params added in rewrites.
 [[redirects]]
   from = "/p/:slug"
-  to = "/.netlify/functions/product-page?slug=:slug"
+  to = "/.netlify/functions/product-page/:slug"
   status = 200
 # Sitemap built from the live catalog (netlify/functions/sitemap.js).
 [[redirects]]
@@ -24,11 +25,11 @@
 # Admin-uploaded images, served by netlify/functions/media.js.
 [[redirects]]
   from = "/media/:key"
-  to = "/.netlify/functions/media?key=:key"
+  to = "/.netlify/functions/media/:key"
   status = 200
 [[redirects]]
   from = "/og-image"
-  to = "/.netlify/functions/media?og=1"
+  to = "/.netlify/functions/media/og-image"
   status = 200
 
 # Baseline security headers for every page. No Content-Security-Policy yet: the pages use
