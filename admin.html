@@ -63,6 +63,16 @@
   .checkbox-field input{width:auto;}
   .modal-actions{display:flex;gap:8px;margin-top:16px;}
   .modal-actions button{flex:1;}
+  .gst-box{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:12px 14px;margin-bottom:14px;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;}
+  .gst-box .form-error{flex-basis:100%;margin:0;}
+  .danger-zone{margin-top:28px;padding:12px 14px;border:1px dashed var(--rust-bright);border-radius:6px;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;font-size:13px;}
+  .fulfil{display:flex;flex-direction:column;gap:6px;min-width:170px;}
+  .fulfil input,.fulfil select{padding:6px 8px;font-size:12px;}
+  .fulfil .status{align-self:flex-start;}
+  .status.processing{background:rgba(168,166,160,0.15);color:var(--bone-dim);}
+  .status.shipped{background:rgba(80,140,230,0.15);color:#7FA8F0;}
+  .status.delivered{background:rgba(63,169,106,0.15);color:var(--ok);}
+  .status.cancelled{background:rgba(230,57,80,0.15);color:var(--rust-bright);}
   .form-error{color:var(--rust-bright);font-size:12px;margin-bottom:10px;display:none;}
 </style>
 </head>
@@ -103,9 +113,34 @@
   <div class="panel" id="panel-orders">
     <div class="toolbar">
       <h2 style="margin:0;">Orders</h2>
-      <button class="secondary" onclick="loadOrders()">Refresh</button>
+      <div class="row-actions">
+        <select id="orderFilter" onchange="renderOrders()">
+          <option value="paid">Paid</option>
+          <option value="pending">Pending (unpaid)</option>
+          <option value="all">All</option>
+        </select>
+        <button class="secondary" onclick="loadOrders()">Refresh</button>
+      </div>
+    </div>
+    <div class="gst-box">
+      <div><strong>GST returns (GSTR-1)</strong> <span class="muted">— CSVs in the GST offline tool's layout, for you or your CA</span></div>
+      <div class="row-actions">
+        <input type="month" id="gstMonth">
+        <select id="gstType">
+          <option value="b2cs">B2CS summary (Table 7)</option>
+          <option value="hsn">HSN summary (Table 12)</option>
+          <option value="docs">Documents issued (Table 13)</option>
+          <option value="register">Invoice register (all lines)</option>
+        </select>
+        <button onclick="downloadGstReport()">Download CSV</button>
+      </div>
+      <div class="form-error" id="gstError"></div>
     </div>
     <div id="ordersWrap"><div class="msg">Loading…</div></div>
+    <div class="danger-zone">
+      <span><strong>Before launch:</strong> <span class="muted">wipe every test order and restart invoice numbering at 00001. Only works while Razorpay is on test keys.</span></span>
+      <button class="danger" onclick="resetTestData()">Reset test data</button>
+    </div>
   </div>
 
   <!-- AUDIT LOG -->
@@ -364,27 +399,104 @@ async function loadOrders(){
   }
 }
 
+let ordersCache = [];
+
 function renderOrders(orders){
+  if(orders) ordersCache = orders;
   const wrap = document.getElementById('ordersWrap');
-  if(!orders.length){ wrap.innerHTML = '<div class="msg">No orders yet.</div>'; return; }
-  const rows = orders.map(o => `
+  const filter = document.getElementById('orderFilter').value;
+  const list = ordersCache.filter(o => filter === 'all' || o.status === filter);
+  if(!list.length){ wrap.innerHTML = `<div class="msg">No ${filter === 'all' ? '' : filter + ' '}orders.</div>`; return; }
+  const rows = list.map(o => {
+    const f = o.fulfilment || {};
+    const fstatus = f.status || 'processing';
+    const id = esc(o.orderId);
+    const action = o.status === 'paid'
+      ? `<div class="fulfil">
+          <span class="status ${fstatus}">${fstatus}</span>
+          <select id="fs-${id}">${['processing','shipped','delivered','cancelled'].map(st => `<option ${st === fstatus ? 'selected' : ''}>${st}</option>`).join('')}</select>
+          <input id="fc-${id}" placeholder="Courier" value="${esc(f.courier || '')}">
+          <input id="ft-${id}" placeholder="Tracking no." value="${esc(f.tracking || '')}">
+          <button class="secondary" onclick="saveFulfilment('${id}')">Save</button>
+          ${fstatus === 'cancelled' ? '<span class="muted">Refund + credit note needed</span>' : ''}
+        </div>`
+      : `<button class="danger" onclick="deleteOrder('${id}')">Delete</button>`;
+    return `
     <tr>
       <td>${new Date(o.createdAt).toLocaleString('en-IN')}</td>
       <td><span class="status ${o.status}">${o.status}</span></td>
-      <td>${esc(o.shipping.name)}<br><span class="muted">${esc(o.shipping.phone)}</span></td>
-      <td>${esc(o.shipping.city)}, ${esc(o.shipping.state)} ${esc(o.shipping.pincode)}</td>
+      <td>${esc(o.shipping.name)}<br><span class="muted">${esc(o.shipping.phone)}${o.shipping.email ? '<br>' + esc(o.shipping.email) : ''}</span></td>
+      <td>${esc(o.shipping.address1)}${o.shipping.address2 ? ', ' + esc(o.shipping.address2) : ''}<br>${esc(o.shipping.city)}, ${esc(o.shipping.state)} ${esc(o.shipping.pincode)}</td>
       <td class="muted">${o.items.map(i => `${esc(i.name)}${i.size ? ' ('+esc(i.size)+')' : ''} x${i.qty}`).join('<br>')}</td>
       <td>₹${(o.amount/100).toLocaleString('en-IN')}</td>
-      <td class="muted">${esc(o.orderId)}${o.invoice ? `<br><a href="/invoice.html?id=${encodeURIComponent(o.orderId)}" target="_blank" rel="noopener">${esc(o.invoice.number)}</a>` : ''}</td>
-    </tr>
-  `).join('');
+      <td class="muted">${id}${o.invoice ? `<br><a href="/invoice.html?id=${encodeURIComponent(o.orderId)}" target="_blank" rel="noopener">${esc(o.invoice.number)}</a>` : ''}</td>
+      <td>${action}</td>
+    </tr>`;
+  }).join('');
   wrap.innerHTML = `
     <table>
-      <thead><tr><th>Date</th><th>Status</th><th>Customer</th><th>Location</th><th>Items</th><th>Amount</th><th>Order / Invoice</th></tr></thead>
+      <thead><tr><th>Date</th><th>Payment</th><th>Customer</th><th>Ship to</th><th>Items</th><th>Amount</th><th>Order / Invoice</th><th>Fulfilment</th></tr></thead>
       <tbody>${rows}</tbody>
     </table>
   `;
 }
+
+async function orderAction(payload){
+  const res = await adminFetch('/.netlify/functions/admin-orders', {
+    method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(payload)
+  });
+  if(res.status === 401){ handleUnauthorized(); return null; }
+  const data = await res.json().catch(() => ({}));
+  if(!res.ok){ alert(data.error || 'Action failed'); return null; }
+  return data;
+}
+
+async function saveFulfilment(orderId){
+  const status = document.getElementById('fs-' + orderId).value;
+  if(status === 'cancelled' && !confirm('Mark this paid order cancelled? You will still need to refund it in Razorpay and issue a credit note.')) return;
+  const ok = await orderAction({
+    action: 'fulfilment', orderId, status,
+    courier: document.getElementById('fc-' + orderId).value.trim(),
+    tracking: document.getElementById('ft-' + orderId).value.trim(),
+  });
+  if(ok) loadOrders();
+}
+
+async function deleteOrder(orderId){
+  if(!confirm('Delete this unpaid order? This cannot be undone.')) return;
+  if(await orderAction({ action: 'delete', orderId })) loadOrders();
+}
+
+async function resetTestData(){
+  const typed = prompt('This deletes EVERY order and restarts invoice numbering. Type RESET to confirm.');
+  if(typed !== 'RESET') return;
+  const data = await orderAction({ action: 'reset-test', confirm: 'RESET' });
+  if(data){ alert(`Done: removed ${data.reset.orders} orders.`); loadOrders(); }
+}
+
+async function downloadGstReport(){
+  const month = document.getElementById('gstMonth').value;
+  const type = document.getElementById('gstType').value;
+  const errEl = document.getElementById('gstError');
+  errEl.style.display = 'none';
+  if(!month){ errEl.textContent = 'Pick a month.'; errEl.style.display = 'block'; return; }
+  // Admin endpoints authenticate by header, so the file is fetched and saved via a blob
+  // rather than a plain link.
+  const res = await adminFetch(`/.netlify/functions/admin-gst-report?month=${month}&type=${type}`);
+  if(res.status === 401){ handleUnauthorized(); return; }
+  if(!res.ok){
+    const data = await res.json().catch(() => ({}));
+    errEl.textContent = data.error || 'Could not build the report.'; errEl.style.display = 'block'; return;
+  }
+  const url = URL.createObjectURL(await res.blob());
+  const a = Object.assign(document.createElement('a'), { href: url, download: `egosynk-gstr1-${type}-${month}.csv` });
+  document.body.appendChild(a); a.click(); a.remove();
+  URL.revokeObjectURL(url);
+}
+
+// Default the GST month to the current month (returns are filed for the month just ended,
+// but early on the current month is what has data).
+document.getElementById('gstMonth').value = new Date().toISOString().slice(0, 7);
 
 /* ---------- AUDIT LOG ---------- */
 async function loadAudit(){

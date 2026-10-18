@@ -22,6 +22,9 @@ exports.handler = async (event) => {
           amount: order.amount,
           paidAt: order.paidAt,
           invoiceNumber: order.invoice ? order.invoice.number : null,
+          fulfilment: order.fulfilment
+            ? { status: order.fulfilment.status, courier: order.fulfilment.courier, tracking: order.fulfilment.tracking }
+            : { status: 'processing' },
         });
       }
     }
