@@ -92,6 +92,7 @@ async function init(){
         return;
       }
       sessionStorage.removeItem('egosynk_cart');
+      try{ localStorage.removeItem('egosynk_cart'); } catch(e){}
     }
 
     const orderRes = await fetch(`/.netlify/functions/get-order?id=${encodeURIComponent(orderId)}`);

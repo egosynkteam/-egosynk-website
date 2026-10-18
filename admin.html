@@ -216,6 +216,9 @@
           <div class="single-img" id="s-hero-img"></div>
           <label class="upload-btn"><input type="file" accept="image/*" onchange="setSettingImage(this, 'hero')">Upload image</label>
         </div>
+        <div class="field"><label for="s-video">Background video URL (optional, .mp4/.webm, plays muted on loop)</label>
+          <input id="s-video" placeholder="https://…/hero.mp4"></div>
+        <p class="muted">Keep videos short and under ~5 MB. The image shows while it loads, and for visitors with reduced motion or data saver on.</p>
       </section>
 
       <section class="settings-card">
@@ -872,7 +875,7 @@ function fillSettingsForm(st){
   document.getElementById('s-ann-on').checked = !(st.announcement && st.announcement.enabled === false);
   set('s-ann', ((st.announcement && st.announcement.items) || []).join('\n'));
   const h = st.hero || {};
-  set('s-eyebrow', h.eyebrow); set('s-headline', h.headline); set('s-accent', h.accent); set('s-sub', h.sub);
+  set('s-eyebrow', h.eyebrow); set('s-headline', h.headline); set('s-video', h.videoUrl); set('s-accent', h.accent); set('s-sub', h.sub);
   const so = st.social || {};
   set('s-ig', so.instagram); set('s-wa', so.whatsapp); set('s-yt', so.youtube); set('s-fb', so.facebook);
   settingsImages = { hero: h.imageKey || null, og: st.ogImageKey || null };
@@ -910,7 +913,7 @@ async function saveSettings(){
     shippingFee: Number(val('s-fee')),
     freeShippingThreshold: Number(val('s-free')),
     announcement: { enabled: document.getElementById('s-ann-on').checked, items: val('s-ann').split('\n').map(s => s.trim()).filter(Boolean) },
-    hero: { eyebrow: val('s-eyebrow'), headline: val('s-headline'), accent: val('s-accent'), sub: val('s-sub'), imageKey: settingsImages.hero },
+    hero: { eyebrow: val('s-eyebrow'), headline: val('s-headline'), accent: val('s-accent'), sub: val('s-sub'), imageKey: settingsImages.hero, videoUrl: val('s-video').trim() },
     social: { instagram: val('s-ig'), whatsapp: val('s-wa'), youtube: val('s-yt'), facebook: val('s-fb') },
     ogImageKey: settingsImages.og,
   };

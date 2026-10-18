@@ -9,6 +9,18 @@
   # explicitly rather than rely on the account default.
   NODE_VERSION = "20"
 
+# Product pages, server-rendered by netlify/functions/product-page.js.
+[[redirects]]
+  from = "/p/:slug"
+  to = "/.netlify/functions/product-page?slug=:slug"
+  status = 200
+# Sitemap built from the live catalog (netlify/functions/sitemap.js).
+[[redirects]]
+  from = "/sitemap.xml"
+  to = "/.netlify/functions/sitemap"
+  status = 200
+  force = true
+
 # Admin-uploaded images, served by netlify/functions/media.js.
 [[redirects]]
   from = "/media/:key"
@@ -43,3 +55,5 @@
 
 [functions]
   node_bundler = "esbuild"
+  # product-page.js reads this template at runtime.
+  included_files = ["product-template.html"]

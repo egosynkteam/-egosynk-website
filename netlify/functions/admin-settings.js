@@ -34,6 +34,7 @@ function cleanStore(d) {
         accent: str(h.accent, 30),
         sub: str(h.sub, 300),
         imageKey: mediaKey(h.imageKey),
+        videoUrl: /^https:\/\/[^\s"'<>]+\.(mp4|webm)(\?[^\s"'<>]*)?$/i.test(str(h.videoUrl, 500)) ? str(h.videoUrl, 500) : null,
       },
       social: {
         instagram: str(s.instagram, 200),

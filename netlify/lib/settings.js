@@ -16,6 +16,7 @@ const DEFAULTS = {
     accent: 'iron.',
     sub: 'Compression gear engineered for lifters who train past the point everyone else stops. Sleeves, compression wear, and accessories built for load, not looks.',
     imageKey: null,
+    videoUrl: null,
   },
   social: { instagram: '', whatsapp: '', youtube: '', facebook: '' },
   ogImageKey: null,

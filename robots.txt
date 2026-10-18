@@ -5,5 +5,6 @@ Disallow: /account.html
 Disallow: /invoice.html
 Disallow: /order-confirmation.html
 Disallow: /.netlify/
+Disallow: /product-template.html
 
 Sitemap: https://egosynk.com/sitemap.xml
