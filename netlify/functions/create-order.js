@@ -3,7 +3,7 @@ const { getStore } = require('../lib/blob-store');
 const { getSessionUser } = require('../lib/session');
 const { logEvent } = require('../lib/audit');
 const { stateCodeFor, taxInfoFor } = require('../lib/gst');
-const { getSettings, shippingFor } = require('../lib/settings');
+const { getSettings, getCategories, shippingFor } = require('../lib/settings');
 const { stockLeft } = require('../lib/orders');
 const { allowRequest } = require('../lib/rate-limit');
 
@@ -54,11 +54,15 @@ exports.handler = async (event) => {
     // admin portal writes to — so a price change or "mark sold out" in the admin portal is
     // enforced at checkout immediately, not just reflected in the storefront's display.
     const catalogStore = getStore('catalog');
+    const categories = await getCategories();
     let amount = 0;
     const items = [];
     for (const item of cart) {
       const product = await catalogStore.get(String(item.id), { type: 'json' });
-      if (!product || !Number.isInteger(item.qty) || item.qty <= 0) {
+      // Hidden products are off the storefront, so they can't be bought either.
+      const cat = categories.find((c) => c.id === (product && product.cat));
+      if (!product || product.visible === false || (cat && cat.visible === false) ||
+          !Number.isInteger(item.qty) || item.qty <= 0) {
         return { statusCode: 400, body: JSON.stringify({ error: 'Invalid cart item' }) };
       }
       if (product.available === false) {
@@ -77,7 +81,7 @@ exports.handler = async (event) => {
         qty: item.qty,
         price: product.price,
         cat: product.cat,
-        ...taxInfoFor(product, product.price),
+        ...taxInfoFor(product, product.price, categories),
       });
     }
 

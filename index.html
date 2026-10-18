@@ -12,7 +12,8 @@
 <meta property="og:url" content="https://egosynk.com/">
 <meta property="og:title" content="EGOSYNK — Compression Engineered for the Grind">
 <meta property="og:description" content="Compression gear, gym sleeves, training shorts, lifting accessories and fragrance built for lifters. Made in India. Free shipping over ₹999.">
-<meta name="twitter:card" content="summary">
+<meta property="og:image" content="https://egosynk.com/og-image">
+<meta name="twitter:card" content="summary_large_image">
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"Organization","name":"EGOSYNK","url":"https://egosynk.com/","email":"support@egosynk.com","address":{"@type":"PostalAddress","addressLocality":"Mumbai","addressRegion":"Maharashtra","postalCode":"400028","addressCountry":"IN"}}</script>
 <title>EGOSYNK — Compression Engineered for the Grind</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -196,6 +197,32 @@
     display:flex;align-items:center;justify-content:center;
     position:relative;
   }
+  [hidden]{display:none !important;}
+  .card-img{overflow:hidden;}
+  .card-img img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transition:opacity .35s ease, transform .5s ease;}
+  .card-img img.alt{opacity:0;}
+  @media(hover:hover){
+    .card:hover .card-img img.alt{opacity:1;}
+    .card:hover .card-img img{transform:scale(1.03);}
+  }
+  .card-tag{z-index:1;}
+  .mrp{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--steel);text-decoration:line-through;margin-left:6px;font-weight:400;}
+  .off{font-size:11px;color:var(--ok, #3FA96A);margin-left:6px;font-weight:600;}
+  .card-body .colour{font-size:11px;color:var(--bone-dim);margin:-6px 0 10px;}
+  .hero.has-image{background-size:cover;background-position:center;}
+  .hero.has-image::after{content:'';position:absolute;inset:0;background:linear-gradient(90deg,rgba(13,14,16,.92) 0%,rgba(13,14,16,.6) 55%,rgba(13,14,16,.25) 100%);}
+  .hero > *{position:relative;z-index:1;}
+  .sheet-gallery{display:flex;gap:8px;overflow-x:auto;padding:4px 20px 0;scroll-snap-type:x mandatory;}
+  .sheet-gallery::-webkit-scrollbar{display:none;}
+  .sheet-gallery img{flex:0 0 46%;aspect-ratio:1;object-fit:cover;border-radius:4px;border:1px solid var(--line);scroll-snap-align:start;background:var(--surface);}
+  .sheet-desc{font-size:13px;color:var(--bone-dim);line-height:1.6;margin-bottom:12px;white-space:pre-line;}
+  .sheet-highlights{list-style:none;margin:0 0 18px;padding:0;}
+  .sheet-highlights li{font-size:12px;color:var(--bone);padding:4px 0 4px 16px;position:relative;}
+  .sheet-highlights li::before{content:'';position:absolute;left:0;top:11px;width:6px;height:6px;background:var(--rust);}
+  .drawer-item .thumb img{width:100%;height:100%;object-fit:cover;border-radius:inherit;}
+  .social-links{display:flex;gap:14px;margin-top:16px;}
+  .social-links a{color:var(--bone-dim);font-size:12px;font-family:'JetBrains Mono',monospace;text-decoration:none;letter-spacing:.05em;}
+  .social-links a:hover{color:var(--bone);}
   .card-img .placeholder-mark{
     font-family:'Archivo Black',sans-serif;font-size:28px;color:var(--line);
   }
@@ -412,27 +439,18 @@
   </div>
 </nav>
 
-<section class="hero">
-  <div class="hero-eyebrow mono">FORGED FOR THE GRIND · MUMBAI</div>
-  <h1>Sync your<br>ego to the<br><span class="accent">iron.</span></h1>
-  <p class="hero-sub">Compression gear engineered for lifters who train past the point everyone else stops. Sleeves, compression wear, and accessories built for load, not looks.</p>
+<section class="hero" id="hero">
+  <div class="hero-eyebrow mono" id="heroEyebrow">FORGED FOR THE GRIND · MUMBAI</div>
+  <h1 id="heroHeadline">Sync your<br>ego to the<br><span class="accent">iron.</span></h1>
+  <p class="hero-sub" id="heroSub">Compression gear engineered for lifters who train past the point everyone else stops. Sleeves, compression wear, and accessories built for load, not looks.</p>
   <div class="hero-actions">
     <button class="btn-primary" onclick="document.getElementById('shop').scrollIntoView({behavior:'smooth'})">Shop the drop</button>
     <button class="btn-secondary" onclick="document.getElementById('manifesto').scrollIntoView({behavior:'smooth'})">Our story</button>
   </div>
 </section>
 
-<div class="marquee">
-  <div class="marquee-track mono">
-    <span>COMPRESSION SLEEVES</span><span class="dot">●</span>
-    <span>PERFORMANCE COMPRESSION WEAR</span><span class="dot">●</span>
-    <span>TRAINING ACCESSORIES</span><span class="dot">●</span>
-    <span>FREE SHIPPING OVER ₹1999</span><span class="dot">●</span>
-    <span>COMPRESSION SLEEVES</span><span class="dot">●</span>
-    <span>PERFORMANCE COMPRESSION WEAR</span><span class="dot">●</span>
-    <span>TRAINING ACCESSORIES</span><span class="dot">●</span>
-    <span>FREE SHIPPING OVER ₹1999</span><span class="dot">●</span>
-  </div>
+<div class="marquee" id="marquee">
+  <div class="marquee-track mono" id="marqueeTrack"></div>
 </div>
 
 <section class="section" style="padding-left:0;padding-right:0;">
@@ -463,10 +481,11 @@
     <div>
       <div class="logo" style="margin-bottom:14px;"><span>EGO</span>SYNK</div>
       <p style="color:var(--bone-dim);font-size:13px;max-width:280px;line-height:1.6;">Compression apparel and training accessories built for lifters who don't train for likes.</p>
+      <div class="social-links" id="socialLinks"></div>
     </div>
     <div>
       <h5>Shop</h5>
-      <ul><li>Gym Sleeves</li><li>Innerwear</li><li>Gym Socks</li><li>Compression Wear</li><li>Accessories</li><li>Bold Fragrance</li><li>Bottoms</li></ul>
+      <ul id="footerShop"></ul>
     </div>
     <div>
       <h5>Support</h5>
@@ -520,7 +539,9 @@
     </div>
     <button class="close-btn" onclick="closeSheet()">×</button>
   </div>
+  <div class="sheet-gallery" id="sheetGallery"></div>
   <div class="sheet-body">
+    <div id="sheetDetails"></div>
     <div id="sheetSizeBlock">
       <div class="sheet-label">
         <span>Select size</span>
@@ -639,15 +660,65 @@
 
 <script>
 /* ---------- CATALOG DATA ---------- */
-const categories = [
-  {id:'sleeves',      num:'01', name:'Gym Sleeves',       desc:'Full & half arm compression'},
-  {id:'innerwear',    num:'02', name:'Innerwear',         desc:'Performance trunks built to move'},
-  {id:'socks',        num:'03', name:'Gym Socks',         desc:'Full length & ankle, grip-fit'},
-  {id:'compression',  num:'04', name:'Compression Wear',  desc:'Tees & leggings for load'},
-  {id:'accessories',  num:'05', name:'Accessories',       desc:'Grips, straps & belts'},
-  {id:'fragrance',    num:'06', name:'Bold Fragrance',    desc:'EGOSYNK BOLD, signature scent'},
-  {id:'bottoms',      num:'07', name:'Bottoms',           desc:'Gym shorts, built for reps'},
+// Categories come from admin (get-catalog). This list is only the fallback if that
+// request fails, so the page still renders.
+let categories = [
+  {id:'sleeves', name:'Gym Sleeves', desc:'Full & half arm compression'},
+  {id:'innerwear', name:'Innerwear', desc:'Performance trunks built to move'},
+  {id:'socks', name:'Gym Socks', desc:'Full length & ankle, grip-fit'},
+  {id:'compression', name:'Compression Wear', desc:'Tees & leggings for load'},
+  {id:'accessories', name:'Accessories', desc:'Grips, straps & belts'},
+  {id:'fragrance', name:'Bold Fragrance', desc:'EGOSYNK BOLD, signature scent'},
+  {id:'bottoms', name:'Bottoms', desc:'Gym shorts, built for reps'},
 ];
+
+function esc(str){
+  const d = document.createElement('div');
+  d.textContent = str == null ? '' : String(str);
+  return d.innerHTML;
+}
+const media = (key) => `/media/${encodeURIComponent(key)}`;
+const inr = (n) => `₹${Number(n).toLocaleString('en-IN')}`;
+function priceHtml(p){
+  const off = p.mrp && p.mrp > p.price ? Math.round((1 - p.price / p.mrp) * 100) : 0;
+  return `<span class="price">${inr(p.price)}</span>${off ? `<span class="mrp">${inr(p.mrp)}</span><span class="off">${off}% off</span>` : ''}`;
+}
+
+// Hero, banner, footer and social links, all editable in admin → Settings.
+function applySettings(st){
+  const h = st.hero || {};
+  if(h.eyebrow) document.getElementById('heroEyebrow').textContent = h.eyebrow;
+  if(h.headline || h.accent){
+    document.getElementById('heroHeadline').innerHTML =
+      esc(h.headline || '').replace(/\n/g, '<br>') + (h.accent ? `<br><span class="accent">${esc(h.accent)}</span>` : '');
+  }
+  if(h.sub) document.getElementById('heroSub').textContent = h.sub;
+  const hero = document.getElementById('hero');
+  hero.classList.toggle('has-image', !!h.imageKey);
+  hero.style.backgroundImage = h.imageKey ? `url('${media(h.imageKey)}')` : '';
+
+  const a = st.announcement || {};
+  const items = a.enabled === false ? [] : (a.items || []);
+  document.getElementById('marquee').hidden = !items.length;
+  // Two copies back to back so the CSS scroll loops seamlessly.
+  const once = items.map(t => `<span>${esc(t).toUpperCase()}</span><span class="dot">●</span>`).join('');
+  document.getElementById('marqueeTrack').innerHTML = once + once;
+
+  const so = st.social || {};
+  const links = [
+    so.instagram && ['Instagram', so.instagram],
+    so.whatsapp && ['WhatsApp', `https://wa.me/${so.whatsapp.length === 10 ? '91' + so.whatsapp : so.whatsapp}`],
+    so.youtube && ['YouTube', so.youtube],
+    so.facebook && ['Facebook', so.facebook],
+  ].filter(Boolean);
+  document.getElementById('socialLinks').innerHTML = links
+    .map(([label, url]) => `<a href="${esc(url)}" target="_blank" rel="noopener">${label}</a>`).join('');
+}
+
+function renderFooterShop(){
+  document.getElementById('footerShop').innerHTML = categories
+    .map(c => `<li><a href="#shop" onclick="filterCat('${esc(c.id)}');return false;">${esc(c.name)}</a></li>`).join('');
+}
 
 // Product catalog is fetched live from /.netlify/functions/get-catalog (backed by the
 // `catalog` Blobs store) instead of being hardcoded here — this is what keeps the storefront
@@ -661,11 +732,16 @@ async function loadCatalog(){
     const data = await res.json();
     products = data.products || [];
     if(data.settings) storeSettings = data.settings;
+    if(Array.isArray(data.categories) && data.categories.length) categories = data.categories;
+    applySettings(storeSettings);
     publishProductData(products);
   } catch(err){
     console.error('Could not load catalog', err);
     products = [];
   }
+  renderCatRail();
+  renderFilterRow();
+  renderFooterShop();
   renderProducts();
   updateCartUI();
 }
@@ -721,11 +797,11 @@ let sheetQty = 1;
 
 /* ---------- CATEGORY RAIL ---------- */
 function renderCatRail(){
-  document.getElementById('catRail').innerHTML = categories.map(c => `
-    <div class="cat-card" onclick="filterCat('${c.id}')">
-      <span class="cat-num mono">${c.num}</span>
-      <h3>${c.name}</h3>
-      <p>${c.desc}</p>
+  document.getElementById('catRail').innerHTML = categories.map((c, i) => `
+    <div class="cat-card" onclick="filterCat('${esc(c.id)}')">
+      <span class="cat-num mono">${String(i + 1).padStart(2, '0')}</span>
+      <h3>${esc(c.name)}</h3>
+      <p>${esc(c.desc)}</p>
     </div>
   `).join('');
 }
@@ -733,7 +809,7 @@ function renderCatRail(){
 function renderFilterRow(){
   const all = [{id:'all', name:'All'}, ...categories];
   document.getElementById('filterRow').innerHTML = all.map(c => `
-    <button class="filter-chip${c.id==='all' ? ' active' : ''}" data-cat="${c.id}" onclick="filterCat('${c.id}')">${c.name}</button>
+    <button class="filter-chip${c.id===currentFilter ? ' active' : ''}" data-cat="${esc(c.id)}" onclick="filterCat('${esc(c.id)}')">${esc(c.name)}</button>
   `).join('');
 }
 
@@ -744,14 +820,17 @@ function renderProducts(){
   grid.innerHTML = filtered.map(p => `
     <div class="card${p.available === false ? ' sold-out' : ''}" onclick="openSheet(${p.id})">
       <div class="card-img">
-        ${p.available === false ? `<span class="card-tag sold-out-tag">SOLD OUT</span>` : (p.tag ? `<span class="card-tag">${p.tag}</span>` : '')}
-        <span class="placeholder-mark">ES</span>
+        ${p.available === false ? `<span class="card-tag sold-out-tag">SOLD OUT</span>` : (p.tag ? `<span class="card-tag">${esc(p.tag)}</span>` : '')}
+        ${p.images && p.images.length
+          ? `<img src="${media(p.images[0])}" alt="${esc(p.name)}" loading="lazy" decoding="async">${p.images[1] ? `<img class="alt" src="${media(p.images[1])}" alt="" loading="lazy" decoding="async">` : ''}`
+          : '<span class="placeholder-mark">ES</span>'}
       </div>
       <div class="card-body">
-        <h4>${p.name}</h4>
-        <div class="cat">${categories.find(c=>c.id===p.cat).name}</div>
+        <h4>${esc(p.name)}</h4>
+        <div class="cat">${esc((categories.find(c=>c.id===p.cat) || {}).name || '')}</div>
+        ${p.colour ? `<div class="colour">${esc(p.colour)}</div>` : ''}
         <div class="price-row">
-          <span class="price">₹${p.price.toLocaleString('en-IN')}</span>
+          <span>${priceHtml(p)}</span>
           <button class="add-btn" ${p.available === false ? 'disabled' : ''} onclick="event.stopPropagation();openSheet(${p.id})">${p.available === false ? '×' : '+'}</button>
         </div>
       </div>
@@ -772,7 +851,16 @@ function openSheet(id){
   sheetSize = null;
   sheetQty = 1;
   document.getElementById('sheetName').textContent = activeProduct.name;
-  document.getElementById('sheetPrice').textContent = `₹${activeProduct.price.toLocaleString('en-IN')}`;
+  document.getElementById('sheetPrice').innerHTML = priceHtml(activeProduct);
+  const imgs = activeProduct.images || [];
+  document.getElementById('sheetGallery').innerHTML = imgs
+    .map((k, i) => `<img src="${media(k)}" alt="${i ? '' : esc(activeProduct.name)}" ${i ? 'loading="lazy"' : ''} decoding="async">`).join('');
+  document.getElementById('sheetGallery').hidden = !imgs.length;
+  const hl = activeProduct.highlights || [];
+  document.getElementById('sheetDetails').innerHTML =
+    (activeProduct.colour ? `<div class="sheet-label" style="margin-bottom:8px;"><span>Colour: ${esc(activeProduct.colour)}</span></div>` : '') +
+    (activeProduct.description ? `<p class="sheet-desc">${esc(activeProduct.description)}</p>` : '') +
+    (hl.length ? `<ul class="sheet-highlights">${hl.map(h => `<li>${esc(h)}</li>`).join('')}</ul>` : '');
   document.getElementById('sheetQty').textContent = '1';
 
   const sizeBlock = document.getElementById('sheetSizeBlock');
@@ -829,7 +917,7 @@ function confirmAddToCart(){
   const lineId = `${activeProduct.id}-${size}`;
   const existing = cart.find(c => c.lineId === lineId);
   if(existing) existing.qty += sheetQty;
-  else cart.push({lineId, id:activeProduct.id, name:activeProduct.name, cat:activeProduct.cat, price:activeProduct.price, size, qty:sheetQty});
+  else cart.push({lineId, id:activeProduct.id, name:activeProduct.name, cat:activeProduct.cat, price:activeProduct.price, size, qty:sheetQty, image:(activeProduct.images || [])[0] || null});
   saveCart();
   showToast(`${activeProduct.name} (${size}) added to bag`);
   closeSheet();
@@ -837,7 +925,8 @@ function confirmAddToCart(){
 
 /* ---------- SIZE GUIDE ---------- */
 function openSizeGuideFromSheet(){
-  if(activeProduct && activeProduct.guide) openSizeGuide(activeProduct.guide);
+  const guide = activeProduct && (activeProduct.guide || (categories.find(c => c.id === activeProduct.cat) || {}).guide);
+  if(guide && sizeGuides[guide]) openSizeGuide(guide);
   else showToast('No size chart needed for this item');
 }
 
@@ -885,10 +974,10 @@ function updateCartUI(){
   } else {
     drawerItems.innerHTML = cart.map(item => `
       <div class="drawer-item">
-        <div class="thumb">ES</div>
+        <div class="thumb">${item.image ? `<img src="${media(item.image)}" alt="">` : 'ES'}</div>
         <div class="drawer-item-info">
-          <h5>${item.name}</h5>
-          <div class="meta size-line">Size: ${item.size}</div>
+          <h5>${esc(item.name)}</h5>
+          <div class="meta size-line">Size: ${esc(item.size)}</div>
           <div class="qty-row">
             <button class="qty-btn" onclick="changeQty('${item.lineId}',-1)">−</button>
             <span class="mono" style="font-size:12px;">${item.qty}</span>
@@ -1045,6 +1134,8 @@ async function proceedToPayment(){
 /* ---------- INIT ---------- */
 renderCatRail();
 renderFilterRow();
+renderFooterShop();
+applySettings({ announcement: { items: ['Compression sleeves','Performance compression wear','Training accessories','Free shipping over ₹999'] } });
 loadCatalog(); // fetches live products, then calls renderProducts() itself
 updateCartUI();
 checkSession();

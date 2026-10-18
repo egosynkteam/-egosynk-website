@@ -1,8 +1,10 @@
 const { getStore } = require('../lib/blob-store');
 const { isAdminAuthorized } = require('../lib/admin-auth');
 const { logEvent } = require('../lib/audit');
+const { getCategories, SIZE_GUIDES } = require('../lib/settings');
 
-const VALID_CATS = ['sleeves', 'innerwear', 'socks', 'compression', 'accessories', 'fragrance', 'bottoms'];
+const MEDIA_KEY = /^[a-f0-9]{16}\.(webp|jpg|png)$/;
+const str = (v, max) => String(v == null ? '' : v).trim().slice(0, max);
 
 // { S: 10, M: 0 } — only sizes the product actually has, whole numbers ≥ 0. Returns null
 // (untracked) when nothing was entered.
@@ -16,16 +18,21 @@ function normaliseStock(raw, sizes) {
   return Object.keys(out).length ? out : null;
 }
 
-function validateProduct(p) {
+function validateProduct(p, categoryIds) {
   if (!p.name || !String(p.name).trim()) return 'Name is required';
-  if (!VALID_CATS.includes(p.cat)) return `Category must be one of: ${VALID_CATS.join(', ')}`;
+  if (!categoryIds.includes(p.cat)) return `Category must be one of: ${categoryIds.join(', ')}`;
   if (!Number.isFinite(p.price) || p.price <= 0) return 'Price must be a positive number';
+  if (p.mrp != null && p.mrp !== '' && (!Number.isFinite(Number(p.mrp)) || Number(p.mrp) < p.price)) {
+    return 'MRP must be at least the selling price (or left blank)';
+  }
   if (!Array.isArray(p.sizes) || p.sizes.length === 0) return 'At least one size/variant is required';
+  if (p.hsn && !/^\d{4,8}$/.test(String(p.hsn))) return 'HSN override must be 4–8 digits';
+  if (p.gstRate != null && p.gstRate !== '' && ![0, 5, 18, 40].includes(Number(p.gstRate))) return 'GST override must be 0, 5, 18 or 40';
   return null;
 }
 
 // Full CRUD for the product catalog, gated by the same admin secret as orders/audit-log.
-// GET    -> list every product (including unavailable ones, for the admin table)
+// GET    -> list every product (including hidden/unavailable ones, for the admin table)
 // POST   -> create a new product, or update an existing one if `id` is supplied
 // DELETE -> remove a product by id
 exports.handler = async (event) => {
@@ -38,18 +45,15 @@ exports.handler = async (event) => {
   try {
     if (event.httpMethod === 'GET') {
       const { blobs } = await store.list();
-      const products = [];
-      for (const b of blobs) {
-        const p = await store.get(b.key, { type: 'json' });
-        if (p) products.push(p);
-      }
-      products.sort((a, b) => a.id - b.id);
+      const products = (await Promise.all(blobs.map((b) => store.get(b.key, { type: 'json' })))).filter(Boolean);
+      products.sort((a, b) => (a.sortOrder ?? a.id) - (b.sortOrder ?? b.id) || a.id - b.id);
       return { statusCode: 200, body: JSON.stringify({ products }) };
     }
 
     if (event.httpMethod === 'POST') {
       const body = JSON.parse(event.body || '{}');
-      const err = validateProduct(body);
+      const categoryIds = (await getCategories()).map((c) => c.id);
+      const err = validateProduct(body, categoryIds);
       if (err) return { statusCode: 400, body: JSON.stringify({ error: err }) };
 
       let id = body.id;
@@ -61,28 +65,40 @@ exports.handler = async (event) => {
         for (const b of blobs) maxId = Math.max(maxId, Number(b.key) || 0);
         id = maxId + 1;
         isNew = true;
-      } else {
-        const existing = await store.get(String(id), { type: 'json' });
-        isNew = !existing;
       }
 
-      // Keep fields this form doesn't manage (future images, descriptions…) instead of
-      // silently wiping them on every save.
+      // Keep fields this form doesn't manage instead of silently wiping them on every save.
       const existing = isNew ? {} : ((await store.get(String(id), { type: 'json' })) || {});
-      const sizes = body.sizes.map((s) => String(s).slice(0, 20)).slice(0, 12);
+      isNew = isNew || !existing.id;
+      const sizes = body.sizes.map((s) => str(s, 20)).filter(Boolean).slice(0, 12);
+      // A field missing from the request keeps its saved value rather than being cleared.
+      for (const k of ['mrp', 'tag', 'colour', 'description', 'highlights', 'images', 'guide', 'visible',
+        'sortOrder', 'hsn', 'gstRate', 'stockBySize']) {
+        if (!(k in body) && k in existing) body[k] = existing[k];
+      }
       const product = {
         ...existing,
         id,
-        name: String(body.name).slice(0, 150),
+        name: str(body.name, 150),
         cat: body.cat,
         price: Math.round(body.price),
-        tag: body.tag ? String(body.tag).slice(0, 30) : null,
+        mrp: body.mrp != null && body.mrp !== '' ? Math.round(Number(body.mrp)) : null,
+        tag: body.tag ? str(body.tag, 30) : null,
+        colour: body.colour ? str(body.colour, 40) : null,
+        description: str(body.description, 2000) || null,
+        highlights: (Array.isArray(body.highlights) ? body.highlights : []).map((h) => str(h, 120)).filter(Boolean).slice(0, 8),
+        images: (Array.isArray(body.images) ? body.images : []).filter((k) => MEDIA_KEY.test(k)).slice(0, 8),
         sizes,
-        guide: body.guide ? String(body.guide).slice(0, 30) : null,
+        guide: SIZE_GUIDES.includes(body.guide) ? body.guide : null,
         available: body.available !== false,
+        visible: body.visible !== false,
+        sortOrder: Number.isFinite(Number(body.sortOrder)) && body.sortOrder !== '' && body.sortOrder != null ? Number(body.sortOrder) : null,
+        hsn: body.hsn ? str(body.hsn, 8) : null,
+        gstRate: body.gstRate != null && body.gstRate !== '' ? Number(body.gstRate) : null,
         stockBySize: normaliseStock(body.stockBySize, sizes),
         updatedAt: new Date().toISOString(),
       };
+      delete product.stock; // replaced by stockBySize
       await store.setJSON(String(id), product);
 
       await logEvent(isNew ? 'product_created' : 'product_updated', 'admin', { id, name: product.name }, event);

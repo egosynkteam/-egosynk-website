@@ -53,8 +53,13 @@ function stateCodeFor(state) {
 
 // Snapshot of the tax treatment for one product, taken when the order is created so a
 // later catalog edit can't change what an already-placed order is taxed at.
-function taxInfoFor(product, unitPrice) {
-  const def = CATEGORY_TAX[product.cat] || {};
+// `categories` (from admin settings) supplies each category's default HSN/tax; the
+// built-in table above is the fallback for categories saved before that existed.
+function taxInfoFor(product, unitPrice, categories) {
+  const cfg = (categories || []).find((c) => c.id === product.cat);
+  const def = cfg && cfg.hsn
+    ? { hsn: cfg.hsn, ...(cfg.tax === 'textile' ? { textile: true } : { rate: Number(cfg.tax) }) }
+    : CATEGORY_TAX[product.cat] || {};
   const hsn = product.hsn || def.hsn || null;
   let rate = Number.isFinite(product.gstRate) ? product.gstRate : def.rate;
   if (!Number.isFinite(rate) && def.textile) {

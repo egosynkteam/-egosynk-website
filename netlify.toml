@@ -9,6 +9,16 @@
   # explicitly rather than rely on the account default.
   NODE_VERSION = "20"
 
+# Admin-uploaded images, served by netlify/functions/media.js.
+[[redirects]]
+  from = "/media/:key"
+  to = "/.netlify/functions/media?key=:key"
+  status = 200
+[[redirects]]
+  from = "/og-image"
+  to = "/.netlify/functions/media?og=1"
+  status = 200
+
 # Baseline security headers for every page. No Content-Security-Policy yet: the pages use
 # inline scripts and Razorpay's checkout loads from several of its own domains, so a
 # strict CSP needs the inline scripts moved out first.

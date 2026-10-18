@@ -74,6 +74,30 @@
   .status.shipped{background:rgba(80,140,230,0.15);color:#7FA8F0;}
   .status.delivered{background:rgba(63,169,106,0.15);color:var(--ok);}
   .status.cancelled{background:rgba(230,57,80,0.15);color:var(--rust-bright);}
+  textarea{background:var(--surface-2);border:1px solid var(--line);color:var(--bone);padding:9px 10px;border-radius:4px;font-size:13px;font-family:inherit;width:100%;resize:vertical;}
+  textarea:focus{outline:none;border-color:var(--rust);}
+  .modal.modal-wide{max-width:620px;}
+  .img-manager{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:8px;}
+  .img-tile{position:relative;width:110px;}
+  .img-tile img{width:110px;height:110px;object-fit:cover;border-radius:4px;border:1px solid var(--line);display:block;}
+  .img-main{position:absolute;top:4px;left:4px;background:var(--rust);font-size:9px;padding:2px 5px;border-radius:2px;font-weight:700;}
+  .img-actions{display:flex;gap:4px;margin-top:4px;}
+  .img-actions button{flex:1;padding:3px 0;font-size:12px;}
+  .upload-btn{display:inline-block;background:var(--surface-2);border:1px dashed var(--steel);padding:8px 14px;border-radius:4px;cursor:pointer;font-size:12px;font-weight:600;}
+  .upload-btn input{display:none;}
+  .single-img{display:flex;align-items:center;gap:10px;margin-bottom:8px;}
+  .single-img img{max-width:220px;max-height:120px;border-radius:4px;border:1px solid var(--line);}
+  .advanced{margin:6px 0 14px;font-size:12px;color:var(--steel);}
+  .advanced summary{cursor:pointer;}
+  td .thumb{width:48px;height:48px;object-fit:cover;border-radius:3px;border:1px solid var(--line);display:flex;align-items:center;justify-content:center;color:var(--steel);}
+  tr.row-hidden td{opacity:.55;}
+  .cat-table input,.cat-table select{padding:6px 8px;font-size:12px;}
+  .settings-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:16px;}
+  .settings-card{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:16px;}
+  .settings-card h4{margin-bottom:12px;font-size:14px;}
+  .flash{position:fixed;bottom:24px;left:50%;transform:translate(-50%,20px);background:var(--ok);color:#06140c;font-weight:700;font-size:13px;padding:10px 18px;border-radius:4px;opacity:0;pointer-events:none;transition:all .25s;z-index:100;}
+  .flash.show{opacity:1;transform:translate(-50%,0);}
+  #panel-categories{overflow-x:auto;}
   .form-error{color:var(--rust-bright);font-size:12px;margin-bottom:10px;display:none;}
 </style>
 </head>
@@ -86,6 +110,7 @@
   <div class="msg" id="gateMsg"></div>
 </div>
 
+<div class="flash" id="flash"></div>
 <div id="app" class="hidden">
   <div class="top">
     <div class="logo"><span>EGO</span>SYNK ADMIN PORTAL</div>
@@ -94,7 +119,9 @@
 
   <div class="tabs">
     <button class="tab-btn active" data-tab="catalog" onclick="switchTab('catalog')">Catalog</button>
+    <button class="tab-btn" data-tab="categories" onclick="switchTab('categories')">Categories</button>
     <button class="tab-btn" data-tab="orders" onclick="switchTab('orders')">Orders</button>
+    <button class="tab-btn" data-tab="settings" onclick="switchTab('settings')">Settings</button>
     <button class="tab-btn" data-tab="audit" onclick="switchTab('audit')">Audit Log</button>
   </div>
 
@@ -108,6 +135,73 @@
       </div>
     </div>
     <div id="catalogWrap"><div class="msg">Loading…</div></div>
+  </div>
+
+  <!-- CATEGORIES -->
+  <div class="panel" id="panel-categories">
+    <div class="toolbar">
+      <h2 style="margin:0;">Categories</h2>
+      <div class="row-actions">
+        <button class="secondary" onclick="addCategoryRow()">+ Add Category</button>
+        <button onclick="saveCategories()">Save Categories</button>
+      </div>
+    </div>
+    <p class="muted" style="margin-bottom:10px;">Order here = order on the store. Hiding a category hides its products too. GST default applies to every product in the category unless the product overrides it. The ID can't change after products use it.</p>
+    <div class="form-error" id="catError"></div>
+    <div id="categoriesWrap"><div class="msg">Loading…</div></div>
+  </div>
+
+  <!-- SETTINGS -->
+  <div class="panel" id="panel-settings">
+    <div class="toolbar">
+      <h2 style="margin:0;">Store Settings</h2>
+      <button onclick="saveSettings()">Save Settings</button>
+    </div>
+    <div class="form-error" id="settingsError"></div>
+    <div class="settings-grid">
+      <section class="settings-card">
+        <h4>Shipping</h4>
+        <div class="field-row">
+          <div class="field"><label for="s-fee">Shipping fee (₹)</label><input id="s-fee" type="number" min="0"></div>
+          <div class="field"><label for="s-free">Free shipping from (₹)</label><input id="s-free" type="number" min="0"></div>
+        </div>
+        <p class="muted">Keep the Shipping Policy page in step if you change these.</p>
+      </section>
+
+      <section class="settings-card">
+        <h4>Scrolling banner</h4>
+        <div class="checkbox-field"><input type="checkbox" id="s-ann-on"><label for="s-ann-on" style="margin:0;">Show banner</label></div>
+        <div class="field"><label for="s-ann">Messages (one per line)</label><textarea id="s-ann" rows="4"></textarea></div>
+      </section>
+
+      <section class="settings-card">
+        <h4>Homepage hero</h4>
+        <div class="field"><label for="s-eyebrow">Small line above headline</label><input id="s-eyebrow"></div>
+        <div class="field"><label for="s-headline">Headline (new line = line break)</label><textarea id="s-headline" rows="2"></textarea></div>
+        <div class="field"><label for="s-accent">Red accent word(s), shown last</label><input id="s-accent"></div>
+        <div class="field"><label for="s-sub">Sub-text</label><textarea id="s-sub" rows="3"></textarea></div>
+        <div class="field">
+          <label>Background image (optional)</label>
+          <div class="single-img" id="s-hero-img"></div>
+          <label class="upload-btn"><input type="file" accept="image/*" onchange="setSettingImage(this, 'hero')">Upload image</label>
+        </div>
+      </section>
+
+      <section class="settings-card">
+        <h4>Social &amp; contact</h4>
+        <div class="field"><label for="s-ig">Instagram URL</label><input id="s-ig" placeholder="https://instagram.com/egosynk"></div>
+        <div class="field"><label for="s-wa">WhatsApp number</label><input id="s-wa" placeholder="10-digit mobile"></div>
+        <div class="field"><label for="s-yt">YouTube URL</label><input id="s-yt"></div>
+        <div class="field"><label for="s-fb">Facebook URL</label><input id="s-fb"></div>
+      </section>
+
+      <section class="settings-card">
+        <h4>Share image</h4>
+        <p class="muted">Shown when egosynk.com is shared on WhatsApp, Instagram, X… Best at 1200 × 630.</p>
+        <div class="single-img" id="s-og-img"></div>
+        <label class="upload-btn"><input type="file" accept="image/*" onchange="setSettingImage(this, 'og')">Upload image</label>
+      </section>
+    </div>
   </div>
 
   <!-- ORDERS -->
@@ -156,11 +250,22 @@
 
 <!-- PRODUCT FORM MODAL -->
 <div class="modal-overlay" id="productModalOverlay" onclick="closeProductForm(event)">
-  <div class="modal" onclick="event.stopPropagation()">
+  <div class="modal modal-wide" onclick="event.stopPropagation()">
     <h3 id="productFormTitle">Add Product</h3>
     <div class="form-error" id="productFormError"></div>
     <form id="productForm" onsubmit="submitProductForm(event)">
       <input type="hidden" id="p-id" value="">
+
+      <div class="field">
+        <label>Photos <span class="muted">— first photo is the main one; the second shows on hover</span></label>
+        <div class="img-manager" id="p-images"></div>
+        <label class="upload-btn">
+          <input type="file" accept="image/*" multiple onchange="addProductImages(this)">
+          + Add photos
+        </label>
+        <div class="muted" id="p-upload-status"></div>
+      </div>
+
       <div class="field">
         <label for="p-name">Product Name</label>
         <input id="p-name" required>
@@ -168,39 +273,55 @@
       <div class="field-row">
         <div class="field">
           <label for="p-cat">Category</label>
-          <select id="p-cat" required>
-            <option value="sleeves">Gym Sleeves</option>
-            <option value="innerwear">Innerwear</option>
-            <option value="socks">Gym Socks</option>
-            <option value="compression">Compression Wear</option>
-            <option value="accessories">Accessories</option>
-            <option value="fragrance">Bold Fragrance</option>
-            <option value="bottoms">Bottoms</option>
-          </select>
+          <select id="p-cat" required></select>
         </div>
         <div class="field">
-          <label for="p-price">Price (₹)</label>
-          <input id="p-price" type="number" min="1" required>
+          <label for="p-colour">Colour (optional)</label>
+          <input id="p-colour" placeholder="Black / Olive">
         </div>
       </div>
       <div class="field-row">
         <div class="field">
-          <label for="p-tag">Tag (optional)</label>
-          <input id="p-tag" placeholder="NEW / BESTSELLER">
+          <label for="p-price">Selling price (₹, incl. GST)</label>
+          <input id="p-price" type="number" min="1" required>
+        </div>
+        <div class="field">
+          <label for="p-mrp">MRP (₹, optional)</label>
+          <input id="p-mrp" type="number" min="1" placeholder="Shows as strike-through">
+        </div>
+      </div>
+      <div class="field">
+        <label for="p-desc">Description</label>
+        <textarea id="p-desc" rows="4" placeholder="Fabric, fit, what it's built for…"></textarea>
+      </div>
+      <div class="field">
+        <label for="p-highlights">Highlights (one per line)</label>
+        <textarea id="p-highlights" rows="3" placeholder="4-way stretch&#10;Sweat-wicking&#10;Flatlock seams"></textarea>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label for="p-sizes">Sizes / Variants (comma-separated)</label>
+          <input id="p-sizes" placeholder="S, M, L, XL" required>
         </div>
         <div class="field">
           <label for="p-stock">Stock per size (optional)</label>
           <input id="p-stock" type="text" placeholder="S:10, M:8, L:0 — blank = untracked">
         </div>
       </div>
-      <div class="field">
-        <label for="p-sizes">Sizes / Variants (comma-separated)</label>
-        <input id="p-sizes" placeholder="S, M, L, XL" required>
+      <div class="field-row">
+        <div class="field">
+          <label for="p-tag">Badge (optional)</label>
+          <input id="p-tag" placeholder="NEW / BESTSELLER">
+        </div>
+        <div class="field">
+          <label for="p-sort">Display order (optional)</label>
+          <input id="p-sort" type="number" placeholder="Lower shows first">
+        </div>
       </div>
       <div class="field">
-        <label for="p-guide">Size Guide (optional)</label>
+        <label for="p-guide">Size guide (blank = category default)</label>
         <select id="p-guide">
-          <option value="">None</option>
+          <option value="">Category default</option>
           <option value="apparel">Apparel</option>
           <option value="sleeves">Sleeves</option>
           <option value="underwear">Underwear</option>
@@ -208,9 +329,32 @@
           <option value="belt">Belt</option>
         </select>
       </div>
+      <details class="advanced">
+        <summary>GST override (advanced — leave blank to use the category default)</summary>
+        <div class="field-row" style="margin-top:10px;">
+          <div class="field">
+            <label for="p-hsn">HSN</label>
+            <input id="p-hsn" placeholder="e.g. 6109">
+          </div>
+          <div class="field">
+            <label for="p-gst">GST rate</label>
+            <select id="p-gst">
+              <option value="">Category default</option>
+              <option value="0">0%</option>
+              <option value="5">5%</option>
+              <option value="18">18%</option>
+              <option value="40">40%</option>
+            </select>
+          </div>
+        </div>
+      </details>
       <div class="checkbox-field">
         <input type="checkbox" id="p-available" checked>
-        <label for="p-available" style="margin:0;">Available for sale</label>
+        <label for="p-available" style="margin:0;">Available for sale (untick = shows "Sold out")</label>
+      </div>
+      <div class="checkbox-field">
+        <input type="checkbox" id="p-visible" checked>
+        <label for="p-visible" style="margin:0;">Visible on the store (untick = hidden completely)</label>
       </div>
       <div class="modal-actions">
         <button type="button" class="secondary" onclick="closeProductForm()">Cancel</button>
@@ -231,6 +375,7 @@ function unlock(){
   sessionStorage.setItem('egosynk_admin_key', key);
   document.getElementById('gate').classList.add('hidden');
   document.getElementById('app').classList.remove('hidden');
+  loadSettings();
   loadCatalog();
   loadOrders();
   loadAudit();
@@ -262,6 +407,8 @@ async function loadCatalog(){
     const data = await res.json();
     catalogCache = data.products || [];
     renderCatalog();
+    // Category rows show how many products use them, so refresh once products arrive.
+    if(categoriesCache.length) renderCategories();
   } catch(err){
     wrap.innerHTML = '<div class="msg">Could not load catalog.</div>';
   }
@@ -273,15 +420,20 @@ function renderCatalog(){
     wrap.innerHTML = `<div class="msg">No products yet. <button onclick="seedCatalog()">Seed from original 16 products</button></div>`;
     return;
   }
+  const catName = (id) => (categoriesCache.find(c => c.id === id) || {}).name || id;
   const rows = catalogCache.map(p => `
-    <tr>
-      <td>${p.id}</td>
-      <td>${esc(p.name)}${p.tag ? ' <span class="muted">('+esc(p.tag)+')</span>' : ''}</td>
-      <td>${esc(p.cat)}</td>
-      <td>₹${p.price.toLocaleString('en-IN')}</td>
+    <tr class="${p.visible === false ? 'row-hidden' : ''}">
+      <td>${p.images && p.images[0] ? `<img class="thumb" src="${mediaUrl(p.images[0])}" alt="">` : '<div class="thumb empty">—</div>'}</td>
+      <td>${esc(p.name)}${p.tag ? ' <span class="muted">('+esc(p.tag)+')</span>' : ''}${p.colour ? '<br><span class="muted">'+esc(p.colour)+'</span>' : ''}</td>
+      <td>${esc(catName(p.cat))}</td>
+      <td>₹${p.price.toLocaleString('en-IN')}${p.mrp ? `<br><span class="muted" style="text-decoration:line-through">₹${p.mrp.toLocaleString('en-IN')}</span>` : ''}</td>
       <td>${esc((p.sizes||[]).join(', '))}</td>
       <td>${p.stockBySize ? esc(formatStock(p.stockBySize)) : '<span class="muted">untracked</span>'}</td>
-      <td><span class="status ${p.available}">${p.available ? 'Available' : 'Sold Out'}</span></td>
+      <td>
+        <span class="status ${p.available}">${p.available ? 'Available' : 'Sold Out'}</span>
+        ${p.visible === false ? '<br><span class="status pending" style="margin-top:4px;display:inline-block">Hidden</span>' : ''}
+        ${!(p.images && p.images.length) ? '<br><span class="muted">no photo</span>' : ''}
+      </td>
       <td class="row-actions">
         <button class="secondary" onclick="toggleAvailability(${p.id})">${p.available ? 'Mark Sold Out' : 'Mark Available'}</button>
         <button class="secondary" onclick="editProduct(${p.id})">Edit</button>
@@ -291,7 +443,7 @@ function renderCatalog(){
   `).join('');
   wrap.innerHTML = `
     <table>
-      <thead><tr><th>ID</th><th>Name</th><th>Category</th><th>Price</th><th>Sizes</th><th>Stock</th><th>Status</th><th>Actions</th></tr></thead>
+      <thead><tr><th>Photo</th><th>Name</th><th>Category</th><th>Price</th><th>Sizes</th><th>Stock</th><th>Status</th><th>Actions</th></tr></thead>
       <tbody>${rows}</tbody>
     </table>
   `;
@@ -317,25 +469,112 @@ function formatStock(map){
   return map ? Object.entries(map).map(([s, q]) => `${s}:${q}`).join(', ') : '';
 }
 
+/* ---------- IMAGES ---------- */
+// Photos are shrunk in the browser (longest side 1600px, WebP) before upload, so phone
+// photos of several MB arrive as ~150–300 KB files and the store stays fast.
+const mediaUrl = (key) => `/media/${encodeURIComponent(key)}`;
+
+function resizeImage(file, maxSide){
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => {
+      const scale = Math.min(1, maxSide / Math.max(img.width, img.height));
+      const canvas = document.createElement('canvas');
+      canvas.width = Math.round(img.width * scale);
+      canvas.height = Math.round(img.height * scale);
+      canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+      URL.revokeObjectURL(img.src);
+      canvas.toBlob(b => b ? resolve(b) : reject(new Error('Could not convert image')), 'image/webp', 0.82);
+    };
+    img.onerror = () => reject(new Error(`${file.name} isn't a readable image`));
+    img.src = URL.createObjectURL(file);
+  });
+}
+
+async function uploadImage(file){
+  const blob = await resizeImage(file, 1600);
+  const data = await new Promise(r => { const fr = new FileReader(); fr.onload = () => r(String(fr.result).split(',')[1]); fr.readAsDataURL(blob); });
+  const res = await adminFetch('/.netlify/functions/admin-media', {
+    method: 'POST', headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({ data, contentType: blob.type || 'image/webp' })
+  });
+  if(res.status === 401){ handleUnauthorized(); throw new Error('Session expired'); }
+  const out = await res.json();
+  if(!res.ok) throw new Error(out.error || 'Upload failed');
+  return out.key;
+}
+
+/* ---------- PRODUCT FORM ---------- */
+let formImages = [];
+
+function renderFormImages(){
+  document.getElementById('p-images').innerHTML = formImages.length
+    ? formImages.map((k, i) => `
+      <div class="img-tile">
+        <img src="${mediaUrl(k)}" alt="">
+        ${i === 0 ? '<span class="img-main">MAIN</span>' : ''}
+        <div class="img-actions">
+          <button type="button" class="secondary" ${i === 0 ? 'disabled' : ''} onclick="moveImage(${i}, -1)" title="Move left">←</button>
+          <button type="button" class="secondary" ${i === formImages.length - 1 ? 'disabled' : ''} onclick="moveImage(${i}, 1)" title="Move right">→</button>
+          <button type="button" class="danger" onclick="removeImage(${i})" title="Remove">×</button>
+        </div>
+      </div>`).join('')
+    : '<div class="muted">No photos yet.</div>';
+}
+function moveImage(i, d){ const j = i + d; [formImages[i], formImages[j]] = [formImages[j], formImages[i]]; renderFormImages(); }
+function removeImage(i){ formImages.splice(i, 1); renderFormImages(); }
+
+async function addProductImages(input){
+  const files = [...input.files];
+  input.value = '';
+  const status = document.getElementById('p-upload-status');
+  const submit = document.getElementById('productFormSubmit');
+  submit.disabled = true;
+  try{
+    for(const [n, f] of files.entries()){
+      if(formImages.length >= 8){ status.textContent = 'Max 8 photos per product.'; break; }
+      status.textContent = `Uploading ${n + 1} of ${files.length}…`;
+      formImages.push(await uploadImage(f));
+      renderFormImages();
+    }
+    if(formImages.length < 8) status.textContent = '';
+  } catch(err){
+    status.textContent = err.message;
+  } finally {
+    submit.disabled = false;
+  }
+}
+
+function fillCategorySelect(selected){
+  document.getElementById('p-cat').innerHTML = categoriesCache
+    .map(c => `<option value="${esc(c.id)}" ${c.id === selected ? 'selected' : ''}>${esc(c.name)}${c.visible === false ? ' (hidden)' : ''}</option>`).join('');
+}
+
 function openProductForm(product){
   document.getElementById('productFormError').style.display = 'none';
+  document.getElementById('p-upload-status').textContent = '';
   document.getElementById('productForm').reset();
-  document.getElementById('p-available').checked = true;
-  if(product){
-    document.getElementById('productFormTitle').textContent = 'Edit Product';
-    document.getElementById('p-id').value = product.id;
-    document.getElementById('p-name').value = product.name;
-    document.getElementById('p-cat').value = product.cat;
-    document.getElementById('p-price').value = product.price;
-    document.getElementById('p-tag').value = product.tag || '';
-    document.getElementById('p-stock').value = formatStock(product.stockBySize);
-    document.getElementById('p-sizes').value = (product.sizes || []).join(', ');
-    document.getElementById('p-guide').value = product.guide || '';
-    document.getElementById('p-available').checked = product.available !== false;
-  } else {
-    document.getElementById('productFormTitle').textContent = 'Add Product';
-    document.getElementById('p-id').value = '';
-  }
+  const p = product || {};
+  fillCategorySelect(p.cat);
+  document.getElementById('productFormTitle').textContent = product ? 'Edit Product' : 'Add Product';
+  document.getElementById('p-id').value = p.id || '';
+  document.getElementById('p-name').value = p.name || '';
+  document.getElementById('p-colour').value = p.colour || '';
+  document.getElementById('p-price').value = p.price || '';
+  document.getElementById('p-mrp').value = p.mrp || '';
+  document.getElementById('p-desc').value = p.description || '';
+  document.getElementById('p-highlights').value = (p.highlights || []).join('\n');
+  document.getElementById('p-sizes').value = (p.sizes || []).join(', ');
+  document.getElementById('p-stock').value = formatStock(p.stockBySize);
+  document.getElementById('p-tag').value = p.tag || '';
+  document.getElementById('p-sort').value = p.sortOrder ?? '';
+  document.getElementById('p-guide').value = p.guide || '';
+  document.getElementById('p-hsn').value = p.hsn || '';
+  document.getElementById('p-gst').value = p.gstRate ?? '';
+  document.getElementById('p-available').checked = p.available !== false;
+  document.getElementById('p-visible').checked = p.visible !== false;
+  formImages = [...(p.images || [])];
+  renderFormImages();
   document.getElementById('productModalOverlay').classList.add('open');
 }
 
@@ -353,18 +592,27 @@ async function submitProductForm(e){
   e.preventDefault();
   const errorEl = document.getElementById('productFormError');
   errorEl.style.display = 'none';
-
-  const idVal = document.getElementById('p-id').value;
+  const val = (id) => document.getElementById(id).value;
+  const idVal = val('p-id');
   const payload = {
     id: idVal ? Number(idVal) : undefined,
-    name: document.getElementById('p-name').value.trim(),
-    cat: document.getElementById('p-cat').value,
-    price: Number(document.getElementById('p-price').value),
-    tag: document.getElementById('p-tag').value.trim() || null,
-    stockBySize: parseStock(document.getElementById('p-stock').value),
-    sizes: document.getElementById('p-sizes').value.split(',').map(s => s.trim()).filter(Boolean),
-    guide: document.getElementById('p-guide').value || null,
+    name: val('p-name').trim(),
+    cat: val('p-cat'),
+    colour: val('p-colour').trim() || null,
+    price: Number(val('p-price')),
+    mrp: val('p-mrp') === '' ? null : Number(val('p-mrp')),
+    description: val('p-desc').trim(),
+    highlights: val('p-highlights').split('\n').map(s => s.trim()).filter(Boolean),
+    sizes: val('p-sizes').split(',').map(s => s.trim()).filter(Boolean),
+    stockBySize: parseStock(val('p-stock')),
+    tag: val('p-tag').trim() || null,
+    sortOrder: val('p-sort') === '' ? null : Number(val('p-sort')),
+    guide: val('p-guide') || null,
+    hsn: val('p-hsn').trim() || null,
+    gstRate: val('p-gst') === '' ? null : Number(val('p-gst')),
+    images: formImages,
     available: document.getElementById('p-available').checked,
+    visible: document.getElementById('p-visible').checked,
   };
 
   const res = await adminFetch('/.netlify/functions/admin-catalog', {
@@ -380,6 +628,152 @@ async function submitProductForm(e){
   }
   closeProductForm();
   loadCatalog();
+}
+
+/* ---------- CATEGORIES ---------- */
+let categoriesCache = [];
+let sizeGuideKeys = ['apparel', 'sleeves', 'underwear', 'socks', 'belt'];
+
+async function loadSettings(){
+  try{
+    const res = await adminFetch('/.netlify/functions/admin-settings');
+    if(res.status === 401){ handleUnauthorized(); return; }
+    const data = await res.json();
+    categoriesCache = data.categories || [];
+    sizeGuideKeys = data.sizeGuides || sizeGuideKeys;
+    renderCategories();
+    fillSettingsForm(data.settings || {});
+    if(catalogCache.length) renderCatalog();
+  } catch(err){
+    document.getElementById('categoriesWrap').innerHTML = '<div class="msg">Could not load categories.</div>';
+  }
+}
+
+function renderCategories(){
+  const usedBy = (id) => catalogCache.filter(p => p.cat === id).length;
+  document.getElementById('categoriesWrap').innerHTML = `
+    <table class="cat-table">
+      <thead><tr><th>Order</th><th>ID</th><th>Name</th><th>Description</th><th>Size guide</th><th>HSN</th><th>GST default</th><th>Visible</th><th>Products</th><th></th></tr></thead>
+      <tbody>${categoriesCache.map((c, i) => `
+        <tr>
+          <td class="row-actions">
+            <button class="secondary" ${i === 0 ? 'disabled' : ''} onclick="moveCategory(${i}, -1)">↑</button>
+            <button class="secondary" ${i === categoriesCache.length - 1 ? 'disabled' : ''} onclick="moveCategory(${i}, 1)">↓</button>
+          </td>
+          <td><input data-i="${i}" data-k="id" value="${esc(c.id)}" ${usedBy(c.id) ? 'readonly title="In use by products"' : ''} oninput="catEdit(this)" style="width:110px"></td>
+          <td><input data-i="${i}" data-k="name" value="${esc(c.name)}" oninput="catEdit(this)" style="width:140px"></td>
+          <td><input data-i="${i}" data-k="desc" value="${esc(c.desc || '')}" oninput="catEdit(this)" style="width:200px"></td>
+          <td><select data-i="${i}" data-k="guide" onchange="catEdit(this)">
+            <option value="">None</option>${sizeGuideKeys.map(g => `<option ${g === c.guide ? 'selected' : ''}>${g}</option>`).join('')}
+          </select></td>
+          <td><input data-i="${i}" data-k="hsn" value="${esc(c.hsn || '')}" oninput="catEdit(this)" style="width:80px"></td>
+          <td><select data-i="${i}" data-k="tax" onchange="catEdit(this)">
+            ${[['textile','Textile slab (5% ≤ ₹2,500 / 18%)'],['0','0%'],['5','5%'],['18','18%'],['40','40%']]
+              .map(([v, l]) => `<option value="${v}" ${String(c.tax) === v ? 'selected' : ''}>${l}</option>`).join('')}
+          </select></td>
+          <td><input type="checkbox" data-i="${i}" data-k="visible" ${c.visible !== false ? 'checked' : ''} onchange="catEdit(this)"></td>
+          <td class="muted">${usedBy(c.id)}</td>
+          <td>${usedBy(c.id) ? '' : `<button class="danger" onclick="removeCategory(${i})">Remove</button>`}</td>
+        </tr>`).join('')}
+      </tbody>
+    </table>`;
+}
+
+function catEdit(el){
+  const c = categoriesCache[Number(el.dataset.i)];
+  const k = el.dataset.k;
+  c[k] = el.type === 'checkbox' ? el.checked : (k === 'tax' && el.value !== 'textile' ? Number(el.value) : el.value);
+}
+function moveCategory(i, d){ const j = i + d; [categoriesCache[i], categoriesCache[j]] = [categoriesCache[j], categoriesCache[i]]; renderCategories(); }
+function removeCategory(i){ categoriesCache.splice(i, 1); renderCategories(); }
+function addCategoryRow(){
+  categoriesCache.push({ id: '', name: '', desc: '', guide: null, hsn: '', tax: 18, visible: true });
+  renderCategories();
+}
+
+async function saveCategories(){
+  const errEl = document.getElementById('catError');
+  errEl.style.display = 'none';
+  const res = await adminFetch('/.netlify/functions/admin-settings', {
+    method: 'POST', headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({ section: 'categories', data: categoriesCache })
+  });
+  if(res.status === 401){ handleUnauthorized(); return; }
+  const out = await res.json();
+  if(!res.ok){ errEl.textContent = out.error || 'Could not save'; errEl.style.display = 'block'; return; }
+  categoriesCache = out.categories;
+  renderCategories();
+  flash('Categories saved');
+}
+
+/* ---------- SETTINGS ---------- */
+let settingsImages = { hero: null, og: null };
+
+function fillSettingsForm(st){
+  const set = (id, v) => { document.getElementById(id).value = v == null ? '' : v; };
+  set('s-fee', st.shippingFee); set('s-free', st.freeShippingThreshold);
+  document.getElementById('s-ann-on').checked = !(st.announcement && st.announcement.enabled === false);
+  set('s-ann', ((st.announcement && st.announcement.items) || []).join('\n'));
+  const h = st.hero || {};
+  set('s-eyebrow', h.eyebrow); set('s-headline', h.headline); set('s-accent', h.accent); set('s-sub', h.sub);
+  const so = st.social || {};
+  set('s-ig', so.instagram); set('s-wa', so.whatsapp); set('s-yt', so.youtube); set('s-fb', so.facebook);
+  settingsImages = { hero: h.imageKey || null, og: st.ogImageKey || null };
+  renderSettingImages();
+}
+
+function renderSettingImages(){
+  for(const [slot, el] of [['hero', 's-hero-img'], ['og', 's-og-img']]){
+    const k = settingsImages[slot];
+    document.getElementById(el).innerHTML = k
+      ? `<img src="${mediaUrl(k)}" alt=""><button type="button" class="danger" onclick="settingsImages.${slot}=null;renderSettingImages()">Remove</button>`
+      : '<span class="muted">None</span>';
+  }
+}
+
+async function setSettingImage(input, slot){
+  const file = input.files[0];
+  input.value = '';
+  if(!file) return;
+  const errEl = document.getElementById('settingsError');
+  try{
+    document.getElementById(slot === 'hero' ? 's-hero-img' : 's-og-img').innerHTML = '<span class="muted">Uploading…</span>';
+    settingsImages[slot] = await uploadImage(file);
+  } catch(err){
+    errEl.textContent = err.message; errEl.style.display = 'block';
+  }
+  renderSettingImages();
+}
+
+async function saveSettings(){
+  const errEl = document.getElementById('settingsError');
+  errEl.style.display = 'none';
+  const val = (id) => document.getElementById(id).value;
+  const data = {
+    shippingFee: Number(val('s-fee')),
+    freeShippingThreshold: Number(val('s-free')),
+    announcement: { enabled: document.getElementById('s-ann-on').checked, items: val('s-ann').split('\n').map(s => s.trim()).filter(Boolean) },
+    hero: { eyebrow: val('s-eyebrow'), headline: val('s-headline'), accent: val('s-accent'), sub: val('s-sub'), imageKey: settingsImages.hero },
+    social: { instagram: val('s-ig'), whatsapp: val('s-wa'), youtube: val('s-yt'), facebook: val('s-fb') },
+    ogImageKey: settingsImages.og,
+  };
+  const res = await adminFetch('/.netlify/functions/admin-settings', {
+    method: 'POST', headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({ section: 'store', data })
+  });
+  if(res.status === 401){ handleUnauthorized(); return; }
+  const out = await res.json();
+  if(!res.ok){ errEl.textContent = out.error || 'Could not save'; errEl.style.display = 'block'; return; }
+  fillSettingsForm(out.settings);
+  flash('Settings saved — live on the store within a minute');
+}
+
+function flash(msg){
+  const el = document.getElementById('flash');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(flash.t);
+  flash.t = setTimeout(() => el.classList.remove('show'), 2600);
 }
 
 async function toggleAvailability(id){
