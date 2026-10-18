@@ -544,7 +544,7 @@
     </div>
     <div>
       <h5>Support</h5>
-      <ul><li><a href="/shipping-policy.html">Shipping</a></li><li><a href="/refund-policy.html">Returns &amp; Exchanges</a></li><li><a href="/terms.html">Terms &amp; Conditions</a></li><li><a href="/privacy-policy.html">Privacy Policy</a></li><li><a href="/contact.html">Contact &amp; Grievances</a></li></ul>
+      <ul><li><a href="/shipping-policy.html">Shipping</a></li><li><a href="/refund-policy.html">Returns &amp; Exchanges</a></li><li><a href="/terms.html">Terms &amp; Conditions</a></li><li><a href="/privacy-policy.html">Privacy Policy</a></li><li><a href="/contact.html">Contact &amp; Grievances</a></li><li><a href="#" onclick="window.egoCookieSettings&&egoCookieSettings();return false;">Cookie settings</a></li></ul>
     </div>
   </div>
   <div class="footer-bottom">
@@ -1029,6 +1029,8 @@ function confirmAddToCart(){
   if(existing) existing.qty += sheetQty;
   else cart.push({lineId, id:activeProduct.id, name:activeProduct.name, cat:activeProduct.cat, price:activeProduct.price, size, qty:sheetQty, image:(activeProduct.images || [])[0] || null});
   saveCart();
+  track('add_to_cart', { currency: 'INR', value: activeProduct.price * sheetQty,
+    items: [{ item_id: activeProduct.id, item_name: activeProduct.name, item_variant: size, price: activeProduct.price, quantity: sheetQty }] });
   flyToBag(document.querySelector('#sheetGallery img') || document.querySelector(`.card[href$="-${activeProduct.id}"] img`));
   showToast(`${activeProduct.name} (${size}) added to bag`);
   closeSheet();
@@ -1297,7 +1299,13 @@ function submitAddressAndPay(e){
   proceedToPayment();
 }
 
+// Analytics hook (consent.js); a no-op until the visitor accepts cookies.
+function track(name, params){ try{ window.egoTrack && window.egoTrack(name, params); } catch(e){} }
+
 async function proceedToPayment(){
+  track('begin_checkout', { currency: 'INR', value: cart.reduce((s, c) => s + c.price * c.qty, 0),
+    coupon: appliedCoupon ? appliedCoupon.code : undefined,
+    items: cart.map(c => ({ item_id: c.id, item_name: c.name, item_variant: c.size, price: c.price, quantity: c.qty })) });
   const btn = document.getElementById('checkoutBtn');
   btn.disabled = true;
   btn.textContent = 'Processing…';
@@ -1370,5 +1378,6 @@ loadCatalog(); // fetches live products, then calls renderProducts() itself
 updateCartUI();
 checkSession();
 </script>
+<script src="/consent.js" defer></script>
 </body>
 </html>

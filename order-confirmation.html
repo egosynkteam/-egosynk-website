@@ -102,6 +102,19 @@ async function init(){
     }
     const order = await orderRes.json();
     render(order);
+    // Purchase is reported once per order (reloading this page must not count it twice).
+    // The order arrives after page load, so fire now if load has already happened.
+    const reportPurchase = () => {
+      try{
+        const k = 'egosynk_tracked_' + order.orderId;
+        if(localStorage.getItem(k) || !window.egoTrack) return;
+        window.egoTrack('purchase', { transaction_id: order.orderId, currency: 'INR', value: order.amount / 100,
+          shipping: order.shippingFee || 0, coupon: order.coupon || undefined,
+          items: order.items.map(i => ({ item_id: i.id, item_name: i.name, item_variant: i.size, price: i.price, quantity: i.qty })) });
+        localStorage.setItem(k, '1');
+      } catch(e){}
+    };
+    if(document.readyState === 'complete') reportPurchase(); else addEventListener('load', reportPurchase);
   } catch(err){
     console.error(err);
     card.innerHTML = '<div class="error-state">Something went wrong loading your order. Contact <a href="mailto:support@egosynk.com">support@egosynk.com</a>.</div>';
@@ -154,5 +167,6 @@ function escapeHtml(str){
 
 init();
 </script>
+<script src="/consent.js" defer></script>
 </body>
 </html>

@@ -19,6 +19,7 @@ const DEFAULTS = {
     videoUrl: null,
   },
   social: { instagram: '', whatsapp: '', youtube: '', facebook: '' },
+  analytics: { ga4Id: null, metaPixelId: null },
   ogImageKey: null,
 };
 
@@ -56,6 +57,7 @@ async function getSettings() {
     announcement: { ...DEFAULTS.announcement, ...(saved.announcement || {}) },
     hero: { ...DEFAULTS.hero, ...(saved.hero || {}) },
     social: { ...DEFAULTS.social, ...(saved.social || {}) },
+    analytics: { ...DEFAULTS.analytics, ...(saved.analytics || {}) },
   };
 }
 

@@ -33,6 +33,18 @@
   .review-card .stars-txt{color:var(--rust-bright);letter-spacing:2px;}
   .review-card p{font-size:13px;color:var(--bone-dim);margin:8px 0;white-space:pre-line;line-height:1.55;}
   .review-card textarea{margin-top:6px;}
+  #dashRange button.on{border-color:var(--bone);color:var(--bone);background:var(--surface);}
+  .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin-bottom:16px;}
+  .kpi{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:14px 16px;}
+  .kpi .k-label{font-size:11px;color:var(--steel);text-transform:uppercase;letter-spacing:.06em;}
+  .kpi .k-value{font-size:26px;font-weight:700;margin:6px 0 4px;font-variant-numeric:tabular-nums;color:var(--bone);}
+  .kpi .k-delta{font-size:12px;color:var(--steel);}
+  .dash-cols{display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));}
+  .mini-table{width:100%;font-size:13px;border-collapse:collapse;}
+  .mini-table td,.mini-table th{padding:7px 4px;border-bottom:1px solid var(--line);text-align:left;}
+  .mini-table td.num,.mini-table th.num{text-align:right;font-variant-numeric:tabular-nums;}
+  .attn{display:flex;justify-content:space-between;gap:10px;padding:8px 0;border-bottom:1px solid var(--line);font-size:13px;}
+  .attn button{padding:4px 10px;font-size:11px;}
   .team-row{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--line);font-size:13px;}
   .gate button{width:100%;}
 
@@ -142,7 +154,8 @@
   </div>
 
   <div class="tabs">
-    <button class="tab-btn active" data-tab="catalog" onclick="switchTab('catalog')">Catalog</button>
+    <button class="tab-btn active" data-tab="dashboard" onclick="switchTab('dashboard')">Dashboard</button>
+    <button class="tab-btn" data-tab="catalog" onclick="switchTab('catalog')">Catalog</button>
     <button class="tab-btn" data-tab="categories" onclick="switchTab('categories')">Categories</button>
     <button class="tab-btn" data-tab="orders" onclick="switchTab('orders')">Orders</button>
     <button class="tab-btn" data-tab="reviews" onclick="switchTab('reviews');loadReviews()">Reviews <span id="pendingBadge" class="status pending" hidden></span></button>
@@ -153,7 +166,23 @@
   </div>
 
   <!-- CATALOG -->
-  <div class="panel active" id="panel-catalog">
+  <!-- DASHBOARD -->
+  <div class="panel active" id="panel-dashboard">
+    <div class="toolbar">
+      <h2 style="margin:0;">Sales</h2>
+      <div class="row-actions" id="dashRange">
+        <button class="secondary" data-range="today" onclick="setDashRange('today')">Today</button><button class="secondary" data-range="7" onclick="setDashRange('7')">7 days</button><button class="secondary on" data-range="30" onclick="setDashRange('30')">30 days</button><button class="secondary" data-range="month" onclick="setDashRange('month')">This month</button><button class="secondary" data-range="all" onclick="setDashRange('all')">All time</button>
+      </div>
+    </div>
+    <div class="kpis" id="kpis"></div>
+    <div class="dash-cols">
+      <section class="settings-card"><h4>Top products</h4><div id="topProducts"></div></section>
+      <section class="settings-card"><h4>Needs attention</h4><div id="attention"></div></section>
+    </div>
+    <p class="muted" style="margin-top:10px;">Paid orders only. Revenue is what customers paid (incl. GST and shipping). Visitor and traffic numbers live in Google Analytics once it's connected in Settings.</p>
+  </div>
+
+  <div class="panel" id="panel-catalog">
     <div class="toolbar">
       <h2 style="margin:0;">Catalog / Inventory</h2>
       <div class="row-actions">
@@ -299,6 +328,13 @@
         <div class="field"><label for="s-wa">WhatsApp number</label><input id="s-wa" placeholder="10-digit mobile"></div>
         <div class="field"><label for="s-yt">YouTube URL</label><input id="s-yt"></div>
         <div class="field"><label for="s-fb">Facebook URL</label><input id="s-fb"></div>
+      </section>
+
+      <section class="settings-card">
+        <h4>Analytics</h4>
+        <p class="muted">Loaded only for visitors who accept the cookie banner. Leave blank to turn off (no banner is shown then).</p>
+        <div class="field"><label for="s-ga4">Google Analytics 4 Measurement ID</label><input id="s-ga4" placeholder="G-XXXXXXXXXX"></div>
+        <div class="field"><label for="s-pixel">Meta Pixel ID</label><input id="s-pixel" placeholder="15–16 digit number"></div>
       </section>
 
       <section class="settings-card">
@@ -622,6 +658,7 @@ async function loadCatalog(){
     const data = await res.json();
     catalogCache = data.products || [];
     renderCatalog();
+    renderDashboard(); // low-stock count needs the catalog
     // Category rows show how many products use them, so refresh once products arrive.
     if(categoriesCache.length){ renderCategories(); renderGuides(); }
   } catch(err){
@@ -1115,6 +1152,8 @@ function fillSettingsForm(st){
   set('s-eyebrow', h.eyebrow); set('s-headline', h.headline); set('s-video', h.videoUrl); set('s-accent', h.accent); set('s-sub', h.sub);
   const so = st.social || {};
   set('s-ig', so.instagram); set('s-wa', so.whatsapp); set('s-yt', so.youtube); set('s-fb', so.facebook);
+  const an = st.analytics || {};
+  set('s-ga4', an.ga4Id); set('s-pixel', an.metaPixelId);
   settingsImages = { hero: h.imageKey || null, og: st.ogImageKey || null };
   renderSettingImages();
 }
@@ -1152,6 +1191,7 @@ async function saveSettings(){
     announcement: { enabled: document.getElementById('s-ann-on').checked, items: val('s-ann').split('\n').map(s => s.trim()).filter(Boolean) },
     hero: { eyebrow: val('s-eyebrow'), headline: val('s-headline'), accent: val('s-accent'), sub: val('s-sub'), imageKey: settingsImages.hero, videoUrl: val('s-video').trim() },
     social: { instagram: val('s-ig'), whatsapp: val('s-wa'), youtube: val('s-yt'), facebook: val('s-fb') },
+    analytics: { ga4Id: val('s-ga4').trim(), metaPixelId: val('s-pixel').trim() },
     ogImageKey: settingsImages.og,
   };
   const res = await adminFetch('/.netlify/functions/admin-settings', {
@@ -1206,8 +1246,83 @@ async function loadOrders(){
 
 let ordersCache = [];
 
+/* ---------- DASHBOARD ---------- */
+// Plain numbers, not charts: at this volume a headline figure with its change vs the
+// previous period reads faster than a plot. Built from the same order list as Orders.
+let dashRange = '30';
+function setDashRange(r){
+  dashRange = r;
+  document.querySelectorAll('#dashRange button').forEach(b => b.classList.toggle('on', b.dataset.range === r));
+  renderDashboard();
+}
+function rangeBounds(r){
+  const now = new Date();
+  const ist = new Date(now.getTime() + 330 * 60000); // day boundaries in India time
+  const startOfDay = Date.UTC(ist.getUTCFullYear(), ist.getUTCMonth(), ist.getUTCDate()) - 330 * 60000;
+  if(r === 'all') return { from: 0, to: Infinity, prevFrom: null };
+  if(r === 'today') return { from: startOfDay, to: Infinity, prevFrom: startOfDay - 864e5, prevTo: startOfDay };
+  if(r === 'month'){
+    const from = Date.UTC(ist.getUTCFullYear(), ist.getUTCMonth(), 1) - 330 * 60000;
+    const prevFrom = Date.UTC(ist.getUTCFullYear(), ist.getUTCMonth() - 1, 1) - 330 * 60000;
+    return { from, to: Infinity, prevFrom, prevTo: from };
+  }
+  const days = Number(r), from = startOfDay - (days - 1) * 864e5;
+  return { from, to: Infinity, prevFrom: from - days * 864e5, prevTo: from };
+}
+function stats(list){
+  const revenue = list.reduce((a, o) => a + o.amount / 100, 0);
+  const units = list.reduce((a, o) => a + o.items.reduce((b, i) => b + i.qty, 0), 0);
+  const discount = list.reduce((a, o) => a + (o.discount || 0), 0);
+  return { revenue, orders: list.length, aov: list.length ? revenue / list.length : 0, units, discount };
+}
+function renderDashboard(){
+  const el = document.getElementById('kpis');
+  if(!el) return;
+  const b = rangeBounds(dashRange);
+  const t = (o) => new Date(o.paidAt || o.createdAt).getTime();
+  const paid = ordersCache.filter(o => o.status === 'paid');
+  const cur = paid.filter(o => t(o) >= b.from && t(o) < b.to);
+  const prev = b.prevFrom != null ? paid.filter(o => t(o) >= b.prevFrom && t(o) < b.prevTo) : null;
+  const S = stats(cur), P = prev ? stats(prev) : null;
+  const money = (n) => '₹' + Math.round(n).toLocaleString('en-IN');
+  const delta = (k) => {
+    if(!P) return '&nbsp;';
+    if(!P[k]) return S[k] ? 'new vs previous period' : 'no change';
+    const d = (S[k] - P[k]) / P[k] * 100;
+    return `${d >= 0 ? '▲' : '▼'} ${Math.abs(d).toFixed(0)}% vs previous period`;
+  };
+  el.innerHTML = [
+    ['Revenue', money(S.revenue), delta('revenue')],
+    ['Orders', S.orders, delta('orders')],
+    ['Avg order value', money(S.aov), delta('aov')],
+    ['Units sold', S.units, delta('units')],
+    ['Discounts given', money(S.discount), '&nbsp;'],
+  ].map(([l, v, d]) => `<div class="kpi"><div class="k-label">${l}</div><div class="k-value">${v}</div><div class="k-delta">${d}</div></div>`).join('');
+
+  const byProduct = {};
+  for(const o of cur) for(const i of o.items){
+    const r = byProduct[i.id] = byProduct[i.id] || { name: i.name, qty: 0, revenue: 0 };
+    r.qty += i.qty; r.revenue += i.price * i.qty - (i.discount || 0);
+  }
+  const top = Object.values(byProduct).sort((a, b) => b.revenue - a.revenue).slice(0, 5);
+  document.getElementById('topProducts').innerHTML = top.length
+    ? `<table class="mini-table"><thead><tr><th>Product</th><th class="num">Units</th><th class="num">Revenue</th></tr></thead><tbody>${
+        top.map(r => `<tr><td>${esc(r.name)}</td><td class="num">${r.qty}</td><td class="num">${money(r.revenue)}</td></tr>`).join('')}</tbody></table>`
+    : '<div class="muted">No sales in this period.</div>';
+
+  const toShip = paid.filter(o => !o.fulfilment || o.fulfilment.status === 'processing');
+  const abandoned = ordersCache.filter(o => o.status === 'pending' && t(o) >= b.from && Date.now() - t(o) > 3600e3);
+  const lowStock = catalogCache.filter(p => p.stockBySize && Object.values(p.stockBySize).some(n => n <= 3));
+  document.getElementById('attention').innerHTML = [
+    [`${toShip.length} paid order${toShip.length === 1 ? '' : 's'} waiting to ship`, toShip.length ? `<button class="secondary" onclick="switchTab('orders')">Open</button>` : ''],
+    [`${abandoned.length} abandoned checkout${abandoned.length === 1 ? '' : 's'} · ${money(abandoned.reduce((a, o) => a + o.amount / 100, 0))}`, ''],
+    [`${lowStock.length} product${lowStock.length === 1 ? '' : 's'} with a size at 3 or fewer`, lowStock.length ? `<button class="secondary" onclick="switchTab('catalog')">Open</button>` : ''],
+  ].map(([l, a]) => `<div class="attn"><span>${l}</span>${a}</div>`).join('');
+}
+
 function renderOrders(orders){
   if(orders) ordersCache = orders;
+  renderDashboard();
   const wrap = document.getElementById('ordersWrap');
   const filter = document.getElementById('orderFilter').value;
   const list = ordersCache.filter(o => filter === 'all'

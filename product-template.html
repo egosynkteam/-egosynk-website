@@ -228,7 +228,7 @@
 <footer>
   <div class="links">
     <a href="/#shop">Shop</a><a href="/shipping-policy.html">Shipping</a><a href="/refund-policy.html">Returns &amp; Exchanges</a>
-    <a href="/terms.html">Terms</a><a href="/privacy-policy.html">Privacy</a><a href="/contact.html">Contact</a>
+    <a href="/terms.html">Terms</a><a href="/privacy-policy.html">Privacy</a><a href="/contact.html">Contact</a><a href="#" onclick="window.egoCookieSettings&&egoCookieSettings();return false;">Cookie settings</a>
   </div>
   <div class="mono">© 2026 EGOSYNK.COM · GSTIN 27AKHPY6964E1ZI</div>
 </footer>
@@ -455,6 +455,7 @@ function addToBag(){
   if(existing) existing.qty += qty;
   else cart.push({ lineId, id: P.id, name: P.name, cat: P.cat, price: P.price, size, qty, image: (P.images || [])[0] || null });
   writeCart(cart);
+  track('add_to_cart', { currency: 'INR', value: P.price * qty, items: [{ item_id: P.id, item_name: P.name, item_variant: size, price: P.price, quantity: qty }] });
   flyToBag();
   showToast(`Added to bag · <a href="/#bag">View bag</a>`);
 }
@@ -530,8 +531,12 @@ function stickyBar(){
   check();
 }
 
+function track(name, params){ try{ window.egoTrack && window.egoTrack(name, params); } catch(e){} }
+
 if(P){
   render();
+  // consent.js loads deferred, so report the view once it's there.
+  addEventListener('load', () => track('view_item', { currency: 'INR', value: P.price, items: [{ item_id: P.id, item_name: P.name, item_category: DATA.category && DATA.category.name, price: P.price }] }));
   stickyBar();
   const reviewOrder = new URLSearchParams(location.search).get('review');
   if(reviewOrder){ toggleReviewForm(true); document.getElementById('rv-order').value = reviewOrder; }
@@ -540,5 +545,6 @@ if(P){
 updateCount(false);
 addEventListener('storage', () => updateCount(false)); // bag changed in another tab
 </script>
+<script src="/consent.js" defer></script>
 </body>
 </html>

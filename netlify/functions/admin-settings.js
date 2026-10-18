@@ -43,6 +43,10 @@ function cleanStore(d) {
         facebook: str(s.facebook, 200),
       },
       ogImageKey: mediaKey(d.ogImageKey),
+      analytics: {
+        ga4Id: /^G-[A-Z0-9]{4,15}$/.test(str(d.analytics && d.analytics.ga4Id, 20).toUpperCase()) ? str(d.analytics.ga4Id, 20).toUpperCase() : null,
+        metaPixelId: /^\d{10,20}$/.test(str(d.analytics && d.analytics.metaPixelId, 20)) ? str(d.analytics.metaPixelId, 20) : null,
+      },
     },
   };
 }
