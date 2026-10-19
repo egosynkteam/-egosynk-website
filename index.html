@@ -217,6 +217,27 @@
     white-space:nowrap;flex-shrink:0;
   }
   .filter-chip.active{background:var(--rust);border-color:var(--rust);color:var(--bone);}
+  .shop-tools{display:flex;gap:10px;margin-bottom:16px;align-items:stretch;}
+  .search-wrap{position:relative;flex:1;display:flex;align-items:center;}
+  .search-wrap > svg{position:absolute;left:14px;color:var(--steel);pointer-events:none;}
+  .search-wrap input{width:100%;background:var(--surface);border:1px solid var(--line);color:var(--bone);padding:12px 14px 12px 40px;border-radius:2px;font:inherit;font-size:14px;}
+  .search-wrap input:focus{outline:none;border-color:var(--rust);}
+  .search-suggest{position:absolute;top:calc(100% + 4px);left:0;right:0;z-index:20;background:var(--surface-2);border:1px solid var(--line);border-radius:2px;box-shadow:0 12px 30px rgba(0,0,0,.5);}
+  .search-suggest a{display:flex;justify-content:space-between;gap:12px;padding:11px 14px;font-size:13px;color:var(--bone);border-bottom:1px solid var(--line);}
+  .search-suggest a:last-child{border-bottom:none;}
+  .search-suggest a:hover,.search-suggest a:focus{background:var(--surface);outline:none;}
+  .search-suggest .s-meta{color:var(--steel);font-family:'JetBrains Mono',monospace;font-size:11px;white-space:nowrap;}
+  .search-suggest .s-empty{padding:11px 14px;font-size:13px;color:var(--steel);}
+  #sortSelect{background:var(--surface);border:1px solid var(--line);color:var(--bone);padding:0 12px;border-radius:2px;font:inherit;font-size:13px;min-width:0;max-width:44%;}
+  @media(max-width:600px){ #sortSelect{max-width:32%;padding:0 8px;font-size:12px;} .search-wrap input{font-size:16px;} }
+  .refine-row{display:flex;gap:8px;margin:-16px 0 14px;overflow-x:auto;scrollbar-width:none;align-items:center;}
+  .refine-row::-webkit-scrollbar{display:none;}
+  .refine-row .filter-chip{font-size:11px;padding:6px 12px;}
+  .refine-row .sep{width:1px;height:20px;background:var(--line);flex-shrink:0;}
+  .refine-row .clear{color:var(--rust-bright);border-color:transparent;}
+  .result-count{font-size:11px;color:var(--steel);margin-bottom:14px;letter-spacing:0.05em;}
+  .card-spec{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--bone-dim);text-transform:uppercase;letter-spacing:0.04em;margin:-6px 0 10px;}
+  .grid-msg .linkish{background:none;border:none;color:var(--rust-bright);cursor:pointer;font:inherit;text-decoration:underline;}
   .grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;}
   @media(min-width:700px){.grid{grid-template-columns:repeat(3,1fr);gap:20px;}}
   .card{
@@ -484,6 +505,9 @@
 <nav>
   <div class="logo"><span>EGO</span>SYNK</div>
   <div class="nav-right">
+    <button class="cart-btn" onclick="focusSearch()" title="Search" aria-label="Search products">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+    </button>
     <a class="cart-btn" href="/account.html" id="accountBtn" title="Account">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
     </a>
@@ -522,7 +546,23 @@
       <h2>Shop the drop</h2>
     </div>
   </div>
+  <div class="shop-tools">
+    <div class="search-wrap">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      <input id="searchInput" type="search" placeholder="Search gear…" aria-label="Search products" autocomplete="off" aria-controls="searchSuggest">
+      <div class="search-suggest" id="searchSuggest" hidden></div>
+    </div>
+    <select id="sortSelect" aria-label="Sort products" onchange="sortBy = this.value; renderProducts()">
+      <option value="featured">Featured</option>
+      <option value="newest">Newest</option>
+      <option value="price-asc">Price: low to high</option>
+      <option value="price-desc">Price: high to low</option>
+      <option value="rating">Top rated</option>
+    </select>
+  </div>
   <div class="filter-row" id="filterRow"></div>
+  <div class="refine-row" id="refineRow"></div>
+  <div class="result-count mono" id="resultCount" aria-live="polite"></div>
   <div class="grid" id="productGrid"></div>
 </section>
 
@@ -907,22 +947,163 @@ function renderCatRail(){
   `).join('');
 }
 
+/* ---------- COLLECTIONS, SEARCH, SORT, REFINE ---------- */
+// "New" = products tagged NEW in admin; if none are tagged, the 8 most recently added.
+// "Sale" = anything with an MRP above its selling price. Both only show when non-empty.
+let searchQuery = '';
+let sortBy = 'featured';
+let sizeFilter = new Set();
+let priceBand = '';
+let inStockOnly = false;
+const PRICE_BANDS = [
+  { id: 'u1000', label: 'Under ₹1,000', test: p => p.price < 1000 },
+  { id: '1000-1999', label: '₹1,000–₹1,999', test: p => p.price >= 1000 && p.price < 2000 },
+  { id: '2000', label: '₹2,000+', test: p => p.price >= 2000 },
+];
+const COMPRESSION_LABEL = { light: 'Light compression', medium: 'Medium compression', firm: 'Firm compression' };
+
+function newProductIds(){
+  const tagged = products.filter(p => /new/i.test(p.tag || ''));
+  const list = tagged.length ? tagged : [...products].sort((a, b) => b.id - a.id).slice(0, 8);
+  return new Set(list.map(p => p.id));
+}
+const onSale = p => p.mrp && p.mrp > p.price;
+
+function inCollection(p, newIds){
+  if(currentFilter === 'all') return true;
+  if(currentFilter === '__new') return newIds.has(p.id);
+  if(currentFilter === '__sale') return onSale(p);
+  return p.cat === currentFilter;
+}
+
+function specLine(p){
+  const s = p.specs || {};
+  return [s.fit, s.compression && COMPRESSION_LABEL[s.compression], s.gsm && s.gsm + ' GSM'].filter(Boolean).join(' · ');
+}
+
+// Every search word must appear somewhere in the product's name, category, colour,
+// tag, specs or description, so "black compression" narrows instead of widening.
+function searchText(p){
+  const s = p.specs || {};
+  return [p.name, (categories.find(c => c.id === p.cat) || {}).name, p.colour, p.tag, s.fit, s.fabric,
+    s.compression && COMPRESSION_LABEL[s.compression], p.description].filter(Boolean).join(' ').toLowerCase();
+}
+function matchesSearch(p, q){
+  const words = q.toLowerCase().split(/\s+/).filter(Boolean);
+  if(!words.length) return true;
+  const hay = searchText(p);
+  return words.every(w => hay.includes(w));
+}
+
+function visibleProducts(){
+  const newIds = newProductIds();
+  let list = products.filter(p => inCollection(p, newIds) && matchesSearch(p, searchQuery));
+  if(sizeFilter.size) list = list.filter(p => p.available !== false && (p.sizes || []).some(s => sizeFilter.has(s) && sizeLeft(p, s) > 0));
+  const band = PRICE_BANDS.find(b => b.id === priceBand);
+  if(band) list = list.filter(band.test);
+  if(inStockOnly) list = list.filter(p => p.available !== false);
+  const sorters = {
+    newest: (a, b) => b.id - a.id,
+    'price-asc': (a, b) => a.price - b.price,
+    'price-desc': (a, b) => b.price - a.price,
+    rating: (a, b) => ((b.rating && b.rating.avg) || 0) - ((a.rating && a.rating.avg) || 0) || ((b.rating && b.rating.count) || 0) - ((a.rating && a.rating.count) || 0),
+  };
+  if(sorters[sortBy]) list = [...list].sort(sorters[sortBy]);
+  return list;
+}
+
 function renderFilterRow(){
-  const all = [{id:'all', name:'All'}, ...categories];
+  const all = [{id:'all', name:'All'}];
+  if(products.length) all.push({id:'__new', name:'New in'});
+  if(products.some(onSale)) all.push({id:'__sale', name:'Sale'});
+  all.push(...categories);
   document.getElementById('filterRow').innerHTML = all.map(c => `
     <button class="filter-chip${c.id===currentFilter ? ' active' : ''}" data-cat="${esc(c.id)}" onclick="filterCat('${esc(c.id)}')">${esc(c.name)}</button>
   `).join('');
 }
 
+// Size chips come from the products in the current collection, so a sleeves view offers
+// sleeve sizes only. "Free Size" items aren't size-filtered.
+function renderRefineRow(){
+  const newIds = newProductIds();
+  const pool = products.filter(p => inCollection(p, newIds));
+  const order = ['XS','S','M','L','XL','XXL','XXXL'];
+  const sizes = [...new Set(pool.flatMap(p => p.sizes || []))].filter(s => s !== 'Free Size')
+    .sort((a, b) => (order.indexOf(a) + 1 || 99) - (order.indexOf(b) + 1 || 99) || a.localeCompare(b));
+  const active = sizeFilter.size || priceBand || inStockOnly || searchQuery;
+  document.getElementById('refineRow').innerHTML =
+    sizes.map(s => `<button class="filter-chip${sizeFilter.has(s) ? ' active' : ''}" aria-pressed="${sizeFilter.has(s)}" onclick="toggleSize('${esc(s)}')">${esc(s)}</button>`).join('') +
+    (sizes.length ? '<span class="sep" aria-hidden="true"></span>' : '') +
+    PRICE_BANDS.map(b => `<button class="filter-chip${priceBand === b.id ? ' active' : ''}" aria-pressed="${priceBand === b.id}" onclick="setPriceBand('${b.id}')">${b.label}</button>`).join('') +
+    `<button class="filter-chip${inStockOnly ? ' active' : ''}" aria-pressed="${inStockOnly}" onclick="inStockOnly=!inStockOnly;renderProducts()">In stock</button>` +
+    (active ? '<button class="filter-chip clear" onclick="clearRefine()">Clear all</button>' : '');
+}
+
+function toggleSize(s){ sizeFilter.has(s) ? sizeFilter.delete(s) : sizeFilter.add(s); renderProducts(); }
+function setPriceBand(id){ priceBand = priceBand === id ? '' : id; renderProducts(); }
+function clearRefine(){
+  sizeFilter.clear(); priceBand = ''; inStockOnly = false; searchQuery = '';
+  document.getElementById('searchInput').value = '';
+  renderProducts();
+}
+
+function focusSearch(){
+  document.getElementById('shop').scrollIntoView({behavior: reduceMotion ? 'auto' : 'smooth'});
+  setTimeout(() => document.getElementById('searchInput').focus({preventScroll: true}), reduceMotion ? 0 : 450);
+}
+
+// Suggestions: up to 6 products, name matches first, each linking straight to its page.
+function renderSuggestions(){
+  const box = document.getElementById('searchSuggest');
+  const q = document.getElementById('searchInput').value.trim();
+  if(q.length < 2){ box.hidden = true; return; }
+  const hits = products.filter(p => matchesSearch(p, q))
+    .sort((a, b) => (b.name.toLowerCase().includes(q.toLowerCase())) - (a.name.toLowerCase().includes(q.toLowerCase())))
+    .slice(0, 6);
+  box.innerHTML = hits.length
+    ? hits.map(p => `<a href="/p/${encodeURIComponent(p.slug || p.id)}"><span>${esc(p.name)}</span><span class="s-meta">${inr(p.price)}</span></a>`).join('')
+    : `<div class="s-empty">No products match “${esc(q)}”</div>`;
+  box.hidden = false;
+}
+
+(function initSearch(){
+  const input = document.getElementById('searchInput');
+  let t;
+  input.addEventListener('input', () => {
+    clearTimeout(t);
+    t = setTimeout(() => { searchQuery = input.value.trim(); renderSuggestions(); renderProducts(); }, 120);
+  });
+  input.addEventListener('keydown', e => {
+    const box = document.getElementById('searchSuggest');
+    if(e.key === 'Escape'){ box.hidden = true; }
+    if(e.key === 'Enter'){ e.preventDefault(); box.hidden = true; searchQuery = input.value.trim(); renderProducts(); }
+    if(e.key === 'ArrowDown' && !box.hidden){ const first = box.querySelector('a'); if(first){ e.preventDefault(); first.focus(); } }
+  });
+  document.getElementById('searchSuggest').addEventListener('keydown', e => {
+    const links = [...e.currentTarget.querySelectorAll('a')];
+    const i = links.indexOf(document.activeElement);
+    if(e.key === 'ArrowDown' && links[i + 1]){ e.preventDefault(); links[i + 1].focus(); }
+    if(e.key === 'ArrowUp'){ e.preventDefault(); (links[i - 1] || input).focus(); }
+    if(e.key === 'Escape'){ e.currentTarget.hidden = true; input.focus(); }
+  });
+  document.addEventListener('click', e => { if(!e.target.closest('.search-wrap')) document.getElementById('searchSuggest').hidden = true; });
+})();
+
 /* ---------- PRODUCT GRID (fast: build string once, single innerHTML write) ---------- */
 function renderProducts(){
   const grid = document.getElementById('productGrid');
-  const filtered = currentFilter === 'all' ? products : products.filter(p => p.cat === currentFilter);
+  renderRefineRow();
+  const filtered = visibleProducts();
+  const narrowed = searchQuery || sizeFilter.size || priceBand || inStockOnly;
+  document.getElementById('resultCount').textContent = products.length
+    ? `${filtered.length} ${filtered.length === 1 ? 'PRODUCT' : 'PRODUCTS'}${searchQuery ? ` FOR “${searchQuery.toUpperCase()}”` : ''}` : '';
   // Never leave a silent empty grid: say what happened and offer a retry.
   if(!filtered.length){
     grid.innerHTML = catalogFailed
       ? '<div class="grid-msg">Couldn\x27t load the collection. <button onclick="renderSkeletons();loadCatalog()">Try again</button></div>'
-      : '<div class="grid-msg">Nothing here yet — check back soon.</div>';
+      : narrowed
+        ? '<div class="grid-msg">No products match these filters. <button class="linkish" onclick="clearRefine()">Clear filters</button></div>'
+        : '<div class="grid-msg">Nothing here yet — check back soon.</div>';
     return;
   }
   grid.innerHTML = filtered.map((p, i) => `
@@ -937,6 +1118,7 @@ function renderProducts(){
         <h4>${esc(p.name)}</h4>
         <div class="cat">${esc((categories.find(c=>c.id===p.cat) || {}).name || '')}</div>
         ${p.colour ? `<div class="colour">${esc(p.colour)}</div>` : ''}
+        ${specLine(p) ? `<div class="card-spec">${esc(specLine(p))}</div>` : ''}
         ${p.rating ? `<div class="card-rating"><span class="stars" aria-label="${p.rating.avg} out of 5"><span style="width:${p.rating.avg / 5 * 100}%"></span></span>${p.rating.avg.toFixed(1)} (${p.rating.count})</div>` : ''}
         <div class="price-row">
           <span>${priceHtml(p)}</span>
@@ -950,7 +1132,9 @@ function renderProducts(){
 
 function filterCat(cat){
   currentFilter = cat;
-  document.querySelectorAll('.filter-chip').forEach(c => c.classList.toggle('active', c.dataset.cat === cat));
+  // Sizes differ between categories, so a size picked in one view doesn't carry over.
+  sizeFilter.clear();
+  document.querySelectorAll('#filterRow .filter-chip').forEach(c => c.classList.toggle('active', c.dataset.cat === cat));
   renderProducts();
   document.getElementById('shop').scrollIntoView({behavior:'smooth'});
 }

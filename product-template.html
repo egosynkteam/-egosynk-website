@@ -70,6 +70,9 @@
   .mrp{font-family:'JetBrains Mono',monospace;color:var(--steel);text-decoration:line-through;font-size:15px;}
   .off{color:var(--ok);font-weight:700;font-size:13px;}
   .tax-note{font-size:11px;color:var(--steel);margin-bottom:22px;}
+  .spec-chips{display:flex;flex-wrap:wrap;gap:8px;margin:-8px 0 22px;}
+  .spec-chips span{font-family:'JetBrains Mono',monospace;font-size:11px;text-transform:uppercase;letter-spacing:0.04em;padding:6px 10px;border:1px solid var(--line);border-radius:2px;color:var(--bone-dim);}
+  .spec-chips .level{border-color:var(--rust);color:var(--bone);}
   .label{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--steel);letter-spacing:0.08em;text-transform:uppercase;
     margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;}
   .link{color:var(--rust-bright);text-decoration:underline;cursor:pointer;background:none;border:none;font:inherit;font-size:11px;}
@@ -247,6 +250,19 @@ const media = (k) => `/media/${encodeURIComponent(k)}`;
 const inr = (n) => `₹${Number(n).toLocaleString('en-IN')}`;
 const isFreeSize = (p) => p.sizes.length === 1 && /^free size$/i.test(p.sizes[0]);
 const left = (p, size) => p.stockBySize && Number.isFinite(p.stockBySize[size]) ? p.stockBySize[size] : Infinity;
+// Fit, compression level, fabric and weight from admin. Nothing renders when none is set.
+function specChips(p){
+  const s = p.specs || {};
+  const level = { light: 'Light compression', medium: 'Medium compression', firm: 'Firm compression' }[s.compression];
+  const chips = [
+    s.fit && `<span>${esc(s.fit)}</span>`,
+    level && `<span class="level">${level}</span>`,
+    s.fabric && `<span>${esc(s.fabric)}</span>`,
+    s.gsm && `<span>${Number(s.gsm)} GSM</span>`,
+  ].filter(Boolean);
+  return chips.length ? `<div class="spec-chips reveal" style="--i:4" aria-label="Product specs">${chips.join('')}</div>` : '';
+}
+
 function priceHtml(p){
   const off = p.mrp && p.mrp > p.price ? Math.round((1 - p.price / p.mrp) * 100) : 0;
   return `<span class="price">${inr(p.price)}</span>${off ? `<span class="mrp">${inr(p.mrp)}</span><span class="off">${off}% off</span>` : ''}`;
@@ -294,6 +310,7 @@ function render(){
         <h1 class="reveal" style="--i:3">${esc(P.name)}</h1>
         <div class="price-line reveal" style="--i:4">${priceHtml(P)}</div>
         <div class="tax-note reveal" style="--i:4">Inclusive of all taxes</div>
+        ${specChips(P)}
         ${P.rating ? `<div class="rating-line reveal" style="--i:4">${starsHtml(P.rating.avg)}<span>${P.rating.avg.toFixed(1)}</span><a href="#reviews">${P.rating.count} review${P.rating.count === 1 ? '' : 's'}</a></div>` : ''}
         <div class="reveal" style="--i:5">
           ${isFreeSize(P) ? '' : `

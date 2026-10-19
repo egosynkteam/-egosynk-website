@@ -18,6 +18,21 @@ function normaliseStock(raw, sizes) {
   return Object.keys(out).length ? out : null;
 }
 
+// Product facts shown as chips on cards and the product page. Each is optional; a product
+// with none of them stores null so the storefront shows nothing rather than empty chips.
+const COMPRESSION_LEVELS = ['light', 'medium', 'firm'];
+function normaliseSpecs(raw) {
+  if (!raw || typeof raw !== 'object') return null;
+  const gsm = Math.round(Number(raw.gsm));
+  const out = {
+    fit: str(raw.fit, 30) || null,
+    fabric: str(raw.fabric, 60) || null,
+    gsm: Number.isFinite(gsm) && gsm >= 50 && gsm <= 800 ? gsm : null,
+    compression: COMPRESSION_LEVELS.includes(raw.compression) ? raw.compression : null,
+  };
+  return Object.values(out).some((v) => v != null) ? out : null;
+}
+
 function validateProduct(p, categoryIds) {
   if (!p.name || !String(p.name).trim()) return 'Name is required';
   if (!categoryIds.includes(p.cat)) return `Category must be one of: ${categoryIds.join(', ')}`;
@@ -74,7 +89,7 @@ exports.handler = async (event) => {
       const sizes = body.sizes.map((s) => str(s, 20)).filter(Boolean).slice(0, 12);
       // A field missing from the request keeps its saved value rather than being cleared.
       for (const k of ['mrp', 'tag', 'colour', 'description', 'highlights', 'images', 'guide', 'visible',
-        'sortOrder', 'hsn', 'gstRate', 'stockBySize']) {
+        'sortOrder', 'hsn', 'gstRate', 'stockBySize', 'specs']) {
         if (!(k in body) && k in existing) body[k] = existing[k];
       }
       const product = {
@@ -97,6 +112,7 @@ exports.handler = async (event) => {
         hsn: body.hsn ? str(body.hsn, 8) : null,
         gstRate: body.gstRate != null && body.gstRate !== '' ? Number(body.gstRate) : null,
         stockBySize: normaliseStock(body.stockBySize, sizes),
+        specs: normaliseSpecs(body.specs),
         updatedAt: new Date().toISOString(),
       };
       delete product.stock; // replaced by stockBySize

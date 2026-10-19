@@ -435,6 +435,27 @@
       </div>
       <div class="field-row">
         <div class="field">
+          <label for="p-fit">Fit (optional)</label>
+          <input id="p-fit" list="fit-options" placeholder="Compression fit">
+          <datalist id="fit-options"><option>Compression fit</option><option>Slim fit</option><option>Regular fit</option><option>Oversized fit</option></datalist>
+        </div>
+        <div class="field">
+          <label for="p-compression">Compression level (optional)</label>
+          <select id="p-compression"><option value="">—</option><option value="light">Light</option><option value="medium">Medium</option><option value="firm">Firm</option></select>
+        </div>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label for="p-fabric">Fabric (optional)</label>
+          <input id="p-fabric" placeholder="Poly-spandex">
+        </div>
+        <div class="field">
+          <label for="p-gsm">Fabric weight, GSM (optional)</label>
+          <input id="p-gsm" type="number" min="50" max="800" placeholder="170">
+        </div>
+      </div>
+      <div class="field-row">
+        <div class="field">
           <label for="p-price">Selling price (₹, incl. GST)</label>
           <input id="p-price" type="number" min="1" required>
         </div>
@@ -822,6 +843,11 @@ function openProductForm(product){
   document.getElementById('p-id').value = p.id || '';
   document.getElementById('p-name').value = p.name || '';
   document.getElementById('p-colour').value = p.colour || '';
+  const sp = p.specs || {};
+  document.getElementById('p-fit').value = sp.fit || '';
+  document.getElementById('p-compression').value = sp.compression || '';
+  document.getElementById('p-fabric').value = sp.fabric || '';
+  document.getElementById('p-gsm').value = sp.gsm || '';
   document.getElementById('p-price').value = p.price || '';
   document.getElementById('p-mrp').value = p.mrp || '';
   document.getElementById('p-desc').value = p.description || '';
@@ -861,6 +887,7 @@ async function submitProductForm(e){
     name: val('p-name').trim(),
     cat: val('p-cat'),
     colour: val('p-colour').trim() || null,
+    specs: { fit: val('p-fit').trim(), compression: val('p-compression'), fabric: val('p-fabric').trim(), gsm: val('p-gsm') },
     price: Number(val('p-price')),
     mrp: val('p-mrp') === '' ? null : Number(val('p-mrp')),
     description: val('p-desc').trim(),
