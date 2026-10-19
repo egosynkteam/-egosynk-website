@@ -917,6 +917,7 @@ async function submitProductForm(e){
   }
   closeProductForm();
   loadCatalog();
+  if(result.restockEmails) alert(`Back in stock: ${result.restockEmails} customer${result.restockEmails === 1 ? '' : 's'} who asked to be notified were emailed.`);
 }
 
 /* ---------- CATEGORIES ---------- */

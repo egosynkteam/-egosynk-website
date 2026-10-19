@@ -93,6 +93,24 @@
   .add-btn:hover:not(:disabled){background:var(--rust-bright);}
   .add-btn:active:not(:disabled){transform:scale(.98);}
   .add-btn:disabled{background:var(--surface-2);color:var(--steel);cursor:not-allowed;}
+  .save-btn{width:52px;height:52px;flex-shrink:0;background:none;border:1px solid var(--line);border-radius:2px;color:var(--bone);display:flex;align-items:center;justify-content:center;cursor:pointer;}
+  .save-btn svg{width:20px;height:20px;}
+  .save-btn.on{color:var(--rust-bright);border-color:var(--rust);}
+  .save-btn.on svg{fill:currentColor;}
+  .notify{border:1px dashed var(--line);border-radius:2px;padding:14px;margin:4px 0 14px;font-size:13px;color:var(--bone-dim);}
+  .notify p{margin-bottom:10px;}
+  .notify select{background:var(--surface-2);border:1px solid var(--line);color:var(--bone);padding:0 8px;border-radius:2px;font:inherit;font-size:13px;margin:0 4px;height:30px;}
+  .inline-form{display:flex;gap:8px;}
+  .inline-form input{flex:1;min-width:0;background:var(--surface-2);border:1px solid var(--line);color:var(--bone);padding:10px 12px;border-radius:2px;font:inherit;font-size:14px;}
+  .inline-form input:focus{outline:none;border-color:var(--rust);}
+  .inline-form button{background:none;border:1px solid var(--rust);color:var(--bone);padding:0 16px;border-radius:2px;font-weight:700;font-size:12px;letter-spacing:.05em;text-transform:uppercase;cursor:pointer;white-space:nowrap;}
+  .form-msg{font-size:12px;margin-top:8px;min-height:16px;}
+  .form-msg.ok{color:#5FBF86;}
+  .form-msg.err{color:var(--rust-bright);}
+  .pin-check{margin:18px 0 0;}
+  .pin-check .inline-form input{font-family:'JetBrains Mono',monospace;letter-spacing:.1em;}
+  .pin-out{font-size:13px;color:var(--bone);margin-top:8px;min-height:18px;line-height:1.5;}
+  .pin-out small{display:block;color:var(--steel);font-size:11px;}
   .perks{display:grid;gap:8px;margin:18px 0 26px;font-size:12px;color:var(--bone-dim);}
   .perks div{display:flex;gap:10px;align-items:center;}
   .perks svg{flex:none;color:var(--rust-bright);}
@@ -319,9 +337,19 @@ function render(){
               ? `<button class="size out" disabled title="Sold out">${esc(sz)}</button>`
               : `<button class="size" data-size="${esc(sz)}" onclick="pickSize(this.dataset.size)">${esc(sz)}</button>`).join('')}</div>`}
           <div class="stock-note" id="stockNote"></div>
+          ${notifyHtml()}
           <div class="buy-row">
             <div class="qty"><button onclick="setQty(-1)" aria-label="Less">−</button><span id="qty">1</span><button onclick="setQty(1)" aria-label="More">+</button></div>
             <button class="add-btn" id="addBtn" onclick="addToBag()"></button>
+            <button class="save-btn" id="saveBtn" onclick="toggleSaved()" aria-pressed="false" aria-label="Save"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1 1.1L12 21l7.8-7.5 1-1.1a5.5 5.5 0 0 0 0-7.8z"/></svg></button>
+          </div>
+          <div class="pin-check">
+            <div class="label"><span>Delivery estimate</span></div>
+            <form class="inline-form" onsubmit="checkPin(event)">
+              <input id="pin" inputmode="numeric" pattern="[0-9]*" maxlength="6" placeholder="Enter pincode" aria-label="Pincode" autocomplete="postal-code">
+              <button type="submit">Check</button>
+            </form>
+            <div class="pin-out" id="pinOut" aria-live="polite"></div>
           </div>
           <div class="perks">
             <div><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 3h15v13H1zM16 8h4l3 3v5h-7"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
@@ -550,8 +578,106 @@ function stickyBar(){
 
 function track(name, params){ try{ window.egoTrack && window.egoTrack(name, params); } catch(e){} }
 
+/* ---------- saved (wishlist) — same list as the shop page ---------- */
+function readSaved(){ try{ return JSON.parse(localStorage.getItem('egosynk_saved') || '[]').filter(Number.isInteger); } catch(e){ return []; } }
+function paintSaved(){
+  const on = readSaved().includes(P.id);
+  const b = document.getElementById('saveBtn');
+  b.classList.toggle('on', on);
+  b.setAttribute('aria-pressed', on);
+  b.setAttribute('aria-label', on ? 'Remove from saved' : 'Save for later');
+}
+function toggleSaved(){
+  const list = readSaved();
+  const on = !list.includes(P.id);
+  const next = on ? [...list, P.id] : list.filter(id => id !== P.id);
+  try{ localStorage.setItem('egosynk_saved', JSON.stringify(next)); } catch(e){}
+  fetch('/.netlify/functions/wishlist', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ ids: next }) }).catch(() => {});
+  paintSaved();
+  showToast(on ? 'Saved · <a href="/#shop">See saved items</a>' : 'Removed from saved');
+  track(on ? 'add_to_wishlist' : 'remove_from_wishlist', { items: [{ item_id: P.id, item_name: P.name, price: P.price }] });
+}
+
+/* ---------- back-in-stock alert ---------- */
+function soldOutSizes(){ return isFreeSize(P) ? [] : P.sizes.filter(sz => left(P, sz) <= 0); }
+function notifyHtml(){
+  const whole = P.available === false;
+  const sizes = soldOutSizes();
+  if(!whole && !sizes.length) return '';
+  let remembered = '';
+  try{ remembered = localStorage.getItem('egosynk_email') || ''; } catch(e){}
+  const pick = whole || sizes.length === 0 ? ''
+    : sizes.length === 1 ? ` in <strong>${esc(sizes[0])}</strong><input type="hidden" id="notifySize" value="${esc(sizes[0])}">`
+    : ` in <select id="notifySize" aria-label="Size to be notified about">${sizes.map(s => `<option>${esc(s)}</option>`).join('')}</select>`;
+  return `<div class="notify" id="notifyBox">
+    <p>${whole ? 'Sold out right now.' : 'Sold out'}${pick}${whole ? '' : '?'} We'll email you once when it's back.</p>
+    <form class="inline-form" onsubmit="signUpNotify(event)">
+      <input type="email" id="notifyEmail" required placeholder="Your email" aria-label="Email for back-in-stock alert" autocomplete="email" value="${esc(remembered)}">
+      <button type="submit">Notify me</button>
+    </form>
+    <div class="form-msg" id="notifyMsg" aria-live="polite"></div>
+  </div>`;
+}
+async function signUpNotify(e){
+  e.preventDefault();
+  const msg = document.getElementById('notifyMsg');
+  const email = document.getElementById('notifyEmail').value.trim();
+  const sizeEl = document.getElementById('notifySize');
+  const btn = e.target.querySelector('button');
+  btn.disabled = true; msg.className = 'form-msg'; msg.textContent = '';
+  try{
+    const res = await fetch('/.netlify/functions/stock-alert', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ productId: P.id, size: sizeEl ? sizeEl.value : null, email }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if(!res.ok) throw new Error(data.error || 'Could not sign you up');
+    try{ localStorage.setItem('egosynk_email', email); } catch(err){}
+    msg.className = 'form-msg ok';
+    msg.textContent = `Done. We'll email ${email} when it's back${sizeEl ? ' in ' + sizeEl.value : ''}.`;
+    track('stock_alert_signup', { item_id: P.id });
+  } catch(err){
+    msg.className = 'form-msg err'; msg.textContent = err.message;
+  }
+  btn.disabled = false;
+}
+
+/* ---------- delivery estimate by pincode ---------- */
+// No courier API yet, so this estimates from the pincode's region, shipping from Mumbai.
+// Days are business days (Sundays skipped) and include 1–2 days to dispatch, matching the
+// shipping policy's "dispatched in 1–2, delivered in 3–7 business days".
+const METRO_PREFIXES = ['110', '560', '600', '700', '500', '411', '380', '122', '201'];
+function transitDays(pin){
+  const p3 = pin.slice(0, 3), p2 = pin.slice(0, 2);
+  if(/^(400|401|410|421)/.test(pin)) return { min: 1, max: 2, zone: 'Mumbai region' };
+  if(['78', '79', '18', '19'].includes(p2) || p3 === '744' || /^68255/.test(pin)) return { min: 5, max: 8, zone: 'Remote / North-East' };
+  if(METRO_PREFIXES.includes(p3)) return { min: 2, max: 4, zone: 'Metro city' };
+  if(p2 >= '40' && p2 <= '44' || p2 >= '36' && p2 <= '39') return { min: 2, max: 4, zone: 'West India' };
+  return { min: 3, max: 5, zone: 'Rest of India' };
+}
+function addBusinessDays(d, n){
+  const out = new Date(d);
+  while(n > 0){ out.setDate(out.getDate() + 1); if(out.getDay() !== 0) n--; }
+  return out;
+}
+function checkPin(e){
+  if(e) e.preventDefault();
+  const pin = document.getElementById('pin').value.trim();
+  const out = document.getElementById('pinOut');
+  if(!/^[1-8]\d{5}$/.test(pin)){ out.innerHTML = '<span style="color:var(--rust-bright)">Enter a valid 6-digit pincode</span>'; return; }
+  try{ localStorage.setItem('egosynk_pincode', pin); } catch(err){}
+  const t = transitDays(pin);
+  const fmt = d => d.toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short' });
+  const now = new Date();
+  out.innerHTML = `Delivery by <strong>${fmt(addBusinessDays(now, 1 + t.min))} – ${fmt(addBusinessDays(now, 2 + t.max))}</strong> to ${pin}
+    <small>${esc(t.zone)} · estimate, exact date in your tracking once shipped</small>`;
+  track('delivery_estimate', { zone: t.zone });
+}
+
 if(P){
   render();
+  paintSaved();
+  try{ const pin = localStorage.getItem('egosynk_pincode'); if(pin){ document.getElementById('pin').value = pin; checkPin(); } } catch(e){}
   // consent.js loads deferred, so report the view once it's there.
   addEventListener('load', () => track('view_item', { currency: 'INR', value: P.price, items: [{ item_id: P.id, item_name: P.name, item_category: DATA.category && DATA.category.name, price: P.price }] }));
   stickyBar();

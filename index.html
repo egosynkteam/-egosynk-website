@@ -237,6 +237,11 @@
   .refine-row .clear{color:var(--rust-bright);border-color:transparent;}
   .result-count{font-size:11px;color:var(--steel);margin-bottom:14px;letter-spacing:0.05em;}
   .card-spec{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--bone-dim);text-transform:uppercase;letter-spacing:0.04em;margin:-6px 0 10px;}
+  .heart{position:absolute;top:8px;right:8px;z-index:2;width:34px;height:34px;border-radius:50%;border:none;background:rgba(13,14,16,.72);color:var(--bone);display:flex;align-items:center;justify-content:center;cursor:pointer;}
+  .heart svg{width:16px;height:16px;}
+  .heart.on{color:var(--rust-bright);}
+  .heart.on svg{fill:currentColor;}
+  .heart:focus-visible{outline:2px solid var(--rust-bright);outline-offset:2px;}
   .grid-msg .linkish{background:none;border:none;color:var(--rust-bright);cursor:pointer;font:inherit;text-decoration:underline;}
   .grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;}
   @media(min-width:700px){.grid{grid-template-columns:repeat(3,1fr);gap:20px;}}
@@ -969,8 +974,51 @@ function newProductIds(){
 }
 const onSale = p => p.mrp && p.mrp > p.price;
 
+/* ---------- WISHLIST ---------- */
+// Saved product ids live in localStorage for everyone; logged-in customers also get them
+// stored on their account (wishlist function), merged both ways on page load.
+function readSaved(){
+  try{ return JSON.parse(localStorage.getItem('egosynk_saved') || '[]').filter(Number.isInteger); } catch(e){ return []; }
+}
+let saved = new Set(readSaved());
+function writeSaved(){
+  try{ localStorage.setItem('egosynk_saved', JSON.stringify([...saved])); } catch(e){}
+  fetch('/.netlify/functions/wishlist', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ ids: [...saved] }) }).catch(() => {});
+}
+async function syncSaved(){
+  try{
+    const res = await fetch('/.netlify/functions/wishlist');
+    if(!res.ok) return; // guest
+    const { ids } = await res.json();
+    const before = saved.size;
+    ids.forEach(id => saved.add(id));
+    if(saved.size !== ids.length || saved.size !== before){ writeSaved(); renderFilterRow(); renderProducts(); }
+  } catch(e){}
+}
+const HEART_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1 1.1L12 21l7.8-7.5 1-1.1a5.5 5.5 0 0 0 0-7.8z"/></svg>';
+function heartHtml(p){
+  const on = saved.has(p.id);
+  return `<button class="heart${on ? ' on' : ''}" data-heart="${p.id}" aria-pressed="${on}" aria-label="${on ? 'Remove from saved' : 'Save'} ${esc(p.name)}" onclick="toggleSaved(${p.id}, event)">${HEART_SVG}</button>`;
+}
+function toggleSaved(id, ev){
+  if(ev){ ev.preventDefault(); ev.stopPropagation(); }
+  const on = !saved.has(id);
+  on ? saved.add(id) : saved.delete(id);
+  writeSaved();
+  const p = products.find(x => x.id === id);
+  document.querySelectorAll(`[data-heart="${id}"]`).forEach(b => {
+    b.classList.toggle('on', on);
+    b.setAttribute('aria-pressed', on);
+    b.setAttribute('aria-label', `${on ? 'Remove from saved' : 'Save'} ${p ? p.name : ''}`);
+  });
+  renderFilterRow();
+  if(currentFilter === '__saved') renderProducts();
+  track(on ? 'add_to_wishlist' : 'remove_from_wishlist', p ? { items: [{ item_id: p.id, item_name: p.name, price: p.price }] } : {});
+}
+
 function inCollection(p, newIds){
   if(currentFilter === 'all') return true;
+  if(currentFilter === '__saved') return saved.has(p.id);
   if(currentFilter === '__new') return newIds.has(p.id);
   if(currentFilter === '__sale') return onSale(p);
   return p.cat === currentFilter;
@@ -1014,6 +1062,8 @@ function visibleProducts(){
 
 function renderFilterRow(){
   const all = [{id:'all', name:'All'}];
+  const savedCount = products.filter(p => saved.has(p.id)).length;
+  if(savedCount || currentFilter === '__saved') all.push({id:'__saved', name:`♥ Saved (${savedCount})`});
   if(products.length) all.push({id:'__new', name:'New in'});
   if(products.some(onSale)) all.push({id:'__sale', name:'Sale'});
   all.push(...categories);
@@ -1110,6 +1160,7 @@ function renderProducts(){
     <a class="card reveal${p.available === false ? ' sold-out' : ''}" style="--i:${i % 6}" href="/p/${encodeURIComponent(p.slug || p.id)}">
       <div class="card-img">
         ${p.available === false ? `<span class="card-tag sold-out-tag">SOLD OUT</span>` : (p.tag ? `<span class="card-tag">${esc(p.tag)}</span>` : '')}
+        ${heartHtml(p)}
         ${p.images && p.images.length
           ? `<img src="${media(p.images[0])}" alt="${esc(p.name)}" loading="lazy" decoding="async" style="view-transition-name:p-${p.id}">${p.images[1] ? `<img class="alt" src="${media(p.images[1])}" alt="" loading="lazy" decoding="async">` : ''}`
           : '<span class="placeholder-mark">ES</span>'}
@@ -1587,7 +1638,7 @@ async function restoreFromLink(){
 }
 restoreFromLink();
 applySettings({ announcement: { items: ['Compression sleeves','Performance compression wear','Training accessories','Free shipping over ₹999'] } });
-loadCatalog(); // fetches live products, then calls renderProducts() itself
+loadCatalog().then(syncSaved); // fetches live products, then calls renderProducts() itself
 updateCartUI();
 checkSession();
 </script>

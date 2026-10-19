@@ -2,6 +2,7 @@ const { getStore } = require('../lib/blob-store');
 const { isAdminAuthorized } = require('../lib/admin-auth');
 const { logEvent } = require('../lib/audit');
 const { getCategories, getSizeGuides } = require('../lib/settings');
+const { notifyRestock } = require('../lib/stock-alerts');
 
 const MEDIA_KEY = /^[a-f0-9]{16}\.(webp|jpg|png)$/;
 const str = (v, max) => String(v == null ? '' : v).trim().slice(0, max);
@@ -120,7 +121,13 @@ exports.handler = async (event) => {
 
       await logEvent(isNew ? 'product_created' : 'product_updated', 'admin', { id, name: product.name }, event);
 
-      return { statusCode: 200, body: JSON.stringify({ product }) };
+      // A size (or the whole product) coming back into stock emails everyone who asked.
+      let restock = { sent: 0 };
+      if (!isNew) {
+        try { restock = await notifyRestock(existing, product); } catch (err) { console.error('Restock alerts failed:', err); }
+      }
+
+      return { statusCode: 200, body: JSON.stringify({ product, restockEmails: restock.sent }) };
     }
 
     if (event.httpMethod === 'DELETE') {
