@@ -14,10 +14,8 @@ const idFromSlug = (slug) => { const m = /-(\d+)$/.exec(String(slug || '')) || /
 // Everything the public may see: visible products in visible categories, without tax
 // internals. Shared by get-catalog, product pages and the sitemap.
 async function getPublicCatalog() {
-  const store = getStore('catalog');
-  const { blobs } = await store.list();
   const [all, categories, ratings] = await Promise.all([
-    Promise.all(blobs.map((b) => store.get(b.key, { type: 'json' }))),
+    getStore('catalog').listValues().then((rows) => rows.map((r) => r.value)),
     getCategories(),
     getSummary(),
   ]);

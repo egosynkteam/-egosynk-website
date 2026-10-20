@@ -9,10 +9,8 @@ exports.handler = async (event) => {
   if (!t || !/^[a-f0-9]{32}$/.test(t)) return { statusCode: 400, body: JSON.stringify({ error: 'Bad link' }) };
   if (!(await allowRequest('restore-cart', event, 30, 10 * 60 * 1000))) return { statusCode: 429, body: '{}' };
   try {
-    const store = getStore('orders');
-    for (const b of (await store.list()).blobs) {
-      const o = await store.get(b.key, { type: 'json' });
-      if (o && o.restoreToken === t) {
+    for (const { value: o } of await getStore('orders').listValues()) {
+      if (o.restoreToken === t) {
         if (o.status !== 'pending') return { statusCode: 410, body: JSON.stringify({ error: 'This order was already completed' }) };
         return {
           statusCode: 200,

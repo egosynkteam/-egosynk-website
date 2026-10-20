@@ -10,14 +10,7 @@ exports.handler = async (event) => {
   }
 
   try {
-    const store = getStore('orders');
-    const { blobs } = await store.list();
-
-    const orders = [];
-    for (const b of blobs) {
-      const order = await store.get(b.key, { type: 'json' });
-      if (order) orders.push(order);
-    }
+    const orders = (await getStore('orders').listValues()).map((r) => r.value);
     orders.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 
     return { statusCode: 200, body: JSON.stringify({ orders }) };

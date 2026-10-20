@@ -58,6 +58,9 @@
   node_bundler = "esbuild"
   # product-page.js reads this template at runtime.
   included_files = ["product-template.html"]
+  # pg (Supabase Postgres, lib/db.js) ships as a plain module: bundling it trips over its
+  # optional native add-on (pg-native), which is never loaded.
+  external_node_modules = ["pg"]
 
 # Abandoned-checkout reminder emails (netlify/lib/abandoned.js), every 30 minutes.
 [functions."abandoned-carts"]

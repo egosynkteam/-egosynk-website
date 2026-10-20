@@ -309,6 +309,19 @@
           <button type="submit" class="secondary">Add admin</button>
         </form>
       </section>
+      <section class="settings-card" id="dbCard" hidden>
+        <h4>Database</h4>
+        <p class="muted" id="dbStatus">Loading…</p>
+        <p class="muted" style="margin:8px 0;">Moving to Postgres: 1 Set up, 2 Copy, 3 Verify, 4 Switch. Do it when no one is checking out. The old copy is kept, so you can switch back: Copy (it now copies back), Verify, Switch.</p>
+        <div class="row-actions" id="dbActions">
+          <button class="secondary" onclick="dbSetup()">1 · Set up</button>
+          <button class="secondary" onclick="dbRun('copy')" id="dbCopyBtn">2 · Copy</button>
+          <button class="secondary" onclick="dbRun('verify')">3 · Verify</button>
+          <button onclick="dbSwitch()" id="dbSwitchBtn">4 · Switch</button>
+        </div>
+        <div class="form-error" id="dbError"></div>
+        <div id="dbLog" class="muted" style="margin-top:10px;font-size:12px;line-height:1.6;"></div>
+      </section>
     </div>
     <div class="settings-grid">
       <section class="settings-card">
@@ -596,6 +609,8 @@ function enterApp(admin){
   document.getElementById('app').classList.remove('hidden');
   document.getElementById('whoami').textContent = `${admin.name || admin.email} · ${admin.role}`;
   document.getElementById('teamCard').hidden = admin.role !== 'owner';
+  document.getElementById('dbCard').hidden = admin.role !== 'owner';
+  if(admin.role === 'owner') loadDb();
   loadSettings();
   loadCatalog();
   loadOrders();
@@ -670,6 +685,76 @@ function renderTeam(users){
       ${currentAdmin && u.email !== currentAdmin.email ? `<button class="danger" onclick="removeAdmin('${esc(u.email)}')">Remove</button>` : '<span class="muted">you</span>'}
     </div>`).join('');
 }
+/* ---------- DATABASE (owner) ---------- */
+let dbInfo = null;
+const DB_NAME = { blobs: 'Netlify Blobs', postgres: 'Supabase Postgres' };
+async function dbCall(payload){
+  const res = await adminFetch('/.netlify/functions/admin-database', payload
+    ? { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(payload) } : undefined);
+  if(res.status === 401){ handleUnauthorized(); throw new Error('Signed out'); }
+  const out = await res.json().catch(() => ({}));
+  if(!res.ok){ const e = new Error(out.error || 'Failed'); e.data = out; throw e; }
+  return out;
+}
+async function loadDb(){
+  try{
+    dbInfo = await dbCall();
+    const other = dbInfo.backend === 'postgres' ? 'blobs' : 'postgres';
+    document.getElementById('dbStatus').innerHTML = !dbInfo.configured
+      ? 'Not connected: SUPABASE_DB_URL isn\'t set in Netlify yet, or the site hasn\'t been deployed since.'
+      : `Data is in <strong>${DB_NAME[dbInfo.backend]}</strong>${dbInfo.override ? ' (forced by DATA_BACKEND in Netlify)' : ''}${dbInfo.switched ? ` · switched ${new Date(dbInfo.switched.at).toLocaleString('en-IN')} by ${esc(dbInfo.switched.by)}` : ''}.`;
+    document.getElementById('dbCopyBtn').textContent = `2 · Copy to ${DB_NAME[other]}`;
+    document.getElementById('dbSwitchBtn').textContent = `4 · Switch to ${DB_NAME[other]}`;
+    document.querySelectorAll('#dbActions button').forEach(b => { b.disabled = !dbInfo.configured || !!dbInfo.override; });
+  } catch(e){ document.getElementById('dbStatus').textContent = 'Could not load: ' + e.message; }
+}
+function dbLog(html){ document.getElementById('dbLog').innerHTML = html; }
+function dbBusy(on){ document.querySelectorAll('#dbActions button').forEach(b => { b.disabled = on; }); }
+async function dbSetup(){
+  document.getElementById('dbError').textContent = '';
+  dbBusy(true);
+  try{ const r = await dbCall({ action: 'setup' }); dbLog(`Connected · Postgres ${esc(r.version)} · tables ready.`); }
+  catch(e){ document.getElementById('dbError').textContent = e.message; }
+  dbBusy(false);
+}
+const dbRow = r => r.copied != null
+  ? `${esc(r.store)}: ${r.copied} copied${r.removed ? ` · ${r.removed} removed` : ''}`
+  : `${r.ok ? '✓' : '✗'} ${esc(r.store)}: ${r.blobs} in Blobs · ${r.postgres} in Postgres${r.ok ? '' : ` · ${r.counts.missing} missing, ${r.counts.extra} extra, ${r.counts.different} different`}`;
+// One request per store keeps each call well inside the function time limit.
+async function dbRun(action){
+  if(action === 'copy' && !confirm(`Copy everything from ${DB_NAME[dbInfo.backend]} over to ${DB_NAME[dbInfo.backend === 'postgres' ? 'blobs' : 'postgres']}? Anything already there is replaced.`)) return;
+  document.getElementById('dbError').textContent = '';
+  dbBusy(true);
+  const lines = [];
+  try{
+    for(const store of dbInfo.stores){
+      dbLog(lines.join('<br>') + `<br>${action === 'copy' ? 'Copying' : 'Checking'} ${esc(store)}…`);
+      lines.push(dbRow(await dbCall({ action, store })));
+    }
+    dbLog(lines.join('<br>') + (action === 'verify' ? `<br><strong>${lines.every(l => l.startsWith('✓')) ? 'Everything matches. Ready to switch.' : 'Some stores differ: copy again, then verify.'}</strong>` : '<br><strong>Copied. Now verify.</strong>'));
+  } catch(e){
+    dbLog(lines.join('<br>'));
+    document.getElementById('dbError').textContent = e.message;
+  }
+  dbBusy(false);
+}
+async function dbSwitch(){
+  const to = dbInfo.backend === 'postgres' ? 'blobs' : 'postgres';
+  if(!confirm(`Switch the live store to ${DB_NAME[to]}? Everything is checked first; nothing switches if anything differs.`)) return;
+  document.getElementById('dbError').textContent = '';
+  dbBusy(true);
+  try{
+    const r = await dbCall({ action: 'switch', to });
+    dbLog(`<strong>Switched to ${DB_NAME[r.backend]}.</strong> Every function picks it up within about 10 seconds.`);
+    flash('Database switched');
+  } catch(e){
+    document.getElementById('dbError').textContent = e.message;
+    if(e.data && e.data.results) dbLog(e.data.results.map(dbRow).join('<br>'));
+  }
+  dbBusy(false);
+  loadDb();
+}
+
 async function loadTeam(){
   try{ renderTeam((await account('list-users')).users); } catch(err){ document.getElementById('teamList').textContent = err.message; }
 }

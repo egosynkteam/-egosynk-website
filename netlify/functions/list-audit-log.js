@@ -9,14 +9,7 @@ exports.handler = async (event) => {
   }
 
   try {
-    const store = getStore('audit-log');
-    const { blobs } = await store.list();
-
-    const logs = [];
-    for (const b of blobs) {
-      const entry = await store.get(b.key, { type: 'json' });
-      if (entry) logs.push(entry);
-    }
+    const logs = (await getStore('audit-log').listValues()).map((r) => r.value);
     logs.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
 
     return { statusCode: 200, body: JSON.stringify({ logs: logs.slice(0, 500) }) };

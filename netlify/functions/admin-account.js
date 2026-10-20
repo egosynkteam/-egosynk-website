@@ -98,7 +98,7 @@ exports.handler = async (event) => {
     }
 
     if (admin.role !== 'owner') return bad('Only the owner can manage the team', 403);
-    const all = (await Promise.all((await users.list()).blobs.map((b) => users.get(b.key, { type: 'json' })))).filter(Boolean);
+    const all = (await users.listValues()).map((r) => r.value);
 
     if (body.action === 'list-users') return ok({ users: all.map(publicUser) });
 

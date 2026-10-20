@@ -1,4 +1,5 @@
-const { getStore } = require('../lib/blob-store');
+const { getStore, currentBackend } = require('../lib/blob-store');
+const { replaceInvoiceSeries } = require('../lib/db');
 const { isAdminAuthorized } = require('../lib/admin-auth');
 const { logEvent } = require('../lib/audit');
 const { notifyFulfilment } = require('../lib/orders');
@@ -71,6 +72,8 @@ exports.handler = async (event) => {
       for (const b of (await invoices.list()).blobs) { await invoices.delete(b.key); counts.invoiceKeys++; }
       // Test buyers would otherwise be refused first-order codes after launch.
       for (const b of (await buyers.list()).blobs) { await buyers.delete(b.key); counts.buyers++; }
+      // On Postgres the invoice series lives in its own tables, not the `invoices` store.
+      if ((await currentBackend()) === 'postgres') await replaceInvoiceSeries({ counters: [], numbers: [] });
       await logEvent('test_data_reset', 'admin', counts, event);
       return ok({ reset: counts });
     }

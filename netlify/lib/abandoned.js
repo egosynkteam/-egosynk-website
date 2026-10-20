@@ -41,7 +41,7 @@ async function sendReminders(now = Date.now()) {
   const { abandonedCart: cfg } = await getSettings();
   if (!cfg || !cfg.enabled) return { skipped: 'disabled' };
   const store = getStore('orders');
-  const orders = (await Promise.all((await store.list()).blobs.map((b) => store.get(b.key, { type: 'json' })))).filter(Boolean);
+  const orders = (await store.listValues()).map((r) => r.value);
   const paidAfter = (email, t) => orders.some((o) => o.status === 'paid' &&
     String((o.shipping && o.shipping.email) || '').toLowerCase() === email && new Date(o.createdAt).getTime() >= t);
 

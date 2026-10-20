@@ -10,14 +10,10 @@ exports.handler = async (event) => {
     const session = await getSessionUser(event);
     if (!session) return { statusCode: 401, body: JSON.stringify({ error: 'Not logged in' }) };
 
-    const store = getStore('orders');
     const catalog = getStore('catalog');
-    const { blobs } = await store.list();
-
     const orders = [];
-    for (const b of blobs) {
-      const order = await store.get(b.key, { type: 'json' });
-      if (order && order.status === 'paid' && order.userId === session.user.id) {
+    for (const { value: order } of await getStore('orders').listValues()) {
+      if (order.status === 'paid' && order.userId === session.user.id) {
         // Exchange options only for orders still inside a window; the size list lets the
         // form offer only sizes the product actually comes in.
         const reasons = openReasons(order);

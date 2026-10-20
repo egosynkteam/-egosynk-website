@@ -9,9 +9,7 @@ const STATUSES = ['new', 'contacted', 'quoted', 'won', 'lost'];
 const OWNER_EMAIL = 'egosynkteam@gmail.com';
 
 async function listEnquiries() {
-  const store = getStore('enquiries');
-  const { blobs } = await store.list({ prefix: 'q/' });
-  const list = (await Promise.all(blobs.map((b) => store.get(b.key, { type: 'json' })))).filter(Boolean);
+  const list = (await getStore('enquiries').listValues({ prefix: 'q/' })).map((r) => r.value);
   return list.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 }
 

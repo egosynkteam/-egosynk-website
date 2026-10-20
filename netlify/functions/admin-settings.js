@@ -57,8 +57,7 @@ function cleanStore(d) {
 }
 
 async function allProducts() {
-  const catalog = getStore('catalog');
-  return (await Promise.all((await catalog.list()).blobs.map((b) => catalog.get(b.key, { type: 'json' })))).filter(Boolean);
+  return (await getStore('catalog').listValues()).map((r) => r.value);
 }
 
 async function cleanCoupons(list) {

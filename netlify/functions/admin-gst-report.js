@@ -47,11 +47,9 @@ exports.handler = async (event) => {
   }
 
   try {
-    const store = getStore('orders');
     const invoices = [];
-    for (const b of (await store.list()).blobs) {
-      const o = await store.get(b.key, { type: 'json' });
-      if (o && o.invoice && istMonth(o.invoice.date) === q.month) invoices.push({ order: o, inv: o.invoice });
+    for (const { value: o } of await getStore('orders').listValues()) {
+      if (o.invoice && istMonth(o.invoice.date) === q.month) invoices.push({ order: o, inv: o.invoice });
     }
     invoices.sort((a, b) => a.inv.number.localeCompare(b.inv.number));
 

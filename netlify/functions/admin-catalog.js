@@ -60,8 +60,7 @@ exports.handler = async (event) => {
 
   try {
     if (event.httpMethod === 'GET') {
-      const { blobs } = await store.list();
-      const products = (await Promise.all(blobs.map((b) => store.get(b.key, { type: 'json' })))).filter(Boolean);
+      const products = (await store.listValues()).map((r) => r.value);
       products.sort((a, b) => (a.sortOrder ?? a.id) - (b.sortOrder ?? b.id) || a.id - b.id);
       return { statusCode: 200, body: JSON.stringify({ products }) };
     }

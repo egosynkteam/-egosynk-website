@@ -8,10 +8,8 @@ const STATUSES = ['pending', 'approved', 'rejected'];
 const reviewKey = (productId, orderId) => `r/${Number(productId)}/${String(orderId)}`;
 
 async function listReviews({ productId, status } = {}) {
-  const store = getStore('reviews');
   const prefix = productId != null ? `r/${Number(productId)}/` : 'r/';
-  const { blobs } = await store.list({ prefix });
-  const all = (await Promise.all(blobs.map((b) => store.get(b.key, { type: 'json' })))).filter(Boolean);
+  const all = (await getStore('reviews').listValues({ prefix })).map((r) => r.value);
   return all
     .filter((r) => !status || r.status === status)
     .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));

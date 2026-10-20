@@ -5,7 +5,8 @@
 // HSN codes and rates below are the founder's best mapping under the Sept-2025 GST
 // rate structure — have the CA confirm them before go-live. A product in the catalog
 // store can override its category default by carrying its own `hsn` / `gstRate` fields.
-const { getStore } = require('./blob-store');
+const { getStore, currentBackend } = require('./blob-store');
+const { claimInvoiceSeq } = require('./db');
 
 const SUPPLIER = {
   tradeName: 'EGOSYNK',
@@ -141,12 +142,16 @@ async function withTaxInfo(items) {
 }
 
 // Claims the next number in this financial year's series, e.g. EGS/26-27/00001 (15 chars,
-// within GST's 16-char limit). This Blobs version has no compare-and-swap, so each number
-// is claimed by writing a marker key and reading it back; with a single store and low
-// order volume a collision is very unlikely, and the read-back catches the rare one.
+// within GST's 16-char limit). On Postgres the claim is atomic (db.claimInvoiceSeq).
+// Blobs has no compare-and-swap, so there each number is claimed by writing a marker key
+// and reading it back; with a single store and low order volume a collision is very
+// unlikely, and the read-back catches the rare one.
 async function allocateInvoiceNumber(orderId, date) {
-  const store = getStore('invoices');
   const fy = fyLabel(date);
+  if ((await currentBackend()) === 'postgres') {
+    return `EGS/${fy}/${String(await claimInvoiceSeq(orderId, fy)).padStart(5, '0')}`;
+  }
+  const store = getStore('invoices');
   const counterKey = `counter/${fy}`;
   let next = ((await store.get(counterKey, { type: 'json' })) || { last: 0 }).last + 1;
   for (let attempt = 0; attempt < 20; attempt++, next++) {
