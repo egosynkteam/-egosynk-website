@@ -3,6 +3,7 @@ const { isAdminAuthorized } = require('../lib/admin-auth');
 const { logEvent } = require('../lib/audit');
 const { getSettings, getCategories, getSizeGuides } = require('../lib/settings');
 const { getCoupons, normCode } = require('../lib/coupons');
+const { getShiprocketSettings } = require('../lib/shiprocket');
 
 // Admin editing of store settings and categories (Settings + Categories tabs).
 //   GET                                   -> { settings, categories, sizeGuides }
@@ -10,6 +11,7 @@ const { getCoupons, normCode } = require('../lib/coupons');
 //   POST { section: 'categories', data }  -> save the full ordered category list
 //   POST { section: 'coupons', data }     -> save the full coupon list
 //   POST { section: 'sizeGuides', data }  -> save all size charts { key: {title, sub, head, rows} }
+//   POST { section: 'shiprocket', data }  -> pickup nickname + default parcel per category
 const MEDIA_KEY = /^[a-f0-9]{16}\.(webp|jpg|png)$/;
 const str = (v, max) => String(v == null ? '' : v).trim().slice(0, max);
 const money = (v) => { const n = Math.round(Number(v)); return Number.isFinite(n) && n >= 0 ? n : null; };
@@ -93,6 +95,23 @@ async function cleanCoupons(list) {
   return { value: out };
 }
 
+// Shiprocket: the pickup address nickname exactly as Shiprocket lists it, and a default
+// parcel (grams, cm) per category used to pre-fill the ship form.
+async function cleanShiprocket(d) {
+  const pickupLocation = str(d && d.pickupLocation, 40);
+  if (!pickupLocation) return { error: 'Enter the pickup address nickname from Shiprocket' };
+  const cats = (await getCategories()).map((c) => c.id);
+  const n = (v, max) => { const x = Math.round(Number(v)); return x >= 1 && x <= max ? x : null; };
+  const packages = {};
+  for (const [cat, p] of Object.entries((d && d.packages) || {})) {
+    if (!cats.includes(cat)) continue;
+    const pkg = { weightG: n(p && p.weightG, 30000), l: n(p && p.l, 150), b: n(p && p.b, 150), h: n(p && p.h, 150) };
+    if (Object.values(pkg).some((v) => v === null)) return { error: `${cat}: weight 1–30000 g and each side 1–150 cm` };
+    packages[cat] = pkg;
+  }
+  return { value: { pickupLocation, packages } };
+}
+
 async function cleanSizeGuides(data) {
   if (!data || typeof data !== 'object' || Array.isArray(data)) return { error: 'Bad size guides' };
   const out = {};
@@ -154,8 +173,8 @@ exports.handler = async (event) => {
   }
   try {
     if (event.httpMethod === 'GET') {
-      const [settings, categories, sizeGuides, coupons] = await Promise.all([getSettings(), getCategories(), getSizeGuides(), getCoupons()]);
-      return { statusCode: 200, body: JSON.stringify({ settings, categories, sizeGuides, coupons }) };
+      const [settings, categories, sizeGuides, coupons, shiprocket] = await Promise.all([getSettings(), getCategories(), getSizeGuides(), getCoupons(), getShiprocketSettings()]);
+      return { statusCode: 200, body: JSON.stringify({ settings, categories, sizeGuides, coupons, shiprocket }) };
     }
     if (event.httpMethod === 'POST') {
       const { section, data } = JSON.parse(event.body || '{}');
@@ -163,6 +182,7 @@ exports.handler = async (event) => {
         : section === 'categories' ? await cleanCategories(data)
         : section === 'coupons' ? await cleanCoupons(data)
         : section === 'sizeGuides' ? await cleanSizeGuides(data)
+        : section === 'shiprocket' ? await cleanShiprocket(data)
         : { error: 'Unknown section' };
       if (cleaned.error) return { statusCode: 400, body: JSON.stringify({ error: cleaned.error }) };
       await getStore('settings').setJSON(section, cleaned.value);

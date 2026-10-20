@@ -2,9 +2,7 @@ const { getStore, currentBackend } = require('../lib/blob-store');
 const { replaceInvoiceSeries } = require('../lib/db');
 const { isAdminAuthorized } = require('../lib/admin-auth');
 const { logEvent } = require('../lib/audit');
-const { notifyFulfilment } = require('../lib/orders');
-
-const FULFILMENT_STATUSES = ['processing', 'shipped', 'delivered', 'cancelled'];
+const { notifyFulfilment, applyFulfilment, FULFILMENT_STATUSES } = require('../lib/orders');
 
 // Order management for admin.html's Orders tab. POST with an `action`:
 //   fulfilment — set shipping status (+ courier/tracking) on a PAID order
@@ -32,17 +30,8 @@ exports.handler = async (event) => {
       if (!order) return bad('Order not found', 404);
       if (order.status !== 'paid') return bad('Only paid orders can be fulfilled');
 
-      const now = new Date().toISOString();
-      const prev = order.fulfilment || { history: [] };
-      order.fulfilment = {
-        status: body.status,
-        courier: body.courier ? String(body.courier).slice(0, 60) : prev.courier || null,
-        tracking: body.tracking ? String(body.tracking).slice(0, 80) : prev.tracking || null,
-        updatedAt: now,
-        history: [...(prev.history || []), { status: body.status, at: now }],
-        notified: prev.notified || {},
-      };
-      const email = await notifyFulfilment(order, prev.tracking);
+      const prevTracking = applyFulfilment(order, { status: body.status, courier: body.courier, tracking: body.tracking });
+      const email = await notifyFulfilment(order, prevTracking);
       await orders.setJSON(order.orderId, order);
       await logEvent('order_fulfilment', 'admin', { orderId: order.orderId, status: body.status, emailed: email.sent }, event);
       return ok({ order, email });

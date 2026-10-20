@@ -99,6 +99,25 @@ async function markOrderPaid(orderId, paymentId, event, source) {
   return { order, newlyPaid: true };
 }
 
+const FULFILMENT_STATUSES = ['processing', 'shipped', 'delivered', 'cancelled'];
+
+// Sets the order's shipping status (+ courier, tracking number and link) and records it
+// in the history. Returns the previous tracking number for notifyFulfilment.
+function applyFulfilment(order, { status, courier, tracking, trackUrl }) {
+  const now = new Date().toISOString();
+  const prev = order.fulfilment || { history: [] };
+  order.fulfilment = {
+    status,
+    courier: courier ? String(courier).slice(0, 60) : prev.courier || null,
+    tracking: tracking ? String(tracking).slice(0, 80) : prev.tracking || null,
+    trackUrl: trackUrl || (tracking && tracking !== prev.tracking ? null : prev.trackUrl || null),
+    updatedAt: now,
+    history: [...(prev.history || []), { status, at: now }],
+    notified: prev.notified || {},
+  };
+  return prev.tracking;
+}
+
 function itemsLine(order) {
   return order.items
     .map((i) => `${escapeHtml(i.name)}${i.size ? ' (' + escapeHtml(i.size) + ')' : ''} × ${i.qty}`)
@@ -109,7 +128,7 @@ function shippedEmailHtml(order) {
   const f = order.fulfilment;
   const tracking = f.tracking
     ? `<p style="font-size:14px;line-height:1.6;">Courier: <strong>${escapeHtml(f.courier || '—')}</strong><br>Tracking number: <strong>${escapeHtml(f.tracking)}</strong></p>
-       <p style="font-size:12px;color:#8B8D93;line-height:1.6;">Use this number on the courier's website to follow your parcel.</p>`
+       ${f.trackUrl ? buttonHtml(f.trackUrl, 'Track my parcel') : '<p style="font-size:12px;color:#8B8D93;line-height:1.6;">Use this number on the courier\'s website to follow your parcel.</p>'}`
     : `<p style="font-size:14px;line-height:1.6;">We'll send the tracking number as soon as the courier assigns it.</p>`;
   return `
     <p style="font-size:14px;line-height:1.6;">Good news, ${escapeHtml(order.shipping.name)} — your order is on its way.</p>
@@ -152,4 +171,4 @@ async function notifyFulfilment(order, prevTracking) {
   return result;
 }
 
-module.exports = { markOrderPaid, notifyFulfilment, stockLeft };
+module.exports = { markOrderPaid, notifyFulfilment, applyFulfilment, FULFILMENT_STATUSES, stockLeft };

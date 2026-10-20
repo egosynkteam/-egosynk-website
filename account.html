@@ -120,7 +120,7 @@ function render(user, orders){
       <div class="order-card">
         <div class="order-head"><span>${new Date(o.paidAt).toLocaleDateString('en-IN', {day:'numeric', month:'short', year:'numeric'})}</span><span>${esc(o.orderId)}</span></div>
         ${o.items.map(i => `<div class="order-item">${esc(i.name)}${i.size ? ' ('+esc(i.size)+')' : ''} × ${i.qty} <a class="review-link" href="/p/${encodeURIComponent(i.id)}?review=${encodeURIComponent(o.orderId)}#reviews">Review</a></div>`).join('')}
-        <div class="order-status">${esc(o.fulfilment.status)}${o.fulfilment.tracking ? ` · ${o.fulfilment.courier ? esc(o.fulfilment.courier) + ' ' : ''}<span class="mono">${esc(o.fulfilment.tracking)}</span>` : ''}</div>
+        <div class="order-status">${esc(o.fulfilment.status)}${o.fulfilment.tracking ? ` · ${o.fulfilment.courier ? esc(o.fulfilment.courier) + ' ' : ''}<span class="mono">${esc(o.fulfilment.tracking)}</span>${o.fulfilment.trackUrl ? ` · <a href="${esc(o.fulfilment.trackUrl)}" target="_blank" rel="noopener">Track</a>` : ''}` : ''}</div>
         <div class="order-total">${o.invoiceNumber ? `<a class="order-invoice" href="/invoice.html?id=${encodeURIComponent(o.orderId)}">Invoice ${esc(o.invoiceNumber)}</a>` : ''}₹${(o.amount/100).toLocaleString('en-IN')}</div>
         ${exchangeHtml(o, idx)}
       </div>

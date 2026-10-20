@@ -88,6 +88,11 @@
   .danger-zone{margin-top:28px;padding:12px 14px;border:1px dashed var(--rust-bright);border-radius:6px;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;font-size:13px;}
   .fulfil{display:flex;flex-direction:column;gap:6px;min-width:170px;}
   .fulfil input,.fulfil select{padding:6px 8px;font-size:12px;}
+  .ship-box{margin-top:6px;padding:8px;border:1px solid var(--line);border-radius:4px;display:flex;flex-direction:column;gap:6px;font-size:12px;}
+  .ship-box .pkg{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;}
+  .ship-box .pkg input{width:100%;min-width:0;}
+  .ship-box .err{color:var(--rust-bright);}
+  .pkg-table input{width:70px;}
   .fulfil .status{align-self:flex-start;}
   .status.processing{background:rgba(168,166,160,0.15);color:var(--bone-dim);}
   .status.shipped{background:rgba(80,140,230,0.15);color:#7FA8F0;}
@@ -308,6 +313,15 @@
           </div>
           <button type="submit" class="secondary">Add admin</button>
         </form>
+      </section>
+      <section class="settings-card" id="shipCard">
+        <h4>Shipping (Shiprocket)</h4>
+        <p class="muted" id="shipStatus" style="margin-bottom:8px;"></p>
+        <div class="field"><label for="sr-pickup">Pickup address nickname (exactly as in Shiprocket → Pick Up Address)</label><input id="sr-pickup" maxlength="40"></div>
+        <p class="muted" style="margin:8px 0;">Default packed parcel per category: weight in grams, size in cm. The ship form adds up a mixed order and you can change it there. Couriers charge on the higher of actual and volumetric weight (L×B×H ÷ 5000).</p>
+        <div id="pkgWrap" style="overflow-x:auto;"></div>
+        <div class="form-error" id="shipError"></div>
+        <button class="secondary" onclick="saveShipping()" style="margin-top:8px;">Save shipping</button>
       </section>
       <section class="settings-card" id="dbCard" hidden>
         <h4>Database</h4>
@@ -612,6 +626,7 @@ function enterApp(admin){
   document.getElementById('dbCard').hidden = admin.role !== 'owner';
   if(admin.role === 'owner') loadDb();
   loadSettings();
+  loadShipStatus();
   loadCatalog();
   loadOrders();
   loadAudit();
@@ -1039,6 +1054,8 @@ async function loadSettings(){
     guidesCache = data.sizeGuides || {};
     sizeGuideKeys = Object.keys(guidesCache);
     couponsCache = data.coupons || [];
+    shipSettings = data.shiprocket || shipSettings;
+    renderShipping();
     renderCoupons();
     renderGuides();
     renderCategories();
@@ -1283,6 +1300,100 @@ async function saveSection(section, data, errEl){
   const out = await res.json();
   if(!res.ok){ errEl.textContent = out.error || 'Could not save'; errEl.style.display = 'block'; return null; }
   return out;
+}
+
+/* ---------- SHIPPING (Shiprocket) ---------- */
+let shipSettings = { pickupLocation: 'work', packages: {} };
+let shipConfigured = null;
+const PKG_FALLBACK = { weightG: 400, l: 30, b: 25, h: 5 };
+async function loadShipStatus(){
+  try{
+    const res = await adminFetch('/.netlify/functions/admin-shipping');
+    if(res.ok){ const d = await res.json(); shipConfigured = d.configured; shipSettings = { pickupLocation: d.pickupLocation, packages: d.packages }; }
+  } catch(e){}
+  renderShipping();
+  if(ordersCache.length) renderOrders();
+}
+function renderShipping(){
+  document.getElementById('shipStatus').textContent = shipConfigured === null ? ''
+    : shipConfigured ? 'Connected: the Shiprocket API login is set in Netlify.'
+    : 'Not connected: SHIPROCKET_EMAIL / SHIPROCKET_PASSWORD aren\'t set in Netlify yet, or the site hasn\'t been deployed since.';
+  document.getElementById('sr-pickup').value = shipSettings.pickupLocation || '';
+  const cats = categoriesCache.length ? categoriesCache : Object.keys(shipSettings.packages).map(id => ({ id, name: id }));
+  document.getElementById('pkgWrap').innerHTML = `<table class="cat-table pkg-table">
+    <thead><tr><th>Category</th><th>Weight g</th><th>L cm</th><th>B cm</th><th>H cm</th></tr></thead>
+    <tbody>${cats.map(c => { const p = shipSettings.packages[c.id] || PKG_FALLBACK; return `<tr data-cat="${esc(c.id)}">
+      <td>${esc(c.name)}</td>${['weightG','l','b','h'].map(k => `<td><input type="number" min="1" data-k="${k}" value="${p[k]}"></td>`).join('')}</tr>`; }).join('')}</tbody></table>`;
+}
+async function saveShipping(){
+  const errEl = document.getElementById('shipError');
+  errEl.style.display = 'none';
+  const packages = {};
+  document.querySelectorAll('#pkgWrap tr[data-cat]').forEach(tr => {
+    packages[tr.dataset.cat] = Object.fromEntries([...tr.querySelectorAll('input')].map(i => [i.dataset.k, Number(i.value)]));
+  });
+  const out = await saveSection('shiprocket', { pickupLocation: document.getElementById('sr-pickup').value.trim(), packages }, errEl);
+  if(out){ shipSettings = out.shiprocket; renderShipping(); flash('Shipping saved'); }
+}
+// Same rule as lib/shiprocket.js packageFor: weights add up, items stack.
+function packageFor(o){
+  let weightG = 0, l = 0, b = 0, h = 0;
+  for(const i of o.items){
+    const p = shipSettings.packages[i.cat] || PKG_FALLBACK;
+    weightG += p.weightG * i.qty; l = Math.max(l, p.l); b = Math.max(b, p.b); h += p.h * i.qty;
+  }
+  return { weightG: Math.max(weightG, 50), l: Math.max(l, 1), b: Math.max(b, 1), h: Math.min(Math.max(h, 1), 60) };
+}
+function shipHtml(o){
+  const s = o.shiprocket || {}, id = esc(o.orderId), f = o.fulfilment || {};
+  if(s.cancelled) return `<div class="ship-box"><b>Shiprocket: cancelled</b><span class="muted">${new Date(s.cancelled).toLocaleString('en-IN')}</span></div>`;
+  const booked = s.pickup && s.awb;
+  if(!booked){
+    if(!s.shipmentId && ['shipped','delivered','cancelled'].includes(f.status)) return '';
+    const p = s.package || packageFor(o);
+    return `<div class="ship-box">
+      <b>Ship with Shiprocket</b>
+      ${s.shipmentId ? `<span class="muted">Shiprocket order ${esc(s.orderId)} created${s.awb ? ` · AWB ${esc(s.awb)}` : ''}. Finish the remaining steps:</span>` : `<span class="muted">Parcel: grams · L · B · H cm</span>
+      <div class="pkg">${['weightG','l','b','h'].map(k => `<input type="number" min="1" id="pk-${k}-${id}" value="${p[k]}" aria-label="${k}">`).join('')}</div>`}
+      ${s.lastError ? `<span class="err">Last try: ${esc(s.lastError.message)}</span>` : ''}
+      <button onclick="shipOrder('${id}')" ${shipConfigured === false ? 'disabled title="Shiprocket login not set in Netlify"' : ''}>${s.shipmentId ? 'Retry' : 'Ship with Shiprocket'}</button>
+    </div>`;
+  }
+  const t = s.tracking;
+  return `<div class="ship-box">
+    <b>${esc(s.courier || 'Courier')} · AWB ${esc(s.awb)}</b>
+    <span class="muted">Pickup ${s.pickup.scheduledFor ? 'on ' + esc(s.pickup.scheduledFor) : 'requested'}${t ? ` · ${esc(t.status)} (checked ${new Date(t.checkedAt).toLocaleString('en-IN')})` : ''}</span>
+    ${s.lastError ? `<span class="err">${esc(s.lastError.message)}</span>` : ''}
+    <div class="row-actions">
+      ${s.labelUrl ? `<a href="${esc(s.labelUrl)}" target="_blank" rel="noopener">Label (PDF)</a>` : `<button class="secondary" onclick="shipAction('label','${id}')">Get label</button>`}
+      <a href="https://shiprocket.co/tracking/${encodeURIComponent(s.awb)}" target="_blank" rel="noopener">Tracking page</a>
+      <button class="secondary" onclick="shipAction('track','${id}')">Refresh tracking</button>
+      ${f.status !== 'delivered' ? `<button class="danger" onclick="shipAction('cancel','${id}')">Cancel shipment</button>` : ''}
+    </div>
+  </div>`;
+}
+async function shipCall(payload){
+  const res = await adminFetch('/.netlify/functions/admin-shipping', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(payload) });
+  if(res.status === 401){ handleUnauthorized(); return null; }
+  const out = await res.json().catch(() => ({}));
+  if(!res.ok){ alert(out.error || 'Shiprocket request failed'); if(out.order) loadOrders(); return null; }
+  return out;
+}
+async function shipOrder(orderId){
+  const val = k => { const el = document.getElementById(`pk-${k}-${orderId}`); return el ? Number(el.value) : undefined; };
+  const pkg = { weightG: val('weightG'), l: val('l'), b: val('b'), h: val('h') };
+  if(!confirm('Book this order with Shiprocket? This charges your Shiprocket wallet and emails the customer their tracking number.')) return;
+  const out = await shipCall({ action: 'ship', orderId, package: pkg.weightG ? pkg : undefined });
+  if(out){ flash(`Booked · AWB ${out.order.shiprocket.awb}`); loadOrders(); }
+}
+async function shipAction(action, orderId){
+  if(action === 'cancel' && !confirm('Cancel this shipment in Shiprocket? Only do this before the courier collects it.')) return;
+  const out = await shipCall({ action, orderId });
+  if(out){
+    if(action === 'label' && out.order.shiprocket.labelUrl) window.open(out.order.shiprocket.labelUrl, '_blank', 'noopener');
+    flash(action === 'track' ? `Status: ${out.order.shiprocket.tracking.status}` : 'Done');
+    loadOrders();
+  }
 }
 
 function fillGuideSelect(selected){
@@ -1551,6 +1662,7 @@ function renderOrders(orders){
           <button class="secondary" onclick="saveFulfilment('${id}')">Save</button>
           ${fstatus === 'cancelled' ? '<span class="muted">Refund + credit note needed</span>' : ''}
           ${['shipped','delivered'].includes(fstatus) ? `<span class="muted">${(f.notified || {})[fstatus] ? 'Customer emailed' : 'Not emailed yet'}</span>` : ''}
+          ${shipHtml(o)}
           ${o.exchange ? exchangeAdminHtml(o) : ''}
         </div>`
       : `<button class="danger" onclick="deleteOrder('${id}')">Delete</button>`;
