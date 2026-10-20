@@ -1,0 +1,20 @@
+# Runs `npm test` on every push and pull request. A red check on GitHub means something in
+# checkout, coupons, permissions, shipping, the database move or the pages broke.
+name: Tests
+on:
+  push:
+  pull_request:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      # In-memory Postgres for tests/db.test.js (not a site dependency, so not in package.json)
+      - run: npm i --no-save --legacy-peer-deps @electric-sql/pglite@0.5.7 @electric-sql/pglite-socket@0.2.10
+      - run: npm test
+      - run: npm audit --omit=dev --audit-level=high
