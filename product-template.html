@@ -225,6 +225,25 @@
   .size-modal table{width:100%;border-collapse:collapse;font-size:13px;}
   .size-modal th,.size-modal td{padding:9px 6px;border-bottom:1px solid var(--line);text-align:left;}
   .size-modal th{color:var(--steel);font-size:11px;text-transform:uppercase;}
+  /* WhatsApp chat: shown only when a number is set in admin → Settings → Social. */
+  .wa-btn{position:fixed;right:18px;bottom:22px;z-index:120;width:52px;height:52px;border-radius:50%;background:#25D366;color:#fff;
+    display:flex;align-items:center;justify-content:center;box-shadow:0 10px 28px rgba(0,0,0,.45);transition:transform .2s;}
+  .wa-btn:hover{transform:translateY(-2px);}
+  .wa-btn svg{width:28px;height:28px;}
+  @media(max-width:860px){.wa-btn{bottom:88px;}}
+  .finder{margin-top:18px;padding-top:16px;border-top:1px solid var(--line);}
+  .finder h4{font-size:14px;margin-bottom:4px;}
+  .finder .hint{font-size:12px;color:var(--steel);margin-bottom:12px;}
+  .finder .row{display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;}
+  .finder label{display:flex;flex-direction:column;gap:5px;font-size:12px;color:var(--bone-dim);flex:1;min-width:110px;}
+  .finder input{background:var(--surface-2);border:1px solid var(--line);color:var(--bone);padding:10px;border-radius:2px;font:inherit;font-size:16px;width:100%;}
+  .finder input:focus{outline:none;border-color:var(--rust);}
+  .finder .units{display:flex;border:1px solid var(--line);border-radius:2px;overflow:hidden;}
+  .finder .units button{background:none;border:none;color:var(--steel);padding:10px 12px;cursor:pointer;font:inherit;font-size:12px;min-height:42px;}
+  .finder .units button[aria-pressed=true]{background:var(--surface-2);color:var(--bone);}
+  .finder-out{margin-top:14px;font-size:14px;line-height:1.5;min-height:1.5em;}
+  .finder-out b{font-family:'Archivo Black',sans-serif;font-size:18px;}
+  .finder-out button{margin-top:10px;background:var(--rust);color:var(--bone);border:none;padding:10px 16px;border-radius:2px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;cursor:pointer;}
 
   /* the "fly to bag" ghost */
   .fly{position:fixed;z-index:500;pointer-events:none;border-radius:4px;object-fit:cover;
@@ -607,8 +626,83 @@ function openGuide(){
   if(!g) return;
   document.getElementById('guideBody').innerHTML = `<h3>${esc(g.title)}</h3><div class="sub">${esc(g.sub || '')}</div>
     <table><thead><tr>${g.head.map(h => `<th>${esc(h)}</th>`).join('')}</tr></thead>
-    <tbody>${g.rows.map(r => `<tr>${r.map(c => `<td>${esc(c)}</td>`).join('')}</tr>`).join('')}</tbody></table>`;
+    <tbody>${g.rows.map(r => `<tr>${r.map(c => `<td>${esc(c)}</td>`).join('')}</tr>`).join('')}</tbody></table>
+    ${finderHtml(g)}`;
   document.getElementById('guideOverlay').classList.add('open');
+}
+
+// Floating WhatsApp chat, only when a number is set in admin → Settings → Social.
+function whatsappButton(number, text){
+  const old = document.getElementById('waBtn');
+  if(old) old.remove();
+  const digits = String(number || '').replace(/\D/g, '');
+  if(digits.length < 10) return;
+  const a = document.createElement('a');
+  a.id = 'waBtn'; a.className = 'wa-btn'; a.target = '_blank'; a.rel = 'noopener';
+  a.href = `https://wa.me/${digits.length === 10 ? '91' + digits : digits}?text=${encodeURIComponent(text)}`;
+  a.setAttribute('aria-label', 'Chat with us on WhatsApp');
+  a.innerHTML = '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2zm0 18.2a8.2 8.2 0 0 1-4.2-1.2l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 1 1 12 20.2zm4.5-6.1c-.2-.1-1.5-.7-1.7-.8s-.4-.1-.6.1-.7.8-.8 1-.3.2-.5.1a6.7 6.7 0 0 1-3.3-2.9c-.3-.4.3-.4.7-1.4.1-.2 0-.3 0-.4l-.8-1.8c-.2-.5-.4-.4-.6-.4h-.5a1 1 0 0 0-.7.3 3 3 0 0 0-.9 2.2 5.2 5.2 0 0 0 1.1 2.7 11.8 11.8 0 0 0 4.5 4c1.7.7 2.3.8 3.2.7a2.7 2.7 0 0 0 1.8-1.3 2.2 2.2 0 0 0 .2-1.3c-.1-.1-.3-.2-.5-.3z"/></svg>';
+  a.addEventListener('click', () => { try{ window.egoTrack && window.egoTrack('contact_whatsapp', {}); } catch(e){} });
+  document.body.appendChild(a);
+}
+
+/* ---------- size finder: measurement → size, from the chart's ranges ---------- */
+// Measured columns are the ones whose header says inches, e.g. "Bicep (in)".
+function measuredColumns(g){
+  return g.head.map((h, i) => ({ i, label: h.replace(/\s*\(in\)\s*/i, '') })).filter(c => c.i > 0 && /\(in\)/i.test(g.head[c.i]));
+}
+const range = (cell) => { const m = String(cell).match(/(\d+(?:\.\d+)?)\s*[–-]\s*(\d+(?:\.\d+)?)/); return m ? [+m[1], +m[2]] : null; };
+// For each measurement, the sizes whose range holds it; the overall pick is the largest
+// size any measurement needs (so nothing is too tight). On a boundary (13 in for 11–13 /
+// 13–15) both fit: we name the snugger one and mention the other.
+function sizeFor(g, values){
+  let need = -1, alt = null;
+  for(const c of measuredColumns(g)){
+    const v = values[c.i];
+    if(!(v > 0)) continue;
+    const fits = g.rows.map((r, n) => [n, range(r[c.i])]).filter(([, rg]) => rg && v >= rg[0] && v <= rg[1]).map(([n]) => n);
+    if(!fits.length){
+      // Between two sizes (chart gaps like 30 → 32) or below the smallest: the next size up.
+      const up = g.rows.findIndex(r => { const rg = range(r[c.i]); return rg && rg[0] > v; });
+      if(up < 0) return { outside: true, label: c.label };
+      need = Math.max(need, up);
+      continue;
+    }
+    if(fits[0] > need){ need = fits[0]; alt = fits.length > 1 ? fits[1] : null; }
+    else if(fits[0] === need && fits.length > 1) alt = fits[1];
+  }
+  if(need < 0) return null;
+  return { size: g.rows[need][0], alt: alt != null && alt !== need ? g.rows[alt][0] : null };
+}
+let finderUnit = 'in';
+function finderHtml(g){
+  const cols = measuredColumns(g);
+  if(!cols.length) return '';
+  return `<div class="finder">
+    <h4>Find my size</h4>
+    <div class="hint">Measure around the widest part, relaxed, with a soft tape.</div>
+    <div class="row">${cols.map(c => `<label>${esc(c.label)}<input type="number" inputmode="decimal" min="1" step="0.1" data-col="${c.i}" oninput="runFinder()"></label>`).join('')}
+      <div class="units" role="group" aria-label="Units"><button type="button" aria-pressed="true" onclick="setUnit('in', this)">in</button><button type="button" aria-pressed="false" onclick="setUnit('cm', this)">cm</button></div>
+    </div>
+    <div class="finder-out" id="finderOut" aria-live="polite"></div>
+  </div>`;
+}
+function setUnit(u, btn){
+  finderUnit = u;
+  btn.parentElement.querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', b === btn));
+  runFinder();
+}
+function runFinder(){
+  const g = DATA.sizeGuide, out = document.getElementById('finderOut');
+  const values = {};
+  document.querySelectorAll('.finder input[data-col]').forEach(i => { const v = parseFloat(i.value); values[i.dataset.col] = v > 0 ? (finderUnit === 'cm' ? v / 2.54 : v) : 0; });
+  const r = sizeFor(g, values);
+  if(!r){ out.innerHTML = ''; return; }
+  if(r.outside){ out.innerHTML = `That ${esc(r.label.toLowerCase())} is above our largest size. Email support@egosynk.com and we'll help.`; return; }
+  const can = P.sizes.includes(r.size) && left(P, r.size) > 0;
+  out.innerHTML = `We suggest <b>${esc(r.size)}</b>${r.alt ? `. You're on the line, so ${esc(r.alt)} if you prefer a looser fit` : ''}.
+    ${can ? `<br><button type="button" onclick="pickSize('${esc(r.size)}');document.getElementById('guideOverlay').classList.remove('open');track('size_finder', { size: '${esc(r.size)}' });">Select ${esc(r.size)}</button>`
+      : P.sizes.includes(r.size) ? '<br>That size is sold out right now. Use "Notify me" below the sizes.' : ''}`;
 }
 
 let toastTimer;
@@ -739,6 +833,9 @@ function checkPin(e){
 }
 
 if(P){
+  whatsappButton((DATA.settings.social || {}).whatsapp, `Hi EGOSYNK, I have a question about ${P.name}`);
+  const linkSize = new URLSearchParams(location.search).get('size');
+  if(linkSize && P.sizes.includes(linkSize) && left(P, linkSize) > 0) size = linkSize;
   renderPromo();
   render();
   paintSaved();

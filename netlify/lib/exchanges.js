@@ -89,4 +89,4 @@ async function emailStatusUpdate(order) {
   return sendEmail({ to: order.shipping.email, subject: `Exchange ${ex.status} — ${order.orderId}`, html: emailWrapper(html) });
 }
 
-module.exports = { REASONS, ADMIN_STATUSES, needsSeal, openReasons, customerView, emailRequestReceived, emailStatusUpdate };
+module.exports = { REASONS, ADMIN_STATUSES, needsSeal, deliveredAt, openReasons, customerView, emailRequestReceived, emailStatusUpdate };

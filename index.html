@@ -172,6 +172,20 @@
   }
 
   /* MARQUEE */
+  /* What every order gets; the shipping line follows admin → Settings. */
+  .trust{list-style:none;display:grid;grid-template-columns:repeat(4,1fr);border-top:1px solid var(--line);background:var(--bg);}
+  .trust li{display:flex;align-items:center;gap:10px;padding:16px 20px;font-size:13px;color:var(--bone-dim);border-right:1px solid var(--line);}
+  .trust li:last-child{border-right:none;}
+  .trust svg{width:18px;height:18px;flex:none;fill:none;stroke:var(--rust-bright);stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
+  .trust a{color:inherit;text-decoration:underline;text-decoration-color:var(--line);text-underline-offset:3px;}
+  .trust a:hover{color:var(--bone);}
+  @media(max-width:860px){.trust{grid-template-columns:1fr 1fr;}.trust li:nth-child(2){border-right:none;}.trust li:nth-child(-n+2){border-bottom:1px solid var(--line);}}
+  @media(max-width:420px){.trust li{padding:13px 14px;font-size:12px;gap:8px;}}
+  /* WhatsApp chat: shown only when a number is set in admin → Settings → Social. */
+  .wa-btn{position:fixed;right:18px;bottom:22px;z-index:120;width:52px;height:52px;border-radius:50%;background:#25D366;color:#fff;
+    display:flex;align-items:center;justify-content:center;box-shadow:0 10px 28px rgba(0,0,0,.45);transition:transform .2s;}
+  .wa-btn:hover{transform:translateY(-2px);}
+  .wa-btn svg{width:28px;height:28px;}
   .marquee{
     border-top:1px solid var(--line);border-bottom:1px solid var(--line);
     padding:14px 0;overflow:hidden;white-space:nowrap;
@@ -552,6 +566,13 @@
   </div>
 </section>
 
+<ul class="trust" id="trustStrip" aria-label="Why shop with us">
+  <li><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M1 3h15v13H1zM16 8h4l3 3v5h-7"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg><span id="trustShip">Free shipping over ₹999</span></li>
+  <li><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg><a href="/refund-policy.html">7-day size exchange</a></li>
+  <li><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg><span>Secure UPI, card &amp; netbanking</span></li>
+  <li><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 2h9l5 5v15H6z"/><path d="M14 2v6h6M9 13h8M9 17h8"/></svg><span>GST invoice with every order</span></li>
+</ul>
+
 <div class="marquee" id="marquee">
   <div class="marquee-track mono" id="marqueeTrack"></div>
 </div>
@@ -818,6 +839,21 @@ function priceHtml(p){
   return `<span class="price">${inr(p.price)}</span>${off ? `<span class="mrp">${inr(p.mrp)}</span><span class="off">${off}% off</span>` : ''}`;
 }
 
+// Floating WhatsApp chat, only when a number is set in admin → Settings → Social.
+function whatsappButton(number, text){
+  const old = document.getElementById('waBtn');
+  if(old) old.remove();
+  const digits = String(number || '').replace(/\D/g, '');
+  if(digits.length < 10) return;
+  const a = document.createElement('a');
+  a.id = 'waBtn'; a.className = 'wa-btn'; a.target = '_blank'; a.rel = 'noopener';
+  a.href = `https://wa.me/${digits.length === 10 ? '91' + digits : digits}?text=${encodeURIComponent(text)}`;
+  a.setAttribute('aria-label', 'Chat with us on WhatsApp');
+  a.innerHTML = '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2zm0 18.2a8.2 8.2 0 0 1-4.2-1.2l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 1 1 12 20.2zm4.5-6.1c-.2-.1-1.5-.7-1.7-.8s-.4-.1-.6.1-.7.8-.8 1-.3.2-.5.1a6.7 6.7 0 0 1-3.3-2.9c-.3-.4.3-.4.7-1.4.1-.2 0-.3 0-.4l-.8-1.8c-.2-.5-.4-.4-.6-.4h-.5a1 1 0 0 0-.7.3 3 3 0 0 0-.9 2.2 5.2 5.2 0 0 0 1.1 2.7 11.8 11.8 0 0 0 4.5 4c1.7.7 2.3.8 3.2.7a2.7 2.7 0 0 0 1.8-1.3 2.2 2.2 0 0 0 .2-1.3c-.1-.1-.3-.2-.5-.3z"/></svg>';
+  a.addEventListener('click', () => { try{ window.egoTrack && window.egoTrack('contact_whatsapp', {}); } catch(e){} });
+  document.body.appendChild(a);
+}
+
 // Hero, banner, footer and social links, all editable in admin → Settings.
 function applySettings(st){
   const h = st.hero || {};
@@ -846,6 +882,10 @@ function applySettings(st){
   const hero = document.getElementById('hero');
   hero.classList.toggle('has-image', !!h.imageKey);
   hero.style.backgroundImage = h.imageKey ? `url('${media(h.imageKey)}')` : '';
+
+  const fee = Number(st.freeShippingThreshold);
+  document.getElementById('trustShip').textContent = fee > 0 ? `Free shipping over ₹${fee.toLocaleString('en-IN')}` : 'Free shipping on every order';
+  whatsappButton((st.social || {}).whatsapp, 'Hi EGOSYNK, I have a question');
 
   const a = st.announcement || {};
   const items = a.enabled === false ? [] : (a.items || []);

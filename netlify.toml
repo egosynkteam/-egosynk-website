@@ -50,6 +50,13 @@
   status = 200
   force = true
 
+# Google Merchant Center product feed (netlify/functions/merchant-feed.js).
+[[redirects]]
+  from = "/merchant-feed.xml"
+  to = "/.netlify/functions/merchant-feed"
+  status = 200
+  force = true
+
 # Admin-uploaded images, served by netlify/functions/media.js.
 [[redirects]]
   from = "/media/:key"
@@ -103,3 +110,8 @@
 # daily at 03:00 IST (21:30 UTC).
 [functions."nightly-cleanup"]
   schedule = "30 21 * * *"
+
+# "How's the fit?" review requests a few days after delivery (netlify/lib/review-requests.js),
+# daily at 11:00 IST (05:30 UTC).
+[functions."review-requests"]
+  schedule = "30 5 * * *"
