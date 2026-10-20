@@ -1,5 +1,5 @@
 const { getStore } = require('../lib/blob-store');
-const { isAdminAuthorized } = require('../lib/admin-auth');
+const { requireAdmin, bodyOf } = require('../lib/admin-auth');
 const { logEvent } = require('../lib/audit');
 const { getSettings, getCategories, getSizeGuides } = require('../lib/settings');
 const { getCoupons, normCode } = require('../lib/coupons');
@@ -168,9 +168,8 @@ async function cleanCategories(list) {
 }
 
 exports.handler = async (event) => {
-  if (!(await isAdminAuthorized(event))) {
-    return { statusCode: 401, body: JSON.stringify({ error: 'Unauthorized' }) };
-  }
+  const auth = await requireAdmin(event, event.httpMethod === 'GET' ? null : (bodyOf(event).section === 'coupons' ? 'coupons' : 'settings'));
+  if (auth.response) return auth.response;
   try {
     if (event.httpMethod === 'GET') {
       const [settings, categories, sizeGuides, coupons, shiprocket] = await Promise.all([getSettings(), getCategories(), getSizeGuides(), getCoupons(), getShiprocketSettings()]);

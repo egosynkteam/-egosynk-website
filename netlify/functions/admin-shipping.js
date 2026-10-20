@@ -1,5 +1,5 @@
 const { getStore } = require('../lib/blob-store');
-const { isAdminAuthorized } = require('../lib/admin-auth');
+const { requireAdmin } = require('../lib/admin-auth');
 const { logEvent } = require('../lib/audit');
 const { notifyFulfilment, applyFulfilment } = require('../lib/orders');
 const sr = require('../lib/shiprocket');
@@ -18,7 +18,8 @@ const sr = require('../lib/shiprocket');
 //   GET → { configured, defaults } for the ship form; GET ?check=1 also logs in to
 //   Shiprocket and lists its pickup addresses
 exports.handler = async (event) => {
-  if (!(await isAdminAuthorized(event))) return bad('Unauthorized', 401);
+  const auth = await requireAdmin(event, event.httpMethod === 'GET' ? 'orders' : 'ship');
+  if (auth.response) return auth.response;
   try {
     if (event.httpMethod === 'GET') {
       const out = { configured: sr.configured(), ...(await sr.getShiprocketSettings()) };

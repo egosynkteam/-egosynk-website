@@ -1,5 +1,5 @@
 const { getStore } = require('../lib/blob-store');
-const { isAdminAuthorized } = require('../lib/admin-auth');
+const { requireAdmin } = require('../lib/admin-auth');
 const { logEvent } = require('../lib/audit');
 const { STATUSES, listEnquiries } = require('../lib/enquiries');
 
@@ -8,9 +8,8 @@ const { STATUSES, listEnquiries } = require('../lib/enquiries');
 //   POST { action: 'update', key, status, note } -> set status / internal note
 //   POST { action: 'delete', key }
 exports.handler = async (event) => {
-  if (!(await isAdminAuthorized(event))) {
-    return { statusCode: 401, body: JSON.stringify({ error: 'Unauthorized' }) };
-  }
+  const auth = await requireAdmin(event, 'enquiries');
+  if (auth.response) return auth.response;
   const store = getStore('enquiries');
   try {
     if (event.httpMethod === 'GET') {

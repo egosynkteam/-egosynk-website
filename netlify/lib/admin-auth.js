@@ -51,7 +51,28 @@ async function destroyAdminSession(event) {
   if (token) await getStore('admin-sessions').delete(hashToken(token));
 }
 
-// Returns the signed-in admin { email, name, role } or null.
+// What an admin may do. Owners can do everything; for staff the owner ticks these in
+// Settings → Team. Staff saved before permissions existed get STAFF_DEFAULT.
+const PERMISSIONS = {
+  orders: 'View and update orders',
+  ship: 'Ship orders (Shiprocket)',
+  catalog: 'Edit products, photos and stock',
+  prices: 'Change prices and MRP',
+  coupons: 'Manage coupons',
+  settings: 'Store settings, categories, size guides, shipping',
+  reviews: 'Moderate reviews',
+  enquiries: 'Bulk enquiries',
+  reports: 'GST reports',
+  audit: 'View the audit log',
+};
+const STAFF_DEFAULT = ['orders', 'ship', 'reviews', 'enquiries'];
+
+function permissionsOf(user) {
+  if (user.role === 'owner') return Object.keys(PERMISSIONS);
+  return Array.isArray(user.permissions) ? user.permissions.filter((p) => PERMISSIONS[p]) : STAFF_DEFAULT;
+}
+
+// Returns the signed-in admin { email, name, role, permissions } or null.
 async function getAdmin(event) {
   const token = parseCookies(header(event, 'cookie'))[COOKIE];
   if (!token) return null;
@@ -59,7 +80,20 @@ async function getAdmin(event) {
   if (!session || new Date(session.expiresAt) < new Date()) return null;
   const user = await getStore('admin-users').get(session.email, { type: 'json' });
   if (!user || user.disabled) return null;
-  return { email: user.email, name: user.name, role: user.role };
+  return { email: user.email, name: user.name, role: user.role, permissions: permissionsOf(user) };
+}
+
+// Ends every session of one admin (password reset, "sign out everywhere"), optionally
+// keeping the caller's own.
+async function revokeSessions(email, keepEvent) {
+  const store = getStore('admin-sessions');
+  const keepToken = keepEvent ? parseCookies(header(keepEvent, 'cookie'))[COOKIE] : null;
+  const keep = keepToken ? hashToken(keepToken) : null;
+  let n = 0;
+  for (const { key, value } of await store.listValues()) {
+    if (value.email === email && key !== keep) { await store.delete(key); n++; }
+  }
+  return n;
 }
 
 // Gate for every admin endpoint. Resolves to the admin (also stored on event.admin for
@@ -73,13 +107,31 @@ async function isAdminAuthorized(event) {
   // Bootstrap only: the shared key works until the first owner account exists.
   const key = header(event, 'x-admin-key') || (event.queryStringParameters && event.queryStringParameters.key);
   if (key && process.env.ADMIN_SECRET && safeEqual(key, process.env.ADMIN_SECRET) && (await adminCount()) === 0) {
-    event.admin = { email: 'setup-key', name: 'Setup key', role: 'owner' };
+    event.admin = { email: 'setup-key', name: 'Setup key', role: 'owner', permissions: Object.keys(PERMISSIONS) };
     return event.admin;
   }
   return null;
 }
 
+// The request body as an object, or {} if it isn't JSON (for choosing a permission
+// before the handler's own try/catch).
+function bodyOf(event) {
+  try { return JSON.parse(event.body || '{}') || {}; } catch (e) { return {}; }
+}
+
+// Gate with a permission: { admin } or { response } (401 signed out, 403 not allowed —
+// the page shows a 403 instead of signing the person out). perm 'owner' = owners only.
+async function requireAdmin(event, perm) {
+  const admin = await isAdminAuthorized(event);
+  if (!admin) return { response: { statusCode: 401, body: JSON.stringify({ error: 'Unauthorized' }) } };
+  if (perm && (perm === 'owner' ? admin.role !== 'owner' : !admin.permissions.includes(perm))) {
+    const what = perm === 'owner' ? 'Only the owner can do this' : `Your account doesn't have the "${PERMISSIONS[perm]}" permission`;
+    return { admin, response: { statusCode: 403, body: JSON.stringify({ error: `${what}. Ask the owner.` }) } };
+  }
+  return { admin };
+}
+
 module.exports = {
-  isAdminAuthorized, getAdmin, adminCount, createAdminSession, destroyAdminSession,
-  adminCookie, clearAdminCookie, safeEqual, HEADER,
+  isAdminAuthorized, requireAdmin, getAdmin, adminCount, createAdminSession, destroyAdminSession,
+  revokeSessions, bodyOf, adminCookie, clearAdminCookie, safeEqual, HEADER, PERMISSIONS, STAFF_DEFAULT, permissionsOf,
 };

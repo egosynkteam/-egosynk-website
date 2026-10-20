@@ -1,5 +1,5 @@
 const { getStore } = require('../lib/blob-store');
-const { isAdminAuthorized } = require('../lib/admin-auth');
+const { requireAdmin } = require('../lib/admin-auth');
 
 // One-time migration: loads the original 16 hardcoded products (that used to live as a
 // JS array inside index.html) into the `catalog` Blobs store. Idempotent by design —
@@ -26,9 +26,8 @@ const SEED_PRODUCTS = [
 ];
 
 exports.handler = async (event) => {
-  if (!(await isAdminAuthorized(event))) {
-    return { statusCode: 401, body: JSON.stringify({ error: 'Unauthorized' }) };
-  }
+  const auth = await requireAdmin(event, 'owner');
+  if (auth.response) return auth.response;
   if (event.httpMethod !== 'POST') {
     return { statusCode: 405, body: 'Method Not Allowed' };
   }

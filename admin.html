@@ -45,7 +45,27 @@
   .mini-table td.num,.mini-table th.num{text-align:right;font-variant-numeric:tabular-nums;}
   .attn{display:flex;justify-content:space-between;gap:10px;padding:8px 0;border-bottom:1px solid var(--line);font-size:13px;}
   .attn button{padding:4px 10px;font-size:11px;}
-  .team-row{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--line);font-size:13px;}
+  .team-row{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--line);font-size:13px;flex-wrap:wrap;}
+  .team-row .perm-grid{flex-basis:100%;}
+  .perm-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:4px 12px;margin:6px 0;font-size:12px;}
+  .perm-grid label,.field .perm-grid label{display:flex;align-items:center;gap:6px;color:var(--bone-dim);text-transform:none;letter-spacing:0;font-size:12px;margin:0;font-family:inherit;}
+  .perm-grid input,.field .perm-grid input{width:auto;flex:none;margin:0;padding:0;}
+  .perm-grid label,.field .perm-grid label{justify-content:flex-start;text-align:left;}
+  .gate .link{background:none;border:none;color:var(--steel);text-decoration:underline;font-size:12px;padding:4px 0;margin-top:8px;width:auto;cursor:pointer;}
+  .row-archived td:not(.row-actions){opacity:.55;}
+  /* Phones: tabs scroll sideways, and the Orders / Catalog tables become stacked cards. */
+  @media (max-width:760px){
+    .top{flex-wrap:wrap;gap:8px;}
+    .tabs{overflow-x:auto;white-space:nowrap;scrollbar-width:none;}
+    .tab-btn{flex:none;}
+    table.cards thead{display:none;}
+    table.cards,table.cards tbody,table.cards tr,table.cards td{display:block;width:100%;}
+    table.cards tr{border:1px solid var(--line);border-radius:6px;margin-bottom:12px;padding:6px 12px;}
+    table.cards td{border:none;padding:5px 0;}
+    table.cards td[data-label]::before{content:attr(data-label);display:block;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--steel);margin-bottom:2px;}
+    table.cards td.row-actions{display:flex;flex-wrap:wrap;gap:6px;}
+    .fulfil{min-width:0;}
+  }
   .gate button{width:100%;}
 
   .top{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;}
@@ -138,6 +158,29 @@
     <input type="email" id="li-email" placeholder="Email" autocomplete="username" required>
     <input type="password" id="li-pass" placeholder="Password" autocomplete="current-password" required>
     <button type="submit">Sign in</button>
+    <button type="button" class="link" onclick="showGate('forgot')">Forgot password?</button>
+  </form>
+  <form id="forgotForm" onsubmit="requestReset(event)" hidden>
+    <p class="muted" style="margin:10px 0 4px;">Enter your admin email. If it has an account, we'll email a reset link that works for 1 hour.</p>
+    <input type="email" id="fg-email" placeholder="Email" autocomplete="username" required>
+    <button type="submit">Email me a reset link</button>
+    <button type="button" class="link" onclick="showGate('recover')">Email not working? Reset with the setup key</button>
+    <button type="button" class="link" onclick="showGate('login')">← Back to sign in</button>
+  </form>
+  <form id="recoverForm" onsubmit="recoverOwner(event)" hidden>
+    <p class="muted" style="margin:10px 0 4px;">Owner recovery: the setup key is <strong>ADMIN_SECRET</strong> in Netlify → Environment variables. It resets the owner's password and signs that account out everywhere.</p>
+    <input type="password" id="rc-key" placeholder="Setup key (ADMIN_SECRET)" required>
+    <input type="email" id="rc-email" placeholder="Owner email" autocomplete="username" required>
+    <input type="password" id="rc-pass" placeholder="New password (min 10 characters)" autocomplete="new-password" minlength="10" required>
+    <input type="password" id="rc-pass2" placeholder="Repeat new password" autocomplete="new-password" minlength="10" required>
+    <button type="submit">Reset owner password</button>
+    <button type="button" class="link" onclick="showGate('login')">← Back to sign in</button>
+  </form>
+  <form id="resetForm" onsubmit="resetPassword(event)" hidden>
+    <p class="muted" style="margin:10px 0 4px;">Choose a new password. Every device signed in to this account will be signed out.</p>
+    <input type="password" id="rs-pass" placeholder="New password (min 10 characters)" autocomplete="new-password" minlength="10" required>
+    <input type="password" id="rs-pass2" placeholder="Repeat new password" autocomplete="new-password" minlength="10" required>
+    <button type="submit">Save new password</button>
   </form>
   <form id="setupForm" onsubmit="setupOwner(event)" hidden>
     <p class="muted" style="margin:10px 0 4px;">First-time setup: create the owner account. Enter the current admin key once to prove it's you; after this the key stops working and everyone signs in with email + password.</p>
@@ -196,6 +239,9 @@
     <div class="toolbar">
       <h2 style="margin:0;">Catalog / Inventory</h2>
       <div class="row-actions">
+        <select id="catalogFilter" onchange="renderCatalog()" aria-label="Show products">
+          <option value="active">On the store</option><option value="archived">Archived</option><option value="all">All</option>
+        </select>
         <button class="secondary" onclick="loadCatalog()">Refresh</button>
         <button onclick="openProductForm()">+ Add Product</button>
       </div>
@@ -301,6 +347,8 @@
           </div>
           <button type="submit" class="secondary">Change password</button>
         </form>
+        <p class="muted" style="margin-top:12px;">Changing your password signs out your other devices. Lost a phone or laptop?</p>
+        <button class="secondary" onclick="logoutAll()" style="margin-top:6px;">Sign out everywhere</button>
       </section>
       <section class="settings-card" id="teamCard" hidden>
         <h4>Team (admins)</h4>
@@ -315,6 +363,7 @@
             <div class="field"><label for="tm-pass">Temporary password</label><input type="password" id="tm-pass" minlength="10" autocomplete="new-password" required></div>
             <div class="field"><label for="tm-role">Role</label><select id="tm-role"><option value="staff">Staff</option><option value="owner">Owner</option></select></div>
           </div>
+          <div class="field"><label>Staff can (owners can do everything)</label><div class="perm-grid" id="tm-perms"></div></div>
           <button type="submit" class="secondary">Add admin</button>
         </form>
       </section>
@@ -425,7 +474,7 @@
         <button class="secondary" onclick="loadOrders()">Refresh</button>
       </div>
     </div>
-    <div class="gst-box">
+    <div class="gst-box" id="gstBox">
       <div><strong>GST returns (GSTR-1)</strong> <span class="muted">— CSVs in the GST offline tool's layout, for you or your CA</span></div>
       <div class="row-actions">
         <input type="month" id="gstMonth">
@@ -440,7 +489,7 @@
       <div class="form-error" id="gstError"></div>
     </div>
     <div id="ordersWrap"><div class="msg">Loading…</div></div>
-    <div class="danger-zone">
+    <div class="danger-zone" id="resetZone">
       <span><strong>Before launch:</strong> <span class="muted">wipe every test order and restart invoice numbering at 00001. Only works while Razorpay is on test keys.</span></span>
       <button class="danger" onclick="resetTestData()">Reset test data</button>
     </div>
@@ -620,8 +669,7 @@ async function account(action, data){
 function showGate(mode, msg){
   document.getElementById('app').classList.add('hidden');
   document.getElementById('gate').classList.remove('hidden');
-  document.getElementById('loginForm').hidden = mode !== 'login';
-  document.getElementById('setupForm').hidden = mode !== 'setup';
+  ['login', 'setup', 'forgot', 'recover', 'reset'].forEach(m => { document.getElementById(m + 'Form').hidden = mode !== m; });
   document.getElementById('gateMsg').textContent = msg || '';
 }
 
@@ -632,19 +680,28 @@ function enterApp(admin){
   document.getElementById('whoami').textContent = `${admin.name || admin.email} · ${admin.role}`;
   document.getElementById('teamCard').hidden = admin.role !== 'owner';
   document.getElementById('dbCard').hidden = admin.role !== 'owner';
+  document.getElementById('resetZone').hidden = admin.role !== 'owner';
+  document.getElementById('gstBox').hidden = !(admin.permissions || []).includes('reports');
+  // Tabs this account can't use are hidden (the server refuses them anyway).
+  const TAB_PERM = { dashboard: 'orders', orders: 'orders', reviews: 'reviews', enquiries: 'enquiries', coupons: 'coupons',
+    categories: 'settings', guides: 'settings', audit: 'audit' };
+  document.querySelectorAll('.tab-btn').forEach(b => { const p = TAB_PERM[b.dataset.tab]; b.hidden = !!p && !can(p); });
+  const first = [...document.querySelectorAll('.tab-btn')].find(b => !b.hidden);
+  if(document.querySelector('.tab-btn.active').hidden && first) switchTab(first.dataset.tab);
   if(admin.role === 'owner') loadDb();
   loadSettings();
-  loadShipStatus();
   loadCatalog();
-  loadOrders();
-  loadAudit();
-  refreshPendingBadge();
-  loadEnquiries();
+  if(can('orders')){ loadShipStatus(); loadOrders(); }
+  if(can('audit')) loadAudit();
+  if(can('reviews')) refreshPendingBadge();
+  if(can('enquiries')) loadEnquiries();
   if(admin.role === 'owner') loadTeam();
 }
 
 async function boot(){
   sessionStorage.removeItem('egosynk_admin_key'); // the old shared key is no longer kept in the browser
+  const m = /^#reset=([a-f0-9]{64})$/.exec(location.hash);
+  if(m){ resetToken = m[1]; history.replaceState(null, '', location.pathname); showGate('reset'); return; }
   try{
     const st = await account('status');
     if(st.admin) enterApp(st.admin);
@@ -700,14 +757,81 @@ async function changePassword(e){
 }
 
 /* ---------- TEAM (owner only) ---------- */
+// Labels match PERMISSIONS in lib/admin-auth.js.
+const PERMS = {
+  orders: 'View & update orders', ship: 'Ship orders', catalog: 'Edit products & stock', prices: 'Change prices & MRP',
+  coupons: 'Coupons', settings: 'Store settings', reviews: 'Reviews', enquiries: 'Bulk enquiries', reports: 'GST reports', audit: 'Audit log',
+};
+const STAFF_DEFAULT = ['orders', 'ship', 'reviews', 'enquiries'];
+const permBoxes = (id, selected, disabled) => Object.entries(PERMS).map(([k, label]) =>
+  `<label><input type="checkbox" data-perm="${k}" ${selected.includes(k) ? 'checked' : ''} ${disabled ? 'disabled' : ''}>${label}</label>`).join('');
+const checkedPerms = (id) => [...document.querySelectorAll(`#${id} input[data-perm]:checked`)].map(i => i.dataset.perm);
+const can = (perm) => !!(currentAdmin && (currentAdmin.permissions || []).includes(perm));
+
 function renderTeam(users){
-  document.getElementById('teamList').innerHTML = users.map(u => `
+  document.getElementById('tm-perms').innerHTML = permBoxes('tm-perms', STAFF_DEFAULT);
+  document.getElementById('teamList').innerHTML = users.map((u, i) => {
+    const self = currentAdmin && u.email === currentAdmin.email;
+    return `
     <div class="team-row">
-      <div><strong>${esc(u.name)}</strong> <span class="muted">${esc(u.email)} · ${esc(u.role)}</span>
+      <div><strong>${esc(u.name)}</strong> <span class="muted">${esc(u.email)} · ${esc(u.role)}${u.disabled ? ' · <span class="status pending">disabled</span>' : ''}</span>
         <div class="muted">${u.lastLoginAt ? 'Last sign-in ' + new Date(u.lastLoginAt).toLocaleString('en-IN') : 'Never signed in'}</div></div>
-      ${currentAdmin && u.email !== currentAdmin.email ? `<button class="danger" onclick="removeAdmin('${esc(u.email)}')">Remove</button>` : '<span class="muted">you</span>'}
-    </div>`).join('');
+      ${self ? '<span class="muted">you</span>' : `<div class="row-actions">
+        <select id="tu-role-${i}" onchange="document.getElementById('tu-perms-${i}').querySelectorAll('input').forEach(c => c.disabled = this.value === 'owner')">
+          <option value="staff" ${u.role === 'staff' ? 'selected' : ''}>Staff</option><option value="owner" ${u.role === 'owner' ? 'selected' : ''}>Owner</option></select>
+        <label class="muted" style="display:flex;align-items:center;gap:4px;margin:0;text-transform:none;letter-spacing:0;"><input type="checkbox" id="tu-dis-${i}" ${u.disabled ? 'checked' : ''}>Disabled</label>
+        <button class="secondary" onclick="saveAdmin(${i}, '${esc(u.email)}')">Save</button>
+        <button class="secondary" onclick="setAdminPassword('${esc(u.email)}')">Set password</button>
+        <button class="danger" onclick="removeAdmin('${esc(u.email)}')">Remove</button></div>
+      <div class="perm-grid" id="tu-perms-${i}">${permBoxes('tu-perms-' + i, u.permissions || [], u.role === 'owner')}</div>`}
+    </div>`;
+  }).join('');
 }
+async function saveAdmin(i, email){
+  try{
+    renderTeam((await account('update-user', { email, role: document.getElementById('tu-role-' + i).value,
+      permissions: checkedPerms('tu-perms-' + i), disabled: document.getElementById('tu-dis-' + i).checked })).users);
+    flash('Admin updated');
+  } catch(err){ alert(err.message); }
+}
+async function setAdminPassword(email){
+  const password = prompt(`New temporary password for ${email} (min 10 characters). Share it privately; they're signed out everywhere.`);
+  if(!password) return;
+  try{ renderTeam((await account('set-password', { email, password })).users); flash('Password set'); } catch(err){ alert(err.message); }
+}
+async function logoutAll(){
+  if(!confirm('Sign out of the admin on every device, including this one?')) return;
+  try{ await account('logout-all'); } catch(e){}
+  location.reload();
+}
+async function requestReset(e){
+  e.preventDefault();
+  try{
+    await account('request-reset', { email: document.getElementById('fg-email').value });
+    showGate('login', 'If that email has an admin account, a reset link is on its way. (Email not set up yet? Use "Reset with the setup key".)');
+  } catch(err){ document.getElementById('gateMsg').textContent = err.message; }
+}
+async function recoverOwner(e){
+  e.preventDefault();
+  const v = id => document.getElementById(id).value;
+  if(v('rc-pass') !== v('rc-pass2')){ document.getElementById('gateMsg').textContent = 'The passwords don\u2019t match.'; return; }
+  try{
+    await account('recover', { setupKey: v('rc-key'), email: v('rc-email'), password: v('rc-pass') });
+    e.target.reset();
+    showGate('login', 'Password reset. Sign in with the new password.');
+  } catch(err){ document.getElementById('gateMsg').textContent = err.message; }
+}
+async function resetPassword(e){
+  e.preventDefault();
+  const v = id => document.getElementById(id).value;
+  if(v('rs-pass') !== v('rs-pass2')){ document.getElementById('gateMsg').textContent = 'The passwords don\u2019t match.'; return; }
+  try{
+    await account('reset-password', { token: resetToken, password: v('rs-pass') });
+    resetToken = null;
+    showGate('login', 'Password changed. Sign in with the new password.');
+  } catch(err){ document.getElementById('gateMsg').textContent = err.message; }
+}
+let resetToken = null;
 /* ---------- DATABASE (owner) ---------- */
 let dbInfo = null;
 const DB_NAME = { blobs: 'Netlify Blobs', postgres: 'Supabase Postgres' };
@@ -787,7 +911,7 @@ async function addAdmin(e){
   errEl.style.display = 'none';
   const val = (id) => document.getElementById(id).value;
   try{
-    const out = await account('add-user', { name: val('tm-name'), email: val('tm-email'), password: val('tm-pass'), role: val('tm-role') });
+    const out = await account('add-user', { name: val('tm-name'), email: val('tm-email'), password: val('tm-pass'), role: val('tm-role'), permissions: checkedPerms('tm-perms') });
     e.target.reset();
     renderTeam(out.users);
     flash('Admin added — share the password with them privately');
@@ -833,28 +957,34 @@ function renderCatalog(){
     return;
   }
   const catName = (id) => (categoriesCache.find(c => c.id === id) || {}).name || id;
-  const rows = catalogCache.map(p => `
-    <tr class="${p.visible === false ? 'row-hidden' : ''}">
-      <td>${p.images && p.images[0] ? `<img class="thumb" src="${mediaUrl(p.images[0])}" alt="">` : '<div class="thumb empty">—</div>'}</td>
-      <td>${esc(p.name)}${p.tag ? ' <span class="muted">('+esc(p.tag)+')</span>' : ''}${p.colour ? '<br><span class="muted">'+esc(p.colour)+'</span>' : ''}</td>
-      <td>${esc(catName(p.cat))}</td>
-      <td>₹${p.price.toLocaleString('en-IN')}${p.mrp ? `<br><span class="muted" style="text-decoration:line-through">₹${p.mrp.toLocaleString('en-IN')}</span>` : ''}</td>
-      <td>${esc((p.sizes||[]).join(', '))}</td>
-      <td>${p.stockBySize ? esc(formatStock(p.stockBySize)) : '<span class="muted">untracked</span>'}</td>
-      <td>
-        <span class="status ${p.available}">${p.available ? 'Available' : 'Sold Out'}</span>
-        ${p.visible === false ? '<br><span class="status pending" style="margin-top:4px;display:inline-block">Hidden</span>' : ''}
+  const filter = document.getElementById('catalogFilter').value;
+  const list = catalogCache.filter(p => filter === 'all' || (filter === 'archived' ? p.archived : !p.archived));
+  const edit = can('catalog');
+  if(!list.length){ wrap.innerHTML = `<div class="msg">${filter === 'archived' ? 'Nothing archived.' : 'No products here.'}</div>`; return; }
+  const rows = list.map(p => `
+    <tr class="${p.archived ? 'row-archived' : p.visible === false ? 'row-hidden' : ''}">
+      <td data-label="Photo">${p.images && p.images[0] ? `<img class="thumb" src="${mediaUrl(p.images[0])}" alt="">` : '<div class="thumb empty">—</div>'}</td>
+      <td data-label="Name">${esc(p.name)}${p.tag ? ' <span class="muted">('+esc(p.tag)+')</span>' : ''}${p.colour ? '<br><span class="muted">'+esc(p.colour)+'</span>' : ''}</td>
+      <td data-label="Category">${esc(catName(p.cat))}</td>
+      <td data-label="Price">₹${p.price.toLocaleString('en-IN')}${p.mrp ? `<br><span class="muted" style="text-decoration:line-through">₹${p.mrp.toLocaleString('en-IN')}</span>` : ''}</td>
+      <td data-label="Sizes">${esc((p.sizes||[]).join(', '))}</td>
+      <td data-label="Stock">${p.stockBySize ? esc(formatStock(p.stockBySize)) : '<span class="muted">untracked</span>'}</td>
+      <td data-label="Status">
+        ${p.archived ? '<span class="status pending">Archived</span>' : `<span class="status ${p.available}">${p.available ? 'Available' : 'Sold Out'}</span>
+        ${p.visible === false ? '<br><span class="status pending" style="margin-top:4px;display:inline-block">Hidden</span>' : ''}`}
         ${!(p.images && p.images.length) ? '<br><span class="muted">no photo</span>' : ''}
       </td>
-      <td class="row-actions">
+      <td class="row-actions">${!edit ? '<span class="muted">View only</span>' : p.archived ? `
+        <button class="secondary" onclick="archiveProduct(${p.id}, false)">Restore</button>
+        ${currentAdmin.role === 'owner' ? `<button class="danger" onclick="deleteProduct(${p.id})">Delete forever</button>` : ''}` : `
         <button class="secondary" onclick="toggleAvailability(${p.id})">${p.available ? 'Mark Sold Out' : 'Mark Available'}</button>
         <button class="secondary" onclick="editProduct(${p.id})">Edit</button>
-        <button class="danger" onclick="deleteProduct(${p.id})">Delete</button>
+        <button class="danger" onclick="archiveProduct(${p.id}, true)">Archive</button>`}
       </td>
     </tr>
   `).join('');
   wrap.innerHTML = `
-    <table>
+    <table class="cards">
       <thead><tr><th>Photo</th><th>Name</th><th>Category</th><th>Price</th><th>Sizes</th><th>Stock</th><th>Status</th><th>Actions</th></tr></thead>
       <tbody>${rows}</tbody>
     </table>
@@ -1367,6 +1497,7 @@ function packageFor(o){
 }
 function shipHtml(o){
   const s = o.shiprocket || {}, id = esc(o.orderId), f = o.fulfilment || {};
+  if(!can('ship')) return s.awb ? `<div class="ship-box muted">${esc(s.courier || 'Courier')} · AWB ${esc(s.awb)}</div>` : '';
   if(s.cancelled) return `<div class="ship-box"><b>Shiprocket: cancelled</b><span class="muted">${new Date(s.cancelled).toLocaleString('en-IN')}</span></div>`;
   const booked = s.pickup && s.awb;
   if(!booked){
@@ -1565,10 +1696,25 @@ async function toggleAvailability(id){
   loadCatalog();
 }
 
+// Archive takes a product off the store but keeps it for old orders, invoices and
+// reviews; Restore puts it back on sale.
+async function archiveProduct(id, archive){
+  const product = catalogCache.find(p => p.id === id);
+  if(archive && !confirm(`Archive "${product ? product.name : id}"? It leaves the store; you can restore it any time.`)) return;
+  const res = await adminFetch('/.netlify/functions/admin-catalog', { method: 'POST', headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({ action: archive ? 'archive' : 'restore', id }) });
+  if(res.status === 401){ handleUnauthorized(); return; }
+  if(!res.ok){ alert((await res.json().catch(() => ({}))).error || 'Failed'); return; }
+  flash(archive ? 'Archived' : 'Restored');
+  loadCatalog();
+}
 async function deleteProduct(id){
   const product = catalogCache.find(p => p.id === id);
-  if(!confirm(`Delete "${product ? product.name : id}"? This can't be undone.`)) return;
-  await adminFetch(`/.netlify/functions/admin-catalog?id=${id}`, { method: 'DELETE' });
+  if(!confirm(`Delete "${product ? product.name : id}" forever? Only possible if it was never ordered. This can't be undone.`)) return;
+  const res = await adminFetch(`/.netlify/functions/admin-catalog?id=${id}`, { method: 'DELETE' });
+  if(res.status === 401){ handleUnauthorized(); return; }
+  if(!res.ok){ alert((await res.json().catch(() => ({}))).error || 'Failed'); return; }
+  flash('Deleted');
   loadCatalog();
 }
 
@@ -1688,18 +1834,18 @@ function renderOrders(orders){
       : `<button class="danger" onclick="deleteOrder('${id}')">Delete</button>`;
     return `
     <tr>
-      <td>${new Date(o.createdAt).toLocaleString('en-IN')}</td>
-      <td><span class="status ${o.status}">${o.status}</span></td>
-      <td>${esc(o.shipping.name)}<br><span class="muted">${esc(o.shipping.phone)}${o.shipping.email ? '<br>' + esc(o.shipping.email) : ''}</span></td>
-      <td>${esc(o.shipping.address1)}${o.shipping.address2 ? ', ' + esc(o.shipping.address2) : ''}<br>${esc(o.shipping.city)}, ${esc(o.shipping.state)} ${esc(o.shipping.pincode)}</td>
-      <td class="muted">${o.items.map(i => `${esc(i.name)}${i.size ? ' ('+esc(i.size)+')' : ''} x${i.qty}`).join('<br>')}</td>
-      <td>₹${(o.amount/100).toLocaleString('en-IN')}</td>
-      <td class="muted">${id}${o.invoice ? `<br><a href="/invoice.html?id=${encodeURIComponent(o.orderId)}" target="_blank" rel="noopener">${esc(o.invoice.number)}</a>` : ''}</td>
-      <td>${action}</td>
+      <td data-label="Date">${new Date(o.createdAt).toLocaleString('en-IN')}</td>
+      <td data-label="Payment"><span class="status ${o.status}">${o.status}</span></td>
+      <td data-label="Customer">${esc(o.shipping.name)}<br><span class="muted">${esc(o.shipping.phone)}${o.shipping.email ? '<br>' + esc(o.shipping.email) : ''}</span></td>
+      <td data-label="Ship to">${esc(o.shipping.address1)}${o.shipping.address2 ? ', ' + esc(o.shipping.address2) : ''}<br>${esc(o.shipping.city)}, ${esc(o.shipping.state)} ${esc(o.shipping.pincode)}</td>
+      <td data-label="Items" class="muted">${o.items.map(i => `${esc(i.name)}${i.size ? ' ('+esc(i.size)+')' : ''} x${i.qty}`).join('<br>')}</td>
+      <td data-label="Amount">₹${(o.amount/100).toLocaleString('en-IN')}</td>
+      <td data-label="Order / invoice" class="muted">${id}${o.invoice ? `<br><a href="/invoice.html?id=${encodeURIComponent(o.orderId)}" target="_blank" rel="noopener">${esc(o.invoice.number)}</a>` : ''}</td>
+      <td data-label="Fulfilment">${action}</td>
     </tr>`;
   }).join('');
   wrap.innerHTML = `
-    <table>
+    <table class="cards">
       <thead><tr><th>Date</th><th>Payment</th><th>Customer</th><th>Ship to</th><th>Items</th><th>Amount</th><th>Order / Invoice</th><th>Fulfilment</th></tr></thead>
       <tbody>${rows}</tbody>
     </table>

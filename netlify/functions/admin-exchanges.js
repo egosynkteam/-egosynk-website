@@ -1,5 +1,5 @@
 const { getStore } = require('../lib/blob-store');
-const { isAdminAuthorized } = require('../lib/admin-auth');
+const { requireAdmin } = require('../lib/admin-auth');
 const { logEvent } = require('../lib/audit');
 const { ADMIN_STATUSES, emailStatusUpdate } = require('../lib/exchanges');
 
@@ -9,9 +9,8 @@ const { ADMIN_STATUSES, emailStatusUpdate } = require('../lib/exchanges');
 // or return-address details, or the reason for a rejection. The customer is emailed
 // each time the status changes; saving the same status again only updates the note.
 exports.handler = async (event) => {
-  if (!(await isAdminAuthorized(event))) {
-    return { statusCode: 401, body: JSON.stringify({ error: 'Unauthorized' }) };
-  }
+  const auth = await requireAdmin(event, 'orders');
+  if (auth.response) return auth.response;
   if (event.httpMethod !== 'POST') return { statusCode: 405, body: 'Method Not Allowed' };
 
   try {

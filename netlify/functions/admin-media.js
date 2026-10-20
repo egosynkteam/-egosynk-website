@@ -1,6 +1,6 @@
 const crypto = require('crypto');
 const { getStore } = require('../lib/blob-store');
-const { isAdminAuthorized } = require('../lib/admin-auth');
+const { requireAdmin } = require('../lib/admin-auth');
 const { logEvent } = require('../lib/audit');
 
 // Image uploads for products, the homepage hero and the share image. admin.html resizes
@@ -13,9 +13,8 @@ const TYPES = { 'image/webp': 'webp', 'image/jpeg': 'jpg', 'image/png': 'png' };
 const MAX_BYTES = 1.5 * 1024 * 1024;
 
 exports.handler = async (event) => {
-  if (!(await isAdminAuthorized(event))) {
-    return { statusCode: 401, body: JSON.stringify({ error: 'Unauthorized' }) };
-  }
+  const auth = await requireAdmin(event, 'catalog');
+  if (auth.response) return auth.response;
   const store = getStore('media');
 
   try {

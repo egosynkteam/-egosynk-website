@@ -1,6 +1,6 @@
 const { getStore, currentBackend } = require('../lib/blob-store');
 const { replaceInvoiceSeries } = require('../lib/db');
-const { isAdminAuthorized } = require('../lib/admin-auth');
+const { requireAdmin, bodyOf } = require('../lib/admin-auth');
 const { logEvent } = require('../lib/audit');
 const { notifyFulfilment, applyFulfilment, FULFILMENT_STATUSES } = require('../lib/orders');
 
@@ -11,9 +11,8 @@ const { notifyFulfilment, applyFulfilment, FULFILMENT_STATUSES } = require('../l
 //   reset-test — wipe every order and the invoice series; refused unless the site is
 //                on Razorpay test keys, so it can't run once real sales exist
 exports.handler = async (event) => {
-  if (!(await isAdminAuthorized(event))) {
-    return { statusCode: 401, body: JSON.stringify({ error: 'Unauthorized' }) };
-  }
+  const auth = await requireAdmin(event, bodyOf(event).action === 'reset-test' ? 'owner' : 'orders');
+  if (auth.response) return auth.response;
   if (event.httpMethod !== 'POST') {
     return { statusCode: 405, body: 'Method Not Allowed' };
   }

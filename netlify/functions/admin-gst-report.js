@@ -1,5 +1,5 @@
 const { getStore } = require('../lib/blob-store');
-const { isAdminAuthorized } = require('../lib/admin-auth');
+const { requireAdmin } = require('../lib/admin-auth');
 const { STATE_CODES } = require('../lib/gst');
 
 // GSTR-1 working files for one month of invoices, as CSV. GET ?month=YYYY-MM&type=…
@@ -38,9 +38,8 @@ function groupSum(items, keyFn, sums) {
 }
 
 exports.handler = async (event) => {
-  if (!(await isAdminAuthorized(event))) {
-    return { statusCode: 401, body: JSON.stringify({ error: 'Unauthorized' }) };
-  }
+  const auth = await requireAdmin(event, 'reports');
+  if (auth.response) return auth.response;
   const q = event.queryStringParameters || {};
   if (!/^\d{4}-\d{2}$/.test(q.month || '') || !TYPES.includes(q.type)) {
     return { statusCode: 400, body: JSON.stringify({ error: `Need month=YYYY-MM and type=${TYPES.join('|')}` }) };

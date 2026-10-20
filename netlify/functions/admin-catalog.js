@@ -1,5 +1,5 @@
 const { getStore } = require('../lib/blob-store');
-const { isAdminAuthorized } = require('../lib/admin-auth');
+const { requireAdmin } = require('../lib/admin-auth');
 const { logEvent } = require('../lib/audit');
 const { getCategories, getSizeGuides } = require('../lib/settings');
 const { notifyRestock } = require('../lib/stock-alerts');
@@ -47,14 +47,15 @@ function validateProduct(p, categoryIds) {
   return null;
 }
 
-// Full CRUD for the product catalog, gated by the same admin secret as orders/audit-log.
-// GET    -> list every product (including hidden/unavailable ones, for the admin table)
+// Product catalog for admin.html. Reading is open to every admin; changes need the
+// `catalog` permission, and setting a price or MRP also needs `prices`.
+// GET    -> list every product (including hidden/archived ones, for the admin table)
 // POST   -> create a new product, or update an existing one if `id` is supplied
-// DELETE -> remove a product by id
+// POST { action: 'archive' | 'restore', id } -> take a product off the store / bring it back
+// DELETE ?id= -> permanently delete: owner only, archived first, and never ordered
 exports.handler = async (event) => {
-  if (!(await isAdminAuthorized(event))) {
-    return { statusCode: 401, body: JSON.stringify({ error: 'Unauthorized' }) };
-  }
+  const auth = await requireAdmin(event, event.httpMethod === 'GET' ? null : 'catalog');
+  if (auth.response) return auth.response;
 
   const store = getStore('catalog');
 
@@ -67,6 +68,18 @@ exports.handler = async (event) => {
 
     if (event.httpMethod === 'POST') {
       const body = JSON.parse(event.body || '{}');
+      // Archived products stay in the admin (and in old orders and reviews) but are off
+      // the store; restoring puts them back on sale.
+      if (body.action === 'archive' || body.action === 'restore') {
+        const p = await store.get(String(body.id), { type: 'json' });
+        if (!p) return { statusCode: 404, body: JSON.stringify({ error: 'Product not found' }) };
+        p.archived = body.action === 'archive' ? new Date().toISOString() : null;
+        p.visible = body.action === 'restore';
+        p.updatedAt = new Date().toISOString();
+        await store.setJSON(String(p.id), p);
+        await logEvent(`product_${body.action}d`, 'admin', { id: p.id, name: p.name }, event);
+        return { statusCode: 200, body: JSON.stringify({ product: p }) };
+      }
       const [cats, guides] = await Promise.all([getCategories(), getSizeGuides()]);
       const categoryIds = cats.map((c) => c.id);
       const err = validateProduct(body, categoryIds);
@@ -86,6 +99,11 @@ exports.handler = async (event) => {
       // Keep fields this form doesn't manage instead of silently wiping them on every save.
       const existing = isNew ? {} : ((await store.get(String(id), { type: 'json' })) || {});
       isNew = isNew || !existing.id;
+      const newMrp = body.mrp != null && body.mrp !== '' ? Math.round(Number(body.mrp)) : (body.mrp === undefined ? existing.mrp ?? null : null);
+      const priceChanged = isNew || Math.round(body.price) !== existing.price || newMrp !== (existing.mrp ?? null);
+      if (priceChanged && !auth.admin.permissions.includes('prices')) {
+        return { statusCode: 403, body: JSON.stringify({ error: 'Your account doesn\'t have the "Change prices and MRP" permission. Ask the owner.' }) };
+      }
       const sizes = body.sizes.map((s) => str(s, 20)).filter(Boolean).slice(0, 12);
       // A field missing from the request keeps its saved value rather than being cleared.
       for (const k of ['mrp', 'tag', 'colour', 'description', 'highlights', 'images', 'guide', 'visible',
@@ -107,7 +125,8 @@ exports.handler = async (event) => {
         sizes,
         guide: guides[body.guide] ? body.guide : null,
         available: body.available !== false,
-        visible: body.visible !== false,
+        // An archived product stays hidden until it's restored.
+        visible: existing.archived ? false : body.visible !== false,
         sortOrder: Number.isFinite(Number(body.sortOrder)) && body.sortOrder !== '' && body.sortOrder != null ? Number(body.sortOrder) : null,
         hsn: body.hsn ? str(body.hsn, 8) : null,
         gstRate: body.gstRate != null && body.gstRate !== '' ? Number(body.gstRate) : null,
@@ -133,6 +152,12 @@ exports.handler = async (event) => {
       const id = (event.queryStringParameters && event.queryStringParameters.id) ||
         (JSON.parse(event.body || '{}').id);
       if (!id) return { statusCode: 400, body: JSON.stringify({ error: 'Missing product id' }) };
+      if (auth.admin.role !== 'owner') return { statusCode: 403, body: JSON.stringify({ error: 'Only the owner can delete a product permanently. Archive it instead.' }) };
+      const p = await store.get(String(id), { type: 'json' });
+      if (!p) return { statusCode: 404, body: JSON.stringify({ error: 'Product not found' }) };
+      if (!p.archived) return { statusCode: 400, body: JSON.stringify({ error: 'Archive the product first' }) };
+      const sold = (await getStore('orders').listValues()).some(({ value: o }) => (o.items || []).some((i) => String(i.id) === String(id)));
+      if (sold) return { statusCode: 400, body: JSON.stringify({ error: 'This product has orders, so it stays archived (orders and invoices refer to it)' }) };
 
       await store.delete(String(id));
       await logEvent('product_deleted', 'admin', { id }, event);

@@ -1,4 +1,4 @@
-const { isAdminAuthorized } = require('../lib/admin-auth');
+const { requireAdmin } = require('../lib/admin-auth');
 const { logEvent } = require('../lib/audit');
 const { blobsStore, currentBackend, setBackend, STORES } = require('../lib/blob-store');
 const { ensureSchema, query } = require('../lib/db');
@@ -13,9 +13,9 @@ const { copyStore, verifyStore } = require('../lib/migrate');
 //   POST { action: 'verify', store }   -> compare one store on both sides
 //   POST { action: 'switch', to }      -> re-verify every store, then switch (refused on any mismatch)
 exports.handler = async (event) => {
-  const admin = await isAdminAuthorized(event);
-  if (!admin) return bad('Unauthorized', 401);
-  if (admin.role !== 'owner') return bad('Only the owner can move the database', 403);
+  const auth = await requireAdmin(event, 'owner');
+  if (auth.response) return auth.response;
+  const { admin } = auth;
   try {
     const configured = !!process.env.SUPABASE_DB_URL;
     if (event.httpMethod === 'GET') {

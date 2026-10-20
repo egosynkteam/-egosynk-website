@@ -1,13 +1,12 @@
 const { getStore } = require('../lib/blob-store');
-const { isAdminAuthorized } = require('../lib/admin-auth');
+const { requireAdmin } = require('../lib/admin-auth');
 
 // Protected endpoint backing admin.html's Orders tab. Gate is a shared-secret header
 // checked against an env var — set ADMIN_SECRET in Netlify before using this.
 // Not a real auth system: fine for a solo founder checking orders, not for a multi-user team.
 exports.handler = async (event) => {
-  if (!(await isAdminAuthorized(event))) {
-    return { statusCode: 401, body: JSON.stringify({ error: 'Unauthorized' }) };
-  }
+  const auth = await requireAdmin(event, 'orders');
+  if (auth.response) return auth.response;
 
   try {
     const orders = (await getStore('orders').listValues()).map((r) => r.value);
