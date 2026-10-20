@@ -65,9 +65,12 @@ exports.handler = async (event) => {
       if (body.confirm !== 'RESET') return bad('Type RESET to confirm');
 
       const invoices = getStore('invoices');
-      const counts = { orders: 0, invoiceKeys: 0 };
+      const buyers = getStore('buyers');
+      const counts = { orders: 0, invoiceKeys: 0, buyers: 0 };
       for (const b of (await orders.list()).blobs) { await orders.delete(b.key); counts.orders++; }
       for (const b of (await invoices.list()).blobs) { await invoices.delete(b.key); counts.invoiceKeys++; }
+      // Test buyers would otherwise be refused first-order codes after launch.
+      for (const b of (await buyers.list()).blobs) { await buyers.delete(b.key); counts.buyers++; }
       await logEvent('test_data_reset', 'admin', counts, event);
       return ok({ reset: counts });
     }

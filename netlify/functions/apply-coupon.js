@@ -5,7 +5,7 @@ const { allowRequest } = require('../lib/rate-limit');
 // Checks a discount code against the shopper's bag so the bag can show the saving before
 // checkout. Prices come from the catalog, not the browser. create-order re-checks the
 // code itself, so this is only a preview.
-//   POST { code, cart: [{ id, qty }] } -> { code, discount } | { error }
+//   POST { code, cart: [{ id, qty }] } -> { code, discount, firstOrderOnly } | { error }
 exports.handler = async (event) => {
   if (event.httpMethod !== 'POST') return { statusCode: 405, body: 'Method Not Allowed' };
   // Slows down anyone trying to guess codes.
@@ -23,7 +23,7 @@ exports.handler = async (event) => {
     }
     const result = await findAndEvaluate(code, subtotal);
     if (result.error) return bad(result.error);
-    return { statusCode: 200, body: JSON.stringify({ code: result.coupon.code, discount: result.discount }) };
+    return { statusCode: 200, body: JSON.stringify({ code: result.coupon.code, discount: result.discount, firstOrderOnly: !!result.coupon.firstOrderOnly }) };
   } catch (err) {
     console.error(err);
     return { statusCode: 500, body: JSON.stringify({ error: 'Could not check the code' }) };

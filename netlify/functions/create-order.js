@@ -94,7 +94,7 @@ exports.handler = async (event) => {
     let discount = 0;
     let coupon = null;
     if (couponCode) {
-      const result = await findAndEvaluate(couponCode, subtotal);
+      const result = await findAndEvaluate(couponCode, subtotal, { email: shipping.email, phone: shipping.phone });
       if (result.error) return { statusCode: 400, body: JSON.stringify({ error: result.error }) };
       discount = result.discount;
       coupon = result.coupon.code;

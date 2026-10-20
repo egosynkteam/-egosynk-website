@@ -10,6 +10,10 @@ const REASONS = {
   wrong_item: { label: "Not what I ordered", hours: 48 },
 };
 const ADMIN_STATUSES = ['approved', 'rejected', 'completed'];
+// Innerwear and socks can be size-exchanged only with the hygiene seal unbroken, which
+// the customer confirms per item. Damaged/wrong-item requests don't need it.
+const HYGIENE_CATS = ['innerwear', 'socks'];
+const needsSeal = (line) => HYGIENE_CATS.includes(line && line.cat);
 const OWNER_EMAIL = 'egosynkteam@gmail.com';
 
 function deliveredAt(order) {
@@ -45,7 +49,7 @@ function customerView(exchange) {
 
 function itemsHtml(items) {
   return items
-    .map((i) => `${escapeHtml(i.name)} (${escapeHtml(i.size || '—')})${i.newSize ? ' → ' + escapeHtml(i.newSize) : ''} × ${i.qty}`)
+    .map((i) => `${escapeHtml(i.name)} (${escapeHtml(i.size || '—')})${i.newSize ? ' → ' + escapeHtml(i.newSize) : ''} × ${i.qty}${i.sealed ? ' · seal unbroken' : ''}`)
     .join('<br>');
 }
 
@@ -85,4 +89,4 @@ async function emailStatusUpdate(order) {
   return sendEmail({ to: order.shipping.email, subject: `Exchange ${ex.status} — ${order.orderId}`, html: emailWrapper(html) });
 }
 
-module.exports = { REASONS, ADMIN_STATUSES, openReasons, customerView, emailRequestReceived, emailStatusUpdate };
+module.exports = { REASONS, ADMIN_STATUSES, needsSeal, openReasons, customerView, emailRequestReceived, emailStatusUpdate };

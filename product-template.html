@@ -28,6 +28,16 @@
     padding:18px 24px;background:rgba(13,14,16,0.85);backdrop-filter:blur(10px);border-bottom:1px solid var(--line);}
   .logo{font-family:'Archivo Black',sans-serif;font-size:20px;letter-spacing:0.02em;text-transform:uppercase;}
   .logo span{color:var(--rust);}
+  /* Offer strip, same as index.html. */
+  .promo-bar{position:fixed;top:0;left:0;right:0;z-index:101;height:34px;display:flex;align-items:center;justify-content:center;gap:10px;
+    padding:0 40px;background:var(--rust);color:var(--bone);font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.08em;text-transform:uppercase;white-space:nowrap;overflow:hidden;}
+  .promo-bar .promo-text{overflow:hidden;text-overflow:ellipsis;}
+  .promo-bar .promo-short{display:none;}
+  @media(max-width:600px){.promo-bar .promo-text{display:none;}.promo-bar .promo-short{display:inline;}}
+  .promo-bar .promo-code{background:var(--bone);color:var(--bg);border:none;border-radius:2px;padding:3px 8px;font:inherit;font-weight:700;cursor:pointer;flex-shrink:0;}
+  .promo-bar .promo-close{position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--bone);font-size:18px;line-height:1;cursor:pointer;padding:4px 8px;}
+  body.has-promo nav{top:34px;}
+  body.has-promo main{padding-top:130px;}
   .nav-right{display:flex;align-items:center;gap:18px;}
   .icon-btn{position:relative;border:1px solid var(--line);color:var(--bone);width:40px;height:40px;border-radius:2px;
     display:flex;align-items:center;justify-content:center;transition:border-color .2s;}
@@ -107,6 +117,12 @@
   .form-msg{font-size:12px;margin-top:8px;min-height:16px;}
   .form-msg.ok{color:#5FBF86;}
   .form-msg.err{color:var(--rust-bright);}
+  .offers{margin:16px 0 4px;border:1px dashed var(--line);border-radius:4px;padding:10px 12px;display:grid;gap:8px;}
+  .offers .label{margin:0;}
+  .offer{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px 10px;font-size:13px;color:var(--bone-dim);}
+  .offer span{flex:1 1 160px;min-width:0;}
+  .offer button{flex:none;background:none;border:1px solid var(--rust);color:var(--rust-bright);border-radius:2px;padding:5px 10px;cursor:pointer;
+    font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.06em;}
   .pin-check{margin:18px 0 0;}
   .pin-check .inline-form input{font-family:'JetBrains Mono',monospace;letter-spacing:.1em;}
   .pin-out{font-size:13px;color:var(--bone);margin-top:8px;min-height:18px;line-height:1.5;}
@@ -226,6 +242,7 @@
 </head>
 <body>
 
+<div class="promo-bar" id="promoBar" role="region" aria-label="Offer" hidden></div>
 <nav>
   <a class="logo" href="/"><span>EGO</span>SYNK</a>
   <div class="nav-right">
@@ -249,7 +266,7 @@
 <footer>
   <div class="links">
     <a href="/#shop">Shop</a><a href="/shipping-policy.html">Shipping</a><a href="/refund-policy.html">Returns &amp; Exchanges</a>
-    <a href="/terms.html">Terms</a><a href="/privacy-policy.html">Privacy</a><a href="/contact.html">Contact</a><a href="#" onclick="window.egoCookieSettings&&egoCookieSettings();return false;">Cookie settings</a>
+    <a href="/terms.html">Terms</a><a href="/privacy-policy.html">Privacy</a><a href="/contact.html">Contact</a><a href="/bulk.html">Bulk orders</a><a href="#" onclick="window.egoCookieSettings&&egoCookieSettings();return false;">Cookie settings</a>
   </div>
   <div class="mono">© 2026 EGOSYNK.COM · GSTIN 27AKHPY6964E1ZI</div>
 </footer>
@@ -287,6 +304,52 @@ function priceHtml(p){
 }
 
 /* ---------- bag (shared with the homepage via localStorage) ---------- */
+// Innerwear and socks: size exchange only with the hygiene seal intact (lib/exchanges.js).
+function isHygiene(p){ return ['innerwear', 'socks'].includes(p.cat); }
+
+/* ---------- offers (coupons marked for display in admin → Coupons) ---------- */
+function offerText(o){
+  const amount = o.type === 'percent' ? `${o.value}% off` : `${inr(o.value)} off`;
+  const scope = o.firstOrderOnly ? 'your first order' : 'your order';
+  const min = o.minSubtotal ? ` over ${inr(o.minSubtotal)}` : '';
+  const cap = o.type === 'percent' && o.maxDiscount ? ` · up to ${inr(o.maxDiscount)}` : '';
+  return `${amount} ${scope}${min}${cap}`;
+}
+function offersHtml(){
+  const list = DATA.offers || [];
+  if(!list.length) return '';
+  return `<div class="offers reveal" style="--i:4"><div class="label"><span>Offers</span></div>
+    ${list.map(o => `<div class="offer"><span>${esc(offerText(o))}</span>
+      <button onclick="copyOffer('${esc(o.code)}')" title="Copy code">${esc(o.code)} · Copy</button></div>`).join('')}</div>`;
+}
+// The bag (on the home page) picks the code up from egosynk_offer.
+async function copyOffer(code){
+  try{ await navigator.clipboard.writeText(code); } catch(e){}
+  try{ localStorage.setItem('egosynk_offer', code); } catch(e){}
+  showToast(`<strong>${esc(code)}</strong> copied · it'll be ready in your bag`);
+  track('select_promotion', { promotion_name: code });
+}
+function renderPromo(){
+  const o = (DATA.offers || []).find(x => x.topBar);
+  const bar = document.getElementById('promoBar');
+  let closed = null;
+  try{ closed = localStorage.getItem('egosynk_promo_closed'); } catch(e){}
+  const show = !!o && closed !== o.code;
+  bar.hidden = !show;
+  document.body.classList.toggle('has-promo', show);
+  if(!show) return;
+  // Phones get the short line ("10% off first order") so the code stays readable.
+  const short = `${o.type === 'percent' ? o.value + '%' : inr(o.value)} off${o.firstOrderOnly ? ' first order' : ''}`;
+  bar.innerHTML = `<span class="promo-text">${esc(offerText(o))} · code</span><span class="promo-short">${esc(short)} ·</span>
+    <button class="promo-code" onclick="copyOffer('${esc(o.code)}')" title="Copy code">${esc(o.code)}</button>
+    <button class="promo-close" onclick="closePromo('${esc(o.code)}')" aria-label="Hide offer">×</button>`;
+}
+function closePromo(code){
+  try{ localStorage.setItem('egosynk_promo_closed', code); } catch(e){}
+  document.getElementById('promoBar').hidden = true;
+  document.body.classList.remove('has-promo');
+}
+
 function readCart(){
   try{ return JSON.parse(localStorage.getItem('egosynk_cart') || sessionStorage.getItem('egosynk_cart') || '[]'); }
   catch(e){ return []; }
@@ -329,6 +392,7 @@ function render(){
         <div class="price-line reveal" style="--i:4">${priceHtml(P)}</div>
         <div class="tax-note reveal" style="--i:4">Inclusive of all taxes</div>
         ${specChips(P)}
+        ${offersHtml()}
         ${P.rating ? `<div class="rating-line reveal" style="--i:4">${starsHtml(P.rating.avg)}<span>${P.rating.avg.toFixed(1)}</span><a href="#reviews">${P.rating.count} review${P.rating.count === 1 ? '' : 's'}</a></div>` : ''}
         <div class="reveal" style="--i:5">
           ${isFreeSize(P) ? '' : `
@@ -355,7 +419,7 @@ function render(){
             <div><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 3h15v13H1zM16 8h4l3 3v5h-7"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
               ${s.freeShippingThreshold ? `Free shipping over ${inr(s.freeShippingThreshold)} · otherwise ${inr(s.shippingFee)}` : 'Ships across India'} · 3–7 days</div>
             <div><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg>
-              ${['innerwear', 'socks'].includes(P.cat) ? 'Not returnable for hygiene · replaced if damaged' : '7-day size exchange'}</div>
+              ${isHygiene(P) ? '7-day size exchange if the hygiene seal is unbroken' : '7-day size exchange'}</div>
             <div><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
               Secure payment via Razorpay · GST invoice included</div>
           </div>
@@ -363,8 +427,8 @@ function render(){
         ${P.description ? `<p class="desc reveal">${esc(P.description)}</p>` : ''}
         ${(P.highlights || []).length ? `<ul class="highlights reveal">${P.highlights.map(h => `<li>${esc(h)}</li>`).join('')}</ul>` : ''}
         <details class="acc reveal"><summary>Shipping</summary><p>Dispatched in 1–2 business days, delivered in 3–7 business days across India. Tracking appears in your account once shipped. <a href="/shipping-policy.html">Shipping policy</a></p></details>
-        <details class="acc reveal"><summary>Returns &amp; exchanges</summary><p>${['innerwear', 'socks'].includes(P.cat)
-          ? 'For hygiene reasons this item can\'t be returned or exchanged, but if it arrives damaged or wrong we\'ll replace or refund it.'
+        <details class="acc reveal"><summary>Returns &amp; exchanges</summary><p>${isHygiene(P)
+          ? 'You can exchange it for another size within 7 days of delivery only if the hygiene seal is unbroken. Opened items can\'t be exchanged, but if it arrives damaged or wrong we\'ll replace or refund it.'
           : 'Exchange for another size within 7 days of delivery, unused with tags.'} <a href="/refund-policy.html">Full policy</a></p></details>
       </div>
     </div>
@@ -675,6 +739,7 @@ function checkPin(e){
 }
 
 if(P){
+  renderPromo();
   render();
   paintSaved();
   try{ const pin = localStorage.getItem('egosynk_pincode'); if(pin){ document.getElementById('pin').value = pin; checkPin(); } } catch(e){}

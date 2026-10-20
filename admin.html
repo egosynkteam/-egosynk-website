@@ -159,6 +159,7 @@
     <button class="tab-btn" data-tab="categories" onclick="switchTab('categories')">Categories</button>
     <button class="tab-btn" data-tab="orders" onclick="switchTab('orders')">Orders</button>
     <button class="tab-btn" data-tab="reviews" onclick="switchTab('reviews');loadReviews()">Reviews <span id="pendingBadge" class="status pending" hidden></span></button>
+    <button class="tab-btn" data-tab="enquiries" onclick="switchTab('enquiries');loadEnquiries()">Enquiries <span id="enquiryBadge" class="status pending" hidden></span></button>
     <button class="tab-btn" data-tab="coupons" onclick="switchTab('coupons')">Coupons</button>
     <button class="tab-btn" data-tab="guides" onclick="switchTab('guides')">Size Guides</button>
     <button class="tab-btn" data-tab="settings" onclick="switchTab('settings')">Settings</button>
@@ -225,6 +226,25 @@
     <div id="reviewsWrap"><div class="msg">Loading…</div></div>
   </div>
 
+  <!-- ENQUIRIES -->
+  <div class="panel" id="panel-enquiries">
+    <div class="toolbar">
+      <h2 style="margin:0;">Bulk enquiries</h2>
+      <div class="row-actions">
+        <select id="enquiryFilter" onchange="renderEnquiries()">
+          <option value="open">Open (new, contacted, quoted)</option>
+          <option value="new">New</option>
+          <option value="won">Won</option>
+          <option value="lost">Lost</option>
+          <option value="">All</option>
+        </select>
+        <button class="secondary" onclick="loadEnquiries()">Refresh</button>
+      </div>
+    </div>
+    <p class="muted" style="margin-bottom:10px;">From the <a href="/bulk.html" target="_blank">bulk orders page</a>. Each one is also emailed to egosynkteam@gmail.com once Resend is set up. The note is internal only.</p>
+    <div id="enquiriesWrap"><div class="msg">Loading…</div></div>
+  </div>
+
   <!-- COUPONS -->
   <div class="panel" id="panel-coupons">
     <div class="toolbar">
@@ -234,7 +254,7 @@
         <button onclick="saveCoupons()">Save Coupons</button>
       </div>
     </div>
-    <p class="muted" style="margin-bottom:10px;">Codes are case-insensitive. Discounts come off the items (not shipping) and reduce the GST taxable value on the invoice. "Used" counts paid orders only. Expiry is end of that day, IST.</p>
+    <p class="muted" style="margin-bottom:10px;">Codes are case-insensitive. Discounts come off the items (not shipping) and reduce the GST taxable value on the invoice. "Used" counts paid orders only. Expiry is end of that day, IST. "First order only" is checked at checkout against the email and phone of earlier paid orders. Codes ticked "On product page" or "Top bar" are public, so don't tick private codes.</p>
     <div class="form-error" id="couponError"></div>
     <div id="couponsWrap"><div class="msg">Loading…</div></div>
   </div>
@@ -581,6 +601,7 @@ function enterApp(admin){
   loadOrders();
   loadAudit();
   refreshPendingBadge();
+  loadEnquiries();
   if(admin.role === 'owner') loadTeam();
 }
 
@@ -1000,6 +1021,59 @@ async function saveCategories(){
   flash('Categories saved');
 }
 
+/* ---------- ENQUIRIES ---------- */
+const ENQ_STATUSES = ['new', 'contacted', 'quoted', 'won', 'lost'];
+let enquiriesCache = [];
+async function loadEnquiries(){
+  try{
+    const res = await adminFetch('/.netlify/functions/admin-enquiries');
+    if(res.status === 401){ handleUnauthorized(); return; }
+    enquiriesCache = (await res.json()).enquiries || [];
+    const fresh = enquiriesCache.filter(q => q.status === 'new').length;
+    const b = document.getElementById('enquiryBadge');
+    b.hidden = !fresh; b.textContent = fresh;
+    renderEnquiries();
+  } catch(err){
+    document.getElementById('enquiriesWrap').innerHTML = '<div class="msg">Could not load enquiries.</div>';
+  }
+}
+function renderEnquiries(){
+  const f = document.getElementById('enquiryFilter').value;
+  const list = enquiriesCache.filter(q => !f || (f === 'open' ? ['new', 'contacted', 'quoted'].includes(q.status) : q.status === f));
+  document.getElementById('enquiriesWrap').innerHTML = list.length ? list.map(q => `
+    <div class="review-card">
+      <div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;">
+        <strong>${esc(q.org || q.name)} · ${esc(q.quantity)} pcs</strong>
+        <span class="status ${q.status === 'won' ? 'paid' : 'pending'}">${esc(q.status)}</span>
+      </div>
+      <div class="muted">${esc(q.name)} · <a href="mailto:${esc(q.email)}">${esc(q.email)}</a> · <a href="tel:+91${esc(q.phone)}">${esc(q.phone)}</a>${q.city ? ' · ' + esc(q.city) : ''} · ${new Date(q.createdAt).toLocaleString('en-IN')}</div>
+      <div class="muted">${esc({ gym: 'Gym / studio', coach: 'Coach / trainer', team: 'Sports team / club', corporate: 'Corporate / event', other: 'Other' }[q.type] || q.type)} · ${esc(q.categories.join(', '))}${q.branding ? ' · <strong>wants their logo</strong>' : ''}</div>
+      ${q.message ? `<p>${esc(q.message)}</p>` : ''}
+      <textarea rows="2" id="enq-note-${esc(q.key)}" placeholder="Internal note (quote sent, follow-up date…)">${esc(q.adminNote || '')}</textarea>
+      <div class="row-actions" style="margin-top:8px;">
+        <select id="enq-status-${esc(q.key)}">${ENQ_STATUSES.map(s => `<option ${s === q.status ? 'selected' : ''}>${s}</option>`).join('')}</select>
+        <button onclick="updateEnquiry('${esc(q.key)}')">Save</button>
+        <button class="danger" onclick="deleteEnquiry('${esc(q.key)}')">Delete</button>
+      </div>
+    </div>`).join('') : '<div class="msg">No enquiries here.</div>';
+}
+async function enquiryAction(payload){
+  const res = await adminFetch('/.netlify/functions/admin-enquiries', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(payload) });
+  if(res.status === 401){ handleUnauthorized(); return false; }
+  const out = await res.json().catch(() => ({}));
+  if(!res.ok){ alert(out.error || 'Failed'); return false; }
+  return true;
+}
+async function updateEnquiry(key){
+  const status = document.getElementById('enq-status-' + key).value;
+  const note = document.getElementById('enq-note-' + key).value;
+  if(await enquiryAction({ action: 'update', key, status, note })){ flash('Enquiry saved'); loadEnquiries(); }
+}
+async function deleteEnquiry(key){
+  if(!confirm('Delete this enquiry permanently?')) return;
+  if(await enquiryAction({ action: 'delete', key })){ flash('Enquiry deleted'); loadEnquiries(); }
+}
+
 /* ---------- COUPONS ---------- */
 let couponsCache = [];
 
@@ -1009,7 +1083,7 @@ function renderCoupons(){
   const today = new Date().toISOString().slice(0, 10);
   wrap.innerHTML = `
     <table class="cat-table">
-      <thead><tr><th>Code</th><th>Type</th><th>Value</th><th>Min order ₹</th><th>Max discount ₹</th><th>Expires</th><th>Usage limit</th><th>Used</th><th>Active</th><th></th></tr></thead>
+      <thead><tr><th>Code</th><th>Type</th><th>Value</th><th>Min order ₹</th><th>Max discount ₹</th><th>Expires</th><th>Usage limit</th><th>Used</th><th title="Refused at checkout if the email or phone has paid before">First order only</th><th title="Listed under Offers on product pages">On product page</th><th title="Shown in the strip above the nav (one coupon)">Top bar</th><th>Active</th><th></th></tr></thead>
       <tbody>${couponsCache.map((c, i) => {
         const expired = c.expiresAt && c.expiresAt < today;
         const usedUp = c.usageLimit && (c.usedCount || 0) >= c.usageLimit;
@@ -1026,6 +1100,9 @@ function renderCoupons(){
           <td><input type="date" data-i="${i}" data-k="expiresAt" value="${c.expiresAt || ''}" onchange="couponEdit(this)"></td>
           <td><input type="number" min="0" data-i="${i}" data-k="usageLimit" value="${c.usageLimit || ''}" placeholder="Unlimited" oninput="couponEdit(this)" style="width:90px"></td>
           <td class="muted">${c.usedCount || 0}${usedUp ? '<br><span class="status pending">used up</span>' : ''}</td>
+          <td><input type="checkbox" data-i="${i}" data-k="firstOrderOnly" ${c.firstOrderOnly ? 'checked' : ''} onchange="couponEdit(this)" aria-label="First order only"></td>
+          <td><input type="checkbox" data-i="${i}" data-k="showOnProduct" ${c.showOnProduct ? 'checked' : ''} onchange="couponEdit(this)" aria-label="Show on product page"></td>
+          <td><input type="radio" name="couponTopBar" data-i="${i}" ${c.topBar ? 'checked' : ''} onclick="couponTopBar(${i}, this)" aria-label="Show in top bar"></td>
           <td><input type="checkbox" data-i="${i}" data-k="active" ${c.active !== false ? 'checked' : ''} onchange="couponEdit(this)">${expired ? '<br><span class="status pending">expired</span>' : ''}</td>
           <td><button class="danger" onclick="couponsCache.splice(${i},1);renderCoupons()">Remove</button></td>
         </tr>`;
@@ -1037,6 +1114,12 @@ function couponEdit(el){
   const c = couponsCache[Number(el.dataset.i)];
   const k = el.dataset.k;
   c[k] = el.type === 'checkbox' ? el.checked : el.type === 'number' ? (el.value === '' ? null : Number(el.value)) : el.value;
+}
+// One coupon at most in the top bar; clicking the chosen one again clears it.
+function couponTopBar(i, el){
+  const was = couponsCache[i].topBar;
+  couponsCache.forEach((c, n) => { c.topBar = n === i && !was; });
+  el.checked = !was;
 }
 function addCouponRow(){
   couponsCache.push({ code: '', type: 'percent', value: 10, minSubtotal: 0, maxDiscount: null, expiresAt: '', usageLimit: null, usedCount: 0, active: true });
@@ -1438,7 +1521,7 @@ function exchangeAdminHtml(o){
   const open = ['requested','approved'].includes(ex.status);
   return `<div style="margin-top:6px;padding:8px;border:1px solid ${open ? 'var(--rust)' : 'var(--line)'};border-radius:4px;display:flex;flex-direction:column;gap:6px;">
     <span><b>Exchange: ${esc(ex.status)}</b> · ${esc(EX_REASON[ex.reason] || ex.reason)}</span>
-    <span class="muted">${ex.items.map(i => `${esc(i.name)} (${esc(i.size || '—')})${i.newSize ? ' → ' + esc(i.newSize) : ''} x${i.qty}`).join('<br>')}${ex.note ? '<br>Customer: ' + esc(ex.note) : ''}</span>
+    <span class="muted">${ex.items.map(i => `${esc(i.name)} (${esc(i.size || '—')})${i.newSize ? ' → ' + esc(i.newSize) : ''} x${i.qty}${i.sealed ? ' · seal unbroken (check on return)' : ''}`).join('<br>')}${ex.note ? '<br>Customer: ' + esc(ex.note) : ''}</span>
     <select id="xs-${id}">${['approved','rejected','completed'].map(st => `<option ${st === ex.status ? 'selected' : ''}>${st}</option>`).join('')}</select>
     <input id="xn-${id}" placeholder="Note to customer: pickup, return address or reason" value="${esc(ex.adminNote || '')}">
     <button class="secondary" onclick="saveExchange('${id}')">Update exchange</button>

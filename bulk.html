@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0D0E10">
+<title>Bulk &amp; Team Orders — EGOSYNK</title>
+<meta name="description" content="Bulk orders of EGOSYNK compression wear, sleeves and training gear for gyms, coaches, teams and corporate events. Volume pricing and size help.">
+<link rel="canonical" href="https://egosynk.com/bulk.html">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="EGOSYNK">
+<meta property="og:url" content="https://egosynk.com/bulk.html">
+<meta property="og:title" content="Bulk &amp; Team Orders — EGOSYNK">
+<meta property="og:description" content="Kit out your gym, team or crew. Volume pricing and size help from EGOSYNK.">
+<meta property="og:image" content="https://egosynk.com/og-image">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0D0E10; --surface:#17181B; --surface-2:#1F2023; --line:#2A2B2F;
+    --bone:#EDEAE3; --bone-dim:#A8A6A0; --steel:#8B8D93;
+    --rust:#C41E3A; --rust-bright:#E63950; --ok:#3FA96A;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  [hidden]{display:none !important;}
+  body{background:var(--bg);color:var(--bone);font-family:'Inter',sans-serif;line-height:1.6;}
+  a{color:var(--rust-bright);}
+  .mono{font-family:'JetBrains Mono',monospace;letter-spacing:0.08em;text-transform:uppercase;}
+  nav{display:flex;align-items:center;justify-content:space-between;padding:18px 24px;border-bottom:1px solid var(--line);}
+  .logo{font-family:'Archivo Black',sans-serif;font-size:20px;text-transform:uppercase;color:var(--bone);text-decoration:none;}
+  .logo span{color:var(--rust);}
+  nav a.back{color:var(--bone-dim);font-size:13px;text-decoration:none;}
+  .wrap{max-width:1080px;margin:0 auto;padding:48px 24px 72px;display:grid;gap:48px;}
+  @media(min-width:900px){.wrap{grid-template-columns:1fr 1.1fr;align-items:start;}.intro{position:sticky;top:32px;}}
+  .eyebrow{font-size:12px;color:var(--rust-bright);margin-bottom:14px;}
+  h1{font-family:'Archivo Black',sans-serif;text-transform:uppercase;font-size:clamp(32px,6vw,52px);line-height:1;letter-spacing:-0.01em;margin-bottom:18px;}
+  h1 .accent{color:var(--rust);}
+  .lead{color:var(--bone-dim);font-size:15px;max-width:440px;margin-bottom:28px;}
+  .perks{display:grid;gap:14px;list-style:none;}
+  .perks li{display:flex;gap:14px;padding:14px 0;border-top:1px solid var(--line);}
+  .perks .n{font-family:'JetBrains Mono',monospace;color:var(--rust-bright);font-size:12px;padding-top:2px;}
+  .perks b{display:block;font-size:14px;}
+  .perks span{color:var(--bone-dim);font-size:13px;}
+  form{background:var(--surface);border:1px solid var(--line);border-radius:4px;padding:24px;display:grid;gap:16px;}
+  .row{display:grid;gap:16px;}
+  @media(min-width:560px){.row{grid-template-columns:1fr 1fr;}}
+  label,.legend{display:block;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--steel);letter-spacing:0.08em;text-transform:uppercase;margin-bottom:6px;}
+  input,select,textarea{width:100%;background:var(--surface-2);border:1px solid var(--line);color:var(--bone);padding:11px 12px;border-radius:2px;font:inherit;font-size:16px;}
+  input:focus,select:focus,textarea:focus{outline:none;border-color:var(--rust);}
+  fieldset{border:none;}
+  .chips{display:flex;flex-wrap:wrap;gap:8px;}
+  .chip{position:relative;}
+  .chip input{position:absolute;opacity:0;width:1px;height:1px;}
+  .chip span{display:inline-block;border:1px solid var(--line);border-radius:2px;padding:8px 12px;font-size:13px;color:var(--bone-dim);cursor:pointer;user-select:none;}
+  .chip input:checked + span{border-color:var(--rust);color:var(--bone);background:rgba(196,30,58,.12);}
+  .chip input:focus-visible + span{outline:2px solid var(--rust-bright);outline-offset:2px;}
+  .check{display:flex;gap:10px;align-items:flex-start;font-size:14px;color:var(--bone-dim);}
+  .check input{width:18px;height:18px;flex:none;margin-top:2px;accent-color:var(--rust);}
+  .hp{position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden;}
+  button[type=submit]{background:var(--rust);color:var(--bone);border:none;padding:14px 20px;border-radius:2px;font:inherit;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;font-size:14px;cursor:pointer;}
+  button[type=submit]:disabled{opacity:.6;cursor:wait;}
+  .err{color:var(--rust-bright);font-size:13px;min-height:1em;}
+  .fine{color:var(--steel);font-size:12px;}
+  .done{background:var(--surface);border:1px solid var(--ok);border-radius:4px;padding:28px 24px;}
+  .done h2{font-family:'Archivo Black',sans-serif;text-transform:uppercase;font-size:22px;margin-bottom:8px;}
+  .done p{color:var(--bone-dim);font-size:14px;}
+  footer{border-top:1px solid var(--line);padding:24px;text-align:center;font-size:12px;color:var(--steel);}
+  footer a{color:var(--bone-dim);margin:0 8px;text-decoration:none;}
+</style>
+</head>
+<body>
+
+<nav>
+  <a href="/" class="logo"><span>EGO</span>SYNK</a>
+  <a href="/" class="back">← Back to store</a>
+</nav>
+
+<main class="wrap">
+  <section class="intro">
+    <div class="eyebrow mono">Bulk &amp; team orders</div>
+    <h1>Kit out the <span class="accent">whole floor.</span></h1>
+    <p class="lead">For gyms, coaches, sports teams and corporate events. Tell us what you need and roughly how many. We'll come back with pricing and sizing within 1 working day.</p>
+    <ul class="perks">
+      <li><span class="n">01</span><div><b>Volume pricing</b><span>Better rates as the quantity goes up, quoted per order.</span></div></li>
+      <li><span class="n">02</span><div><b>Size runs sorted</b><span>We help you split sizes across your members or squad using our size charts.</span></div></li>
+      <li><span class="n">03</span><div><b>Your logo, on request</b><span>Ask about adding your gym or team logo. We'll tell you what's possible for your order.</span></div></li>
+      <li><span class="n">04</span><div><b>GST invoice</b><span>Every order comes with a GST tax invoice. Share your GSTIN when we quote.</span></div></li>
+    </ul>
+  </section>
+
+  <section>
+    <form id="bulkForm" novalidate>
+      <div class="row">
+        <div><label for="name">Your name</label><input id="name" autocomplete="name" required maxlength="100"></div>
+        <div><label for="org">Gym / team / company</label><input id="org" autocomplete="organization" maxlength="120"></div>
+      </div>
+      <div class="row">
+        <div><label for="email">Email</label><input id="email" type="email" autocomplete="email" required maxlength="200"></div>
+        <div><label for="phone">Mobile</label><input id="phone" type="tel" inputmode="numeric" autocomplete="tel-national" required maxlength="10" placeholder="10 digits"></div>
+      </div>
+      <div class="row">
+        <div><label for="type">Who is it for?</label>
+          <select id="type" required>
+            <option value="">Choose…</option>
+            <option value="gym">Gym / studio</option>
+            <option value="coach">Coach / trainer</option>
+            <option value="team">Sports team / club</option>
+            <option value="corporate">Corporate / event</option>
+            <option value="other">Other</option>
+          </select></div>
+        <div><label for="quantity">Rough quantity (pieces)</label>
+          <select id="quantity" required>
+            <option value="">Choose…</option>
+            <option>10–25</option><option>26–50</option><option>51–100</option><option>100+</option>
+          </select></div>
+      </div>
+      <fieldset>
+        <div class="legend">What are you after?</div>
+        <div class="chips" id="cats"></div>
+      </fieldset>
+      <div><label for="city">City</label><input id="city" autocomplete="address-level2" maxlength="80"></div>
+      <label class="check" style="font-family:inherit;text-transform:none;letter-spacing:0;font-size:14px;color:var(--bone-dim);margin:0;">
+        <input type="checkbox" id="branding"> I'd like our logo on the gear
+      </label>
+      <div><label for="message">Anything else? (sizes, colours, deadline)</label><textarea id="message" rows="4" maxlength="1000"></textarea></div>
+      <div class="hp" aria-hidden="true"><label for="website">Website</label><input id="website" tabindex="-1" autocomplete="off"></div>
+      <div class="err" id="err" role="alert"></div>
+      <button type="submit" id="submitBtn">Send enquiry</button>
+      <p class="fine">We use these details only to reply to this enquiry. See our <a href="/privacy-policy.html">privacy policy</a>. Prefer email? Write to <a href="mailto:support@egosynk.com">support@egosynk.com</a>.</p>
+    </form>
+    <div class="done" id="done" hidden>
+      <h2>Enquiry sent</h2>
+      <p>Thanks! We'll reply within 1 working day with pricing and sizing. Check your inbox (and spam) for a reply from support@egosynk.com.</p>
+      <p style="margin-top:14px;"><a href="/">← Back to the store</a></p>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <a href="/shipping-policy.html">Shipping</a><a href="/refund-policy.html">Returns &amp; Exchanges</a><a href="/terms.html">Terms</a><a href="/privacy-policy.html">Privacy</a><a href="/contact.html">Contact</a>
+  <div class="mono" style="margin-top:10px;">© 2026 EGOSYNK.COM · GSTIN 27AKHPY6964E1ZI</div>
+</footer>
+
+<script>
+const FALLBACK_CATS = [
+  { id: 'sleeves', name: 'Gym Sleeves' }, { id: 'compression', name: 'Compression Wear' }, { id: 'bottoms', name: 'Bottoms' },
+  { id: 'innerwear', name: 'Innerwear' }, { id: 'socks', name: 'Gym Socks' }, { id: 'accessories', name: 'Accessories' },
+];
+function esc(str){ const d = document.createElement('div'); d.textContent = str == null ? '' : String(str); return d.innerHTML; }
+function track(name, params){ try{ window.egoTrack && window.egoTrack(name, params); } catch(e){} }
+
+function renderCats(list){
+  document.getElementById('cats').innerHTML = list.map(c =>
+    `<label class="chip"><input type="checkbox" value="${esc(c.id)}"><span>${esc(c.name)}</span></label>`).join('');
+}
+
+// Categories come from the live catalog so the chips match the store.
+async function loadCats(){
+  renderCats(FALLBACK_CATS);
+  try{
+    const res = await fetch('/.netlify/functions/get-catalog');
+    const data = await res.json();
+    if(Array.isArray(data.categories) && data.categories.length) renderCats(data.categories);
+  } catch(e){}
+}
+
+document.getElementById('bulkForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const val = id => document.getElementById(id).value.trim();
+  const err = document.getElementById('err');
+  const payload = {
+    name: val('name'), org: val('org'), email: val('email'), phone: val('phone').replace(/\D/g, ''),
+    type: val('type'), quantity: val('quantity'), city: val('city'), message: val('message'),
+    branding: document.getElementById('branding').checked, website: val('website'),
+    categories: [...document.querySelectorAll('#cats input:checked')].map(i => i.value),
+  };
+  const missing = !payload.name ? 'Enter your name'
+    : !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(payload.email) ? 'Enter a valid email'
+    : !/^[6-9]\d{9}$/.test(payload.phone) ? 'Enter a valid 10-digit mobile number'
+    : !payload.type ? 'Pick who the order is for'
+    : !payload.quantity ? 'Pick a rough quantity'
+    : !payload.categories.length ? 'Pick at least one product type' : '';
+  if(missing){ err.textContent = missing; return; }
+
+  const btn = document.getElementById('submitBtn');
+  btn.disabled = true; btn.textContent = 'Sending…'; err.textContent = '';
+  try{
+    const res = await fetch('/.netlify/functions/bulk-enquiry', {
+      method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(payload),
+    });
+    const data = await res.json().catch(() => ({}));
+    if(!res.ok) throw new Error(data.error || 'Could not send your enquiry');
+    document.getElementById('bulkForm').hidden = true;
+    document.getElementById('done').hidden = false;
+    track('generate_lead', { lead_source: 'bulk', quantity: payload.quantity });
+  } catch(ex){
+    err.textContent = ex.message;
+    btn.disabled = false; btn.textContent = 'Send enquiry';
+  }
+});
+
+loadCats();
+</script>
+<script src="/consent.js" defer></script>
+</body>
+</html>

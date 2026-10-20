@@ -144,6 +144,8 @@ function render(user, orders){
 // Exchange / issue request on a delivered order. The server decides which reasons are
 // still open (7 days for size, 48 hours for damaged/wrong item) and re-checks on submit.
 const EX_STATUS = { requested: 'Request received', approved: 'Approved', rejected: 'Not approved', completed: 'Completed' };
+// Size exchange on these only with the hygiene seal unbroken (lib/exchanges.js).
+const HYGIENE_CATS = ['innerwear', 'socks'];
 let ordersCache = [];
 
 function exchangeHtml(o, idx){
@@ -173,7 +175,9 @@ function exchangeHtml(o, idx){
             <option value="">New size</option>
             ${sizes.map(s => `<option>${esc(s)}</option>`).join('')}
           </select>
-        </div>`;
+        </div>
+        ${HYGIENE_CATS.includes(i.cat) ? `<div class="ex-item ex-seal"><input type="checkbox" id="ex-seal-${idx}-${n}">
+          <span><label for="ex-seal-${idx}-${n}" style="display:inline;margin:0;font:inherit;text-transform:none;letter-spacing:0;color:var(--bone-dim);">The hygiene seal on ${esc(i.name)} is unbroken (required for innerwear and socks)</label></span></div>` : ''}`;
       }).join('')}
       <label for="ex-note-${idx}">Anything we should know? (optional)</label>
       <textarea id="ex-note-${idx}" rows="2" maxlength="500"></textarea>
@@ -191,6 +195,7 @@ function toggleExchange(idx){
 function exchangeReasonChanged(idx){
   const isSize = document.getElementById('ex-reason-' + idx).value === 'size';
   document.querySelectorAll(`#ex-${idx} .ex-size`).forEach(s => { s.style.display = isSize ? '' : 'none'; });
+  document.querySelectorAll(`#ex-${idx} .ex-seal`).forEach(s => { s.style.display = isSize ? '' : 'none'; });
   document.getElementById('ex-hint-' + idx).textContent = isSize
     ? 'Items must be unused with tags on. Exchanges depend on stock.'
     : "After you submit, reply to our email with photos of the item and packaging. We'll send a replacement or a full refund.";
@@ -203,11 +208,13 @@ async function submitExchange(idx){
   const items = [];
   o.items.forEach((i, n) => {
     if(document.getElementById(`ex-${idx}-${n}`).checked){
-      items.push({ index: n, newSize: document.getElementById(`ex-size-${idx}-${n}`).value });
+      const seal = document.getElementById(`ex-seal-${idx}-${n}`);
+      items.push({ index: n, newSize: document.getElementById(`ex-size-${idx}-${n}`).value, sealed: seal ? seal.checked : undefined });
     }
   });
   if(!items.length){ err.textContent = 'Tick the item(s) this is about.'; return; }
   if(reason === 'size' && items.some(i => !i.newSize)){ err.textContent = 'Pick the new size for each ticked item.'; return; }
+  if(reason === 'size' && items.some(i => i.sealed === false)){ err.textContent = 'Innerwear and socks can only be exchanged with the hygiene seal unbroken.'; return; }
 
   const btn = document.getElementById('ex-submit-' + idx);
   btn.disabled = true; btn.textContent = 'Sending…'; err.textContent = '';

@@ -1,12 +1,13 @@
 const { getStore } = require('../lib/blob-store');
 const { getSessionUser } = require('../lib/session');
 const { logEvent } = require('../lib/audit');
-const { REASONS, openReasons, customerView, emailRequestReceived } = require('../lib/exchanges');
+const { REASONS, needsSeal, openReasons, customerView, emailRequestReceived } = require('../lib/exchanges');
 
 // A logged-in customer raises an exchange or issue request on one of their delivered
 // orders (account.html → My Orders). Body:
-//   { orderId, reason: 'size'|'damaged'|'wrong_item', items: [{ index, newSize? }], note? }
-// `index` points into order.items; a size exchange needs a new size the product offers.
+//   { orderId, reason: 'size'|'damaged'|'wrong_item', items: [{ index, newSize?, sealed? }], note? }
+// `index` points into order.items; a size exchange needs a new size the product offers,
+// and for innerwear/socks `sealed: true` (the hygiene seal is unbroken).
 exports.handler = async (event) => {
   if (event.httpMethod !== 'POST') return { statusCode: 405, body: 'Method Not Allowed' };
 
@@ -36,7 +37,12 @@ exports.handler = async (event) => {
       if (!line || seen.has(i)) return bad('Invalid item');
       seen.add(i);
       let newSize = null;
+      let sealed = false;
       if (reason === 'size') {
+        if (needsSeal(line)) {
+          if (p.sealed !== true) return bad(`${line.name} can only be exchanged if the hygiene seal is unbroken`);
+          sealed = true;
+        }
         newSize = String(p.newSize || '').slice(0, 20);
         const product = await catalog.get(String(line.id), { type: 'json' });
         const sizes = (product && product.sizes) || [];
@@ -44,7 +50,7 @@ exports.handler = async (event) => {
           return bad(`Pick a different size for ${line.name}`);
         }
       }
-      items.push({ index: i, id: line.id, name: line.name, size: line.size || null, qty: line.qty, newSize });
+      items.push({ index: i, id: line.id, name: line.name, size: line.size || null, qty: line.qty, newSize, ...(sealed ? { sealed } : {}) });
     }
 
     const now = new Date().toISOString();

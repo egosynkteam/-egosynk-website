@@ -3,6 +3,7 @@ const path = require('path');
 const { getSettings, getSizeGuides } = require('../lib/settings');
 const { getPublicCatalog, idFromSlug } = require('../lib/catalog');
 const { listReviews, publicReview } = require('../lib/reviews');
+const { getCoupons, publicOffers } = require('../lib/coupons');
 
 // Server-renders /p/<slug> (rewritten here in netlify.toml) from product-template.html,
 // putting the product's own title, description, share image and Product structured data
@@ -34,8 +35,8 @@ exports.handler = async (event) => {
     decodeURIComponent(String(event.path || '').split('/').filter(Boolean).pop() || '');
   const id = idFromSlug(slug);
   try {
-    const [{ products, categories }, settings, sizeGuides, template] = await Promise.all([
-      getPublicCatalog(), getSettings(), getSizeGuides(), loadTemplate(),
+    const [{ products, categories }, settings, sizeGuides, template, coupons] = await Promise.all([
+      getPublicCatalog(), getSettings(), getSizeGuides(), loadTemplate(), getCoupons(),
     ]);
     const product = products.find((p) => p.id === id);
     if (!product) {
@@ -86,7 +87,7 @@ exports.handler = async (event) => {
 
     const { shippingFee, freeShippingThreshold, social } = settings;
     const data = { product, category, related, reviews, sizeGuide: guideKey ? sizeGuides[guideKey] || null : null,
-      settings: { shippingFee, freeShippingThreshold, social } };
+      settings: { shippingFee, freeShippingThreshold, social }, offers: publicOffers(coupons) };
 
     // Function replacers, so "$" in product text isn't read as a replace pattern.
     const body = template

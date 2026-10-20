@@ -85,8 +85,12 @@ async function cleanCoupons(list) {
       usageLimit: money(c.usageLimit) || null,
       usedCount: used[code] || 0,
       active: c.active !== false,
+      firstOrderOnly: !!c.firstOrderOnly,
+      showOnProduct: !!c.showOnProduct,
+      topBar: !!c.topBar,
     });
   }
+  if (out.filter((c) => c.topBar).length > 1) return { error: 'Only one coupon can be shown in the top bar' };
   return { value: out };
 }
 

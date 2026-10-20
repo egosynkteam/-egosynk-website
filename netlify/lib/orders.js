@@ -2,7 +2,7 @@ const { getStore } = require('./blob-store');
 const { logEvent } = require('./audit');
 const { sendEmail, emailWrapper, buttonHtml, escapeHtml, GSTIN } = require('./email');
 const { ensureInvoice } = require('./gst');
-const { recordCouponUse } = require('./coupons');
+const { recordCouponUse, recordBuyer } = require('./coupons');
 const { getSettings } = require('./settings');
 
 const OWNER_EMAIL = 'egosynkteam@gmail.com';
@@ -81,6 +81,7 @@ async function markOrderPaid(orderId, paymentId, event, source) {
   try { await ensureInvoice(order); } catch (err) { console.error('Invoice generation failed:', err); }
   try { await decrementStock(order.items); } catch (err) { console.error('Stock update failed:', err); }
   try { await recordCouponUse(order.coupon); } catch (err) { console.error('Coupon count failed:', err); }
+  try { await recordBuyer(order); } catch (err) { console.error('Buyer record failed:', err); }
   await logEvent('order_paid', order.shipping && order.shipping.email, { orderId, paymentId, source }, event);
 
   if (order.shipping && order.shipping.email) {

@@ -79,6 +79,17 @@
   .mono{font-family:'JetBrains Mono',monospace;letter-spacing:0.04em;}
   .display{font-family:'Archivo Black',sans-serif;text-transform:uppercase;}
 
+  /* OFFER STRIP (the coupon marked "Top bar" in admin → Coupons) */
+  .promo-bar{position:fixed;top:0;left:0;right:0;z-index:101;height:34px;display:flex;align-items:center;justify-content:center;gap:10px;
+    padding:0 40px;background:var(--rust);color:var(--bone);font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.08em;text-transform:uppercase;white-space:nowrap;overflow:hidden;}
+  .promo-bar .promo-text{overflow:hidden;text-overflow:ellipsis;}
+  .promo-bar .promo-short{display:none;}
+  @media(max-width:600px){.promo-bar .promo-text{display:none;}.promo-bar .promo-short{display:inline;}}
+  .promo-bar .promo-code{background:var(--bone);color:var(--bg);border:none;border-radius:2px;padding:3px 8px;font:inherit;font-weight:700;cursor:pointer;flex-shrink:0;}
+  .promo-bar .promo-close{position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--bone);font-size:18px;line-height:1;cursor:pointer;padding:4px 8px;}
+  body.has-promo nav{top:34px;}
+  body.has-promo .hero{padding-top:134px;}
+
   /* NAV */
   nav{
     position:fixed;top:0;left:0;right:0;z-index:100;
@@ -507,6 +518,7 @@
 </head>
 <body>
 
+<div class="promo-bar" id="promoBar" role="region" aria-label="Offer" hidden></div>
 <nav>
   <div class="logo"><span>EGO</span>SYNK</div>
   <div class="nav-right">
@@ -589,7 +601,7 @@
     </div>
     <div>
       <h5>Support</h5>
-      <ul><li><a href="/shipping-policy.html">Shipping</a></li><li><a href="/refund-policy.html">Returns &amp; Exchanges</a></li><li><a href="/terms.html">Terms &amp; Conditions</a></li><li><a href="/privacy-policy.html">Privacy Policy</a></li><li><a href="/contact.html">Contact &amp; Grievances</a></li><li><a href="#" onclick="window.egoCookieSettings&&egoCookieSettings();return false;">Cookie settings</a></li></ul>
+      <ul><li><a href="/shipping-policy.html">Shipping</a></li><li><a href="/refund-policy.html">Returns &amp; Exchanges</a></li><li><a href="/terms.html">Terms &amp; Conditions</a></li><li><a href="/privacy-policy.html">Privacy Policy</a></li><li><a href="/contact.html">Contact &amp; Grievances</a></li><li><a href="/bulk.html">Bulk &amp; team orders</a></li><li><a href="#" onclick="window.egoCookieSettings&&egoCookieSettings();return false;">Cookie settings</a></li></ul>
     </div>
   </div>
   <div class="footer-bottom">
@@ -843,6 +855,51 @@ function applySettings(st){
     .map(([label, url]) => `<a href="${esc(url)}" target="_blank" rel="noopener">${label}</a>`).join('');
 }
 
+// "10% off your first order", "₹150 off orders over ₹1,499 (max …)" from a public offer.
+function offerText(o){
+  const amount = o.type === 'percent' ? `${o.value}% off` : `${inr(o.value)} off`;
+  const scope = o.firstOrderOnly ? 'your first order' : 'your order';
+  const min = o.minSubtotal ? ` over ${inr(o.minSubtotal)}` : '';
+  const cap = o.type === 'percent' && o.maxDiscount ? ` · up to ${inr(o.maxDiscount)}` : '';
+  return `${amount} ${scope}${min}${cap}`;
+}
+
+// The strip above the nav. Closing it hides that code until a different one is set.
+function renderPromo(offers){
+  const o = offers.find(x => x.topBar);
+  const bar = document.getElementById('promoBar');
+  let closed = null;
+  try{ closed = localStorage.getItem('egosynk_promo_closed'); } catch(e){}
+  const show = !!o && closed !== o.code;
+  bar.hidden = !show;
+  document.body.classList.toggle('has-promo', show);
+  if(!show) return;
+  // Phones get the short line ("10% off first order") so the code stays readable.
+  const short = `${o.type === 'percent' ? o.value + '%' : inr(o.value)} off${o.firstOrderOnly ? ' first order' : ''}`;
+  bar.innerHTML = `<span class="promo-text">${esc(offerText(o))} · code</span><span class="promo-short">${esc(short)} ·</span>
+    <button class="promo-code" onclick="copyOffer('${esc(o.code)}', this)" title="Copy code">${esc(o.code)}</button>
+    <button class="promo-close" onclick="closePromo('${esc(o.code)}')" aria-label="Hide offer">×</button>`;
+}
+function prefillOffer(){
+  let code = null;
+  try{ code = localStorage.getItem('egosynk_offer'); } catch(e){}
+  const input = document.getElementById('couponInput');
+  if(code && input && !appliedCoupon && !input.value) input.value = code;
+}
+function closePromo(code){
+  try{ localStorage.setItem('egosynk_promo_closed', code); } catch(e){}
+  document.getElementById('promoBar').hidden = true;
+  document.body.classList.remove('has-promo');
+}
+// Copies the code and puts it in the bag's discount field for checkout. Product pages
+// save a copied code too (egosynk_offer), so it's waiting in the bag here.
+async function copyOffer(code, btn){
+  try{ await navigator.clipboard.writeText(code); } catch(e){}
+  try{ localStorage.setItem('egosynk_offer', code); } catch(e){}
+  prefillOffer();
+  if(btn){ const t = btn.textContent; btn.textContent = 'Copied'; setTimeout(() => { btn.textContent = t; }, 1500); }
+}
+
 function renderFooterShop(){
   document.getElementById('footerShop').innerHTML = categories
     .map(c => `<li><a href="#shop" onclick="filterCat('${esc(c.id)}');return false;">${esc(c.name)}</a></li>`).join('');
@@ -866,6 +923,7 @@ async function loadCatalog(){
     if(Array.isArray(data.categories) && data.categories.length) categories = data.categories;
     if(data.sizeGuides && Object.keys(data.sizeGuides).length) sizeGuides = data.sizeGuides;
     applySettings(storeSettings);
+    renderPromo(data.offers || []);
     publishProductData(products);
   } catch(err){
     console.error('Could not load catalog', err);
@@ -881,6 +939,7 @@ async function loadCatalog(){
   sessionStorage.removeItem('egosynk_filter');
   renderProducts();
   updateCartUI();
+  prefillOffer();
   openBagFromHash();
 }
 
@@ -1351,7 +1410,7 @@ function updateCartUI(fromRecheck){
   const applied = document.getElementById('couponApplied');
   applied.hidden = !appliedCoupon;
   if(appliedCoupon){
-    applied.innerHTML = `<span><span class="mono">${esc(appliedCoupon.code)}</span> applied · you save ${inr(discount)}</span><button type="button" onclick="removeCoupon()">Remove</button>`;
+    applied.innerHTML = `<span><span class="mono">${esc(appliedCoupon.code)}</span> applied · you save ${inr(discount)}${appliedCoupon.firstOrderOnly ? ' · first orders only' : ''}</span><button type="button" onclick="removeCoupon()">Remove</button>`;
     document.getElementById('couponError').textContent = '';
   }
   document.getElementById('discountRow').hidden = !discount;
