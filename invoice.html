@@ -8,6 +8,7 @@
 <title>Tax Invoice — EGOSYNK</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/site.css">
 <style>
   /* A tax invoice is a document people print or save as PDF, so it's black-on-white
      paper rather than the storefront's dark theme. */
@@ -53,6 +54,7 @@
 </style>
 </head>
 <body>
+<script src="/site.js"></script>
 
 <div class="toolbar" id="toolbar" hidden>
   <a href="/">← egosynk.com</a>
@@ -207,5 +209,6 @@ function render({ orderId, paymentId, invoice: inv }){
 
 init();
 </script>
+<script src="/consent.js" defer></script>
 </body>
 </html>

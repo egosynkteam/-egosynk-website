@@ -1,0 +1,50 @@
+/* Shared shell for the store's secondary pages (account, sign-in, checkout result,
+   policies…): the same header and footer as index.html / the product pages, consistent
+   focus, and cross-page transitions. Added by site.js; each page keeps its own content
+   styles. */
+@view-transition{navigation:auto;}
+
+:root{--site-nav-h:77px;}
+html{overflow-x:clip;}
+body.site-shell{padding-top:calc(var(--site-nav-h) + 32px) !important;}
+:focus-visible{outline:2px solid #E63950;outline-offset:2px;}
+
+.site-nav{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;align-items:center;justify-content:space-between;
+  padding:18px 24px;background:rgba(13,14,16,.85);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-bottom:1px solid #2A2B2F;
+  font-family:'Inter',sans-serif;view-transition-name:site-nav;}
+.site-nav .site-logo{font-family:'Archivo Black',sans-serif;font-size:20px;letter-spacing:.02em;text-transform:uppercase;color:#EDEAE3;text-decoration:none;}
+.site-nav .site-logo span{color:#C41E3A;}
+.site-nav .site-right{display:flex;align-items:center;gap:12px;}
+.site-nav .site-shop{color:#A8A6A0;font-size:13px;font-weight:600;text-decoration:none;margin-right:6px;}
+.site-nav .site-shop:hover{color:#EDEAE3;}
+.site-nav .site-icon{position:relative;border:1px solid #2A2B2F;color:#EDEAE3;width:40px;height:40px;border-radius:2px;
+  display:flex;align-items:center;justify-content:center;transition:border-color .2s;}
+.site-nav .site-icon:hover,.site-nav .site-icon[aria-current=page]{border-color:#A8A6A0;}
+.site-nav .site-count{position:absolute;top:-6px;right:-6px;background:#C41E3A;color:#EDEAE3;font-size:10px;font-weight:700;
+  min-width:16px;height:16px;padding:0 4px;border-radius:8px;display:flex;align-items:center;justify-content:center;}
+.site-nav .site-count[hidden]{display:none;}
+
+.site-foot{width:100vw;margin:64px calc(50% - 50vw) 0;border-top:1px solid #2A2B2F;padding:32px 24px 40px;font:12px/1.6 'Inter',sans-serif;color:#8B8D93;align-self:auto;}
+.site-foot .site-links{display:flex;flex-wrap:wrap;gap:8px 18px;margin-bottom:12px;max-width:1200px;}
+.site-foot a{color:#8B8D93;text-decoration:none;}
+.site-foot a:hover,.site-foot a[aria-current=page]{color:#EDEAE3;}
+.site-foot .site-legal{font-family:'JetBrains Mono',monospace;letter-spacing:.04em;}
+
+/* Cross-page transition: header stays put, the page underneath cross-fades and rises. */
+::view-transition-old(root){animation:site-out .18s cubic-bezier(.2,.7,.2,1) both;}
+::view-transition-new(root){animation:site-in .36s cubic-bezier(.16,1,.3,1) both;}
+@keyframes site-out{to{opacity:0;}}
+@keyframes site-in{from{opacity:0;transform:translateY(12px);}}
+
+@media (max-width:600px){
+  .site-nav{padding:14px 16px;}
+  .site-nav .site-shop{display:none;}
+  :root{--site-nav-h:69px;}
+}
+@media (prefers-reduced-motion:reduce){
+  ::view-transition-old(root),::view-transition-new(root){animation:none;}
+}
+@media print{
+  .site-nav,.site-foot{display:none !important;}
+  body.site-shell{padding-top:0 !important;}
+}
