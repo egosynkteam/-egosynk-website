@@ -72,7 +72,10 @@
 
 <script>
 const params = new URLSearchParams(window.location.search);
-const redirect = params.get('redirect') || '/account.html';
+// Only pages on this site: a path starting with one "/" (not "//host" or "/\host"), so a
+// crafted link can't send someone to another site or run a javascript: URL after sign-in.
+const wanted = params.get('redirect') || '';
+const redirect = /^\/(?![/\\])/.test(wanted) ? wanted : '/account.html';
 
 document.getElementById('loginForm').addEventListener('submit', async (e) => {
   e.preventDefault();

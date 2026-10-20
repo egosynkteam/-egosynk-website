@@ -72,7 +72,7 @@ async function init(){
   const signature = params.get('signature');
 
   if(!orderId){
-    card.innerHTML = '<div class="error-state">No order reference found.</div>';
+    card.innerHTML = '<div class="error-state">This link doesn\'t include an order.<br><br>Your confirmation email has the right link, and signed-in customers can see every order in <a href="/account.html">My account</a>.</div>';
     return;
   }
 
@@ -88,7 +88,7 @@ async function init(){
       });
       const verifyResult = await verifyRes.json();
       if(!verifyResult.verified){
-        card.innerHTML = '<div class="error-state">Payment could not be verified.<br>If money was deducted, contact <a href="mailto:support@egosynk.com">support@egosynk.com</a> with this order ID:<br><br>' + orderId + '</div>';
+        card.innerHTML = '<div class="error-state">Payment could not be verified.<br>If money was deducted, contact <a href="mailto:support@egosynk.com">support@egosynk.com</a> with this order ID:<br><br><span class="mono">' + escapeHtml(orderId) + '</span></div>';
         return;
       }
       sessionStorage.removeItem('egosynk_cart');
@@ -97,7 +97,7 @@ async function init(){
 
     const orderRes = await fetch(`/.netlify/functions/get-order?id=${encodeURIComponent(orderId)}`);
     if(!orderRes.ok){
-      card.innerHTML = '<div class="error-state">Order not found yet. If you just paid, refresh in a few seconds, or contact <a href="mailto:support@egosynk.com">support@egosynk.com</a>.</div>';
+      card.innerHTML = '<div class="error-state">We can\'t find this order yet. If you just paid, refresh in a few seconds. Still missing? Email <a href="mailto:support@egosynk.com">support@egosynk.com</a> and we\'ll check.</div>';
       return;
     }
     const order = await orderRes.json();
@@ -117,7 +117,7 @@ async function init(){
     if(document.readyState === 'complete') reportPurchase(); else addEventListener('load', reportPurchase);
   } catch(err){
     console.error(err);
-    card.innerHTML = '<div class="error-state">Something went wrong loading your order. Contact <a href="mailto:support@egosynk.com">support@egosynk.com</a>.</div>';
+    card.innerHTML = '<div class="error-state">Your order couldn\'t load. Refresh to try again, or email <a href="mailto:support@egosynk.com">support@egosynk.com</a>.</div>';
   }
 }
 
