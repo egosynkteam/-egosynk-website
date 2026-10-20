@@ -111,14 +111,15 @@ function orderPayload(order, pickupLocation, pkg) {
     billing_address: s.address1,
     billing_address_2: s.address2 || '',
     billing_city: s.city,
-    billing_pincode: s.pincode,
+    billing_pincode: Number(s.pincode),
     billing_state: s.state,
     billing_country: 'India',
     billing_email: s.email || '',
-    billing_phone: s.phone,
+    billing_phone: Number(s.phone),
     shipping_is_billing: true,
     order_items: items,
     payment_method: 'Prepaid',
+    invoice_number: (order.invoice && order.invoice.number) || '',
     shipping_charges: order.shippingFee || 0,
     total_discount: 0,
     sub_total: Math.round(items.reduce((a, i) => a + i.selling_price * i.units, 0) * 100) / 100,
@@ -167,9 +168,18 @@ async function track(awb) {
 }
 
 const cancelOrder = (srOrderId) => call('POST', '/orders/cancel', { ids: [srOrderId] });
+
+// Logs in and lists the account's pickup addresses (nickname = `pickup_location`), so
+// admin can check the connection and that the saved nickname exists.
+async function pickupLocations() {
+  const data = await call('GET', '/settings/company/pickup');
+  return ((data.data && data.data.shipping_address) || []).map((a) => ({
+    name: a.pickup_location, pincode: a.pin_code || null, verified: a.phone_verified === 1,
+  }));
+}
 const trackUrlFor = (awb) => `https://shiprocket.co/tracking/${encodeURIComponent(awb)}`;
 
 module.exports = {
   DEFAULT_PACKAGES, FALLBACK_PACKAGE, ShiprocketError, configured, getShiprocketSettings, packageFor,
-  orderPayload, createOrder, assignAwb, requestPickup, label, track, cancelOrder, trackUrlFor,
+  orderPayload, createOrder, assignAwb, requestPickup, label, track, cancelOrder, trackUrlFor, pickupLocations,
 };

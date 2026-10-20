@@ -15,12 +15,23 @@ const sr = require('../lib/shiprocket');
 //   label  { orderId } — fetch the label again
 //   track  { orderId } — latest courier status; marks the order delivered when it is
 //   cancel { orderId } — cancel the Shiprocket order (before the courier collects it)
-//   GET → { configured, defaults } for the ship form
+//   GET → { configured, defaults } for the ship form; GET ?check=1 also logs in to
+//   Shiprocket and lists its pickup addresses
 exports.handler = async (event) => {
   if (!(await isAdminAuthorized(event))) return bad('Unauthorized', 401);
   try {
     if (event.httpMethod === 'GET') {
-      return ok({ configured: sr.configured(), ...(await sr.getShiprocketSettings()) });
+      const out = { configured: sr.configured(), ...(await sr.getShiprocketSettings()) };
+      if (event.queryStringParameters && event.queryStringParameters.check) {
+        try {
+          out.pickups = await sr.pickupLocations();
+          out.pickupFound = out.pickups.some((p) => p.name === out.pickupLocation);
+        } catch (err) {
+          if (!(err instanceof sr.ShiprocketError)) throw err;
+          out.checkError = err.message;
+        }
+      }
+      return ok(out);
     }
     if (event.httpMethod !== 'POST') return bad('Method Not Allowed', 405);
 

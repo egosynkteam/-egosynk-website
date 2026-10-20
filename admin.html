@@ -92,7 +92,11 @@
   .ship-box .pkg{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;}
   .ship-box .pkg input{width:100%;min-width:0;}
   .ship-box .err{color:var(--rust-bright);}
-  .pkg-table input{width:70px;}
+  .pkg-table th,.pkg-table td{padding:5px 3px;font-size:12px;}
+  .pkg-table input{width:44px;padding:5px 3px;}
+  .pkg-table input[data-k="weightG"]{width:56px;}
+  .pkg-table input{-moz-appearance:textfield;appearance:textfield;}
+  .pkg-table input::-webkit-outer-spin-button,.pkg-table input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0;}
   .fulfil .status{align-self:flex-start;}
   .status.processing{background:rgba(168,166,160,0.15);color:var(--bone-dim);}
   .status.shipped{background:rgba(80,140,230,0.15);color:#7FA8F0;}
@@ -321,7 +325,11 @@
         <p class="muted" style="margin:8px 0;">Default packed parcel per category: weight in grams, size in cm. The ship form adds up a mixed order and you can change it there. Couriers charge on the higher of actual and volumetric weight (L×B×H ÷ 5000).</p>
         <div id="pkgWrap" style="overflow-x:auto;"></div>
         <div class="form-error" id="shipError"></div>
-        <button class="secondary" onclick="saveShipping()" style="margin-top:8px;">Save shipping</button>
+        <div class="row-actions" style="margin-top:8px;">
+          <button class="secondary" onclick="saveShipping()">Save shipping</button>
+          <button class="secondary" onclick="checkShipping()">Check connection</button>
+        </div>
+        <p class="muted" id="shipCheck" style="margin-top:8px;"></p>
       </section>
       <section class="settings-card" id="dbCard" hidden>
         <h4>Database</h4>
@@ -1325,6 +1333,19 @@ function renderShipping(){
     <tbody>${cats.map(c => { const p = shipSettings.packages[c.id] || PKG_FALLBACK; return `<tr data-cat="${esc(c.id)}">
       <td>${esc(c.name)}</td>${['weightG','l','b','h'].map(k => `<td><input type="number" min="1" data-k="${k}" value="${p[k]}"></td>`).join('')}</tr>`; }).join('')}</tbody></table>`;
 }
+async function checkShipping(){
+  const el = document.getElementById('shipCheck');
+  el.textContent = 'Checking…';
+  try{
+    const res = await adminFetch('/.netlify/functions/admin-shipping?check=1');
+    if(res.status === 401){ handleUnauthorized(); return; }
+    const d = await res.json();
+    el.innerHTML = !d.configured ? 'Not connected: the Shiprocket login is not set in Netlify.'
+      : d.checkError ? `Shiprocket said: ${esc(d.checkError)}`
+      : d.pickupFound ? `✓ Connected. Pickup address "${esc(d.pickupLocation)}" found.`
+      : `Connected, but no pickup address is named "${esc(d.pickupLocation)}". Shiprocket has: ${d.pickups.map(p => '"' + esc(p.name) + '"').join(', ') || 'none'}.`;
+  } catch(e){ el.textContent = 'Check failed: ' + e.message; }
+}
 async function saveShipping(){
   const errEl = document.getElementById('shipError');
   errEl.style.display = 'none';
@@ -1353,8 +1374,7 @@ function shipHtml(o){
     const p = s.package || packageFor(o);
     return `<div class="ship-box">
       <b>Ship with Shiprocket</b>
-      ${s.shipmentId ? `<span class="muted">Shiprocket order ${esc(s.orderId)} created${s.awb ? ` · AWB ${esc(s.awb)}` : ''}. Finish the remaining steps:</span>` : `<span class="muted">Parcel: grams · L · B · H cm</span>
-      <div class="pkg">${['weightG','l','b','h'].map(k => `<input type="number" min="1" id="pk-${k}-${id}" value="${p[k]}" aria-label="${k}">`).join('')}</div>`}
+      ${s.shipmentId ? `<span class="muted">Shiprocket order ${esc(s.orderId)} created${s.awb ? ` · AWB ${esc(s.awb)}` : ''}. Finish the remaining steps:</span>` : `<div class="pkg">${[['weightG','Weight g'],['l','L cm'],['b','B cm'],['h','H cm']].map(([k, label]) => `<label class="muted" style="font-size:11px;">${label}<input type="number" min="1" id="pk-${k}-${id}" value="${p[k]}"></label>`).join('')}</div>`}
       ${s.lastError ? `<span class="err">Last try: ${esc(s.lastError.message)}</span>` : ''}
       <button onclick="shipOrder('${id}')" ${shipConfigured === false ? 'disabled title="Shiprocket login not set in Netlify"' : ''}>${s.shipmentId ? 'Retry' : 'Ship with Shiprocket'}</button>
     </div>`;
