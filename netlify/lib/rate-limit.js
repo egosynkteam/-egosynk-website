@@ -25,7 +25,12 @@ async function checkLoginLock(email) {
 async function recordLoginFailure(email) {
   const store = getStore('security');
   const k = key(email);
-  const rec = (await store.get(k, { type: 'json' })) || { count: 0 };
+  let rec = (await store.get(k, { type: 'json' })) || { count: 0 };
+  // Failures count toward a lock only while they're recent: a typo weeks after an old
+  // lockout starts from zero instead of locking the account again straight away.
+  if (rec.lastFailure && Date.now() - new Date(rec.lastFailure).getTime() > LOCKOUT_MS && !(rec.lockedUntil && new Date(rec.lockedUntil) > new Date())) {
+    rec = { count: 0 };
+  }
   rec.count = (rec.count || 0) + 1;
   rec.lastFailure = new Date().toISOString();
   if (rec.count >= MAX_ATTEMPTS) {

@@ -1,9 +1,11 @@
 const { getStore } = require('./blob-store');
+const { purgeCatalog } = require('./cdn');
 const { logEvent } = require('./audit');
 const { sendEmail, emailWrapper, buttonHtml, escapeHtml, GSTIN } = require('./email');
 const { ensureInvoice } = require('./gst');
 const { recordCouponUse, recordBuyer } = require('./coupons');
 const { getSettings } = require('./settings');
+const { viewKey } = require('./order-access');
 
 const OWNER_EMAIL = 'egosynkteam@gmail.com';
 
@@ -15,15 +17,25 @@ function stockLeft(product, size) {
   return map[size];
 }
 
+// Returns whether any tracked stock changed (so the CDN copy of the catalog is refreshed).
 async function decrementStock(items) {
   const catalog = getStore('catalog');
+  let changed = false;
   for (const i of items) {
     const product = await catalog.get(String(i.id), { type: 'json' });
     if (!product || stockLeft(product, i.size) === Infinity) continue;
     product.stockBySize[i.size] = Math.max(0, product.stockBySize[i.size] - i.qty);
     product.updatedAt = new Date().toISOString();
     await catalog.setJSON(String(i.id), product);
+    changed = true;
   }
+  return changed;
+}
+
+// The invoice link carries the order's view key; never let a missing secret break the
+// confirmation email of an order that's already paid.
+function invoiceKeyParam(orderId) {
+  try { return `&k=${viewKey(orderId)}`; } catch (err) { console.error('No order view key:', err.message); return ''; }
 }
 
 function orderEmailHtml(order, forOwner) {
@@ -58,7 +70,7 @@ function orderEmailHtml(order, forOwner) {
       ${escapeHtml(s.city)}, ${escapeHtml(s.state)} ${escapeHtml(s.pincode)}<br>
       ${escapeHtml(s.phone)}
     </p>
-    ${order.invoice ? `<p style="font-size:13px;"><a href="https://egosynk.com/invoice.html?id=${encodeURIComponent(order.orderId)}" style="color:#C41E3A;">View / download GST tax invoice</a></p>` : ''}
+    ${order.invoice ? `<p style="font-size:13px;"><a href="https://egosynk.com/invoice.html?id=${encodeURIComponent(order.orderId)}${invoiceKeyParam(order.orderId)}" style="color:#C41E3A;">View / download GST tax invoice</a></p>` : ''}
   `;
 }
 
@@ -79,7 +91,7 @@ async function markOrderPaid(orderId, paymentId, event, source) {
 
   // Nothing below may undo a confirmed payment: each step logs and carries on.
   try { await ensureInvoice(order); } catch (err) { console.error('Invoice generation failed:', err); }
-  try { await decrementStock(order.items); } catch (err) { console.error('Stock update failed:', err); }
+  try { if (await decrementStock(order.items)) await purgeCatalog(); } catch (err) { console.error('Stock update failed:', err); }
   try { await recordCouponUse(order.coupon); } catch (err) { console.error('Coupon count failed:', err); }
   try { await recordBuyer(order); } catch (err) { console.error('Buyer record failed:', err); }
   await logEvent('order_paid', order.shipping && order.shipping.email, { orderId, paymentId, source }, event);

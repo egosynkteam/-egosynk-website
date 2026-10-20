@@ -1,4 +1,5 @@
 const { getSettings, getSizeGuides } = require('../lib/settings');
+const { CATALOG_HEADERS } = require('../lib/cdn');
 const { getPublicCatalog } = require('../lib/catalog');
 const { getCoupons, publicOffers } = require('../lib/coupons');
 
@@ -17,7 +18,7 @@ exports.handler = async () => {
     const { shippingFee, freeShippingThreshold, announcement, hero, social } = settings;
     return {
       statusCode: 200,
-      headers: { 'Cache-Control': 'public, max-age=30' },
+      headers: { 'Cache-Control': 'public, max-age=30', ...CATALOG_HEADERS },
       body: JSON.stringify({
         products,
         categories: categories.map(({ id, name, desc, guide }) => ({ id, name, desc, guide })),

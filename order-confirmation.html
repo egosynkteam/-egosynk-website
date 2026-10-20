@@ -69,8 +69,19 @@ async function init(){
   const card = document.getElementById('card');
   const params = new URLSearchParams(window.location.search);
   const orderId = params.get('order');
-  const paymentId = params.get('payment_id');
-  const signature = params.get('signature');
+  // Payment proof from checkout (sessionStorage; older links carried it in the URL).
+  let pay = {};
+  try{ pay = JSON.parse(sessionStorage.getItem('egosynk_payment') || '{}'); } catch(e){}
+  if(pay.order !== orderId) pay = {};
+  const paymentId = pay.payment_id || params.get('payment_id');
+  const signature = pay.signature || params.get('signature');
+  // Keep only the order id in the address bar before analytics loads.
+  if(params.get('payment_id') || params.get('signature') || params.get('k')){
+    history.replaceState(null, '', location.pathname + (orderId ? '?order=' + encodeURIComponent(orderId) : ''));
+  }
+  const viewKeyName = 'egosynk_view_' + orderId;
+  let viewKey = params.get('k');
+  try{ viewKey = viewKey || sessionStorage.getItem(viewKeyName); } catch(e){}
 
   if(!orderId){
     card.innerHTML = '<div class="error-state">This link doesn\'t include an order.<br><br>Your confirmation email has the right link, and signed-in customers can see every order in <a href="/account.html">My account</a>.</div>';
@@ -93,10 +104,13 @@ async function init(){
         return;
       }
       sessionStorage.removeItem('egosynk_cart');
+      sessionStorage.removeItem('egosynk_payment');
+      viewKey = verifyResult.k;
+      try{ sessionStorage.setItem(viewKeyName, viewKey); } catch(e){}
       try{ localStorage.removeItem('egosynk_cart'); } catch(e){}
     }
 
-    const orderRes = await fetch(`/.netlify/functions/get-order?id=${encodeURIComponent(orderId)}`);
+    const orderRes = await fetch(`/.netlify/functions/get-order?id=${encodeURIComponent(orderId)}${viewKey ? '&k=' + encodeURIComponent(viewKey) : ''}`);
     if(!orderRes.ok){
       card.innerHTML = '<div class="error-state">We can\'t find this order yet. If you just paid, refresh in a few seconds. Still missing? Email <a href="mailto:support@egosynk.com">support@egosynk.com</a> and we\'ll check.</div>';
       return;
@@ -154,7 +168,7 @@ function render(order){
       ${escapeHtml(s.phone)}
     </div>
 
-    ${order.invoiceNumber ? `<a class="btn btn-outline" href="/invoice.html?id=${encodeURIComponent(order.orderId)}">Download GST Invoice · ${escapeHtml(order.invoiceNumber)}</a>` : ''}
+    ${order.invoiceNumber ? `<a class="btn btn-outline" href="/invoice.html?id=${encodeURIComponent(order.orderId)}${viewKey ? '&k=' + encodeURIComponent(viewKey) : ''}">Download GST Invoice · ${escapeHtml(order.invoiceNumber)}</a>` : ''}
     <a class="btn" href="/">Continue Shopping</a>
     <div class="support-note">Sold by EGOSYNK · GSTIN: 27AKHPY6964E1ZI<br>Questions? support@egosynk.com</div>
   `;

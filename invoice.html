@@ -95,12 +95,20 @@ function amountInWords(amount){
 }
 
 async function init(){
-  const id = new URLSearchParams(location.search).get('id');
+  const params = new URLSearchParams(location.search);
+  const id = params.get('id');
+  // The view key from the email link moves to sessionStorage and out of the address bar
+  // (so it isn't in history or analytics); reloads in this tab still work.
+  let k = params.get('k');
+  try{
+    if(k) sessionStorage.setItem('egosynk_view_' + id, k); else k = sessionStorage.getItem('egosynk_view_' + id);
+  } catch(e){}
+  if(params.get('k')) history.replaceState(null, '', location.pathname + '?id=' + encodeURIComponent(id));
   const root = document.getElementById('root');
   if(!id){ root.innerHTML = '<div class="state">No order reference given.</div>'; return; }
   try{
-    const res = await fetch(`/.netlify/functions/get-invoice?id=${encodeURIComponent(id)}`);
-    if(!res.ok){ root.innerHTML = '<div class="state">Invoice not found. Contact support@egosynk.com with your order ID.</div>'; return; }
+    const res = await fetch(`/.netlify/functions/get-invoice?id=${encodeURIComponent(id)}${k ? '&k=' + encodeURIComponent(k) : ''}`);
+    if(!res.ok){ root.innerHTML = '<div class="state">This invoice isn\'t available from this link. Open it from your order email or <a href="/account.html">My account</a>, or email support@egosynk.com with your order ID.</div>'; return; }
     const data = await res.json();
     render(data);
   }catch(err){

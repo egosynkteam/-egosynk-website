@@ -1,4 +1,5 @@
 const { getStore } = require('../lib/blob-store');
+const { purgeCatalog } = require('../lib/cdn');
 const { requireAdmin, bodyOf } = require('../lib/admin-auth');
 const { logEvent } = require('../lib/audit');
 const { getSettings, getCategories, getSizeGuides } = require('../lib/settings');
@@ -186,6 +187,7 @@ exports.handler = async (event) => {
       if (cleaned.error) return { statusCode: 400, body: JSON.stringify({ error: cleaned.error }) };
       await getStore('settings').setJSON(section, cleaned.value);
       await logEvent('settings_updated', 'admin', { section }, event);
+      await purgeCatalog();
       return { statusCode: 200, body: JSON.stringify({ [section === 'store' ? 'settings' : section]: cleaned.value }) };
     }
     return { statusCode: 405, body: 'Method Not Allowed' };

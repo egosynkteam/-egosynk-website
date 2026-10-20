@@ -1,4 +1,5 @@
 const fs = require('fs');
+const { CATALOG_HEADERS } = require('../lib/cdn');
 const path = require('path');
 const { getSettings, getSizeGuides } = require('../lib/settings');
 const { getPublicCatalog, idFromSlug } = require('../lib/catalog');
@@ -95,7 +96,7 @@ exports.handler = async (event) => {
       .replace('/*PRODUCT_DATA*/null', () => safeJson(data));
     return {
       statusCode: 200,
-      headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'public, max-age=60' },
+      headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'public, max-age=60', ...CATALOG_HEADERS },
       body,
     };
   } catch (err) {

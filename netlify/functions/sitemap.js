@@ -1,4 +1,5 @@
 const { getPublicCatalog } = require('../lib/catalog');
+const { CATALOG_HEADERS } = require('../lib/cdn');
 
 // /sitemap.xml (rewritten here in netlify.toml): the static pages plus one URL per
 // visible product, so new products reach search engines without editing a file.
@@ -15,7 +16,7 @@ exports.handler = async () => {
     ];
     return {
       statusCode: 200,
-      headers: { 'Content-Type': 'application/xml; charset=utf-8', 'Cache-Control': 'public, max-age=3600' },
+      headers: { 'Content-Type': 'application/xml; charset=utf-8', 'Cache-Control': 'public, max-age=3600', ...CATALOG_HEADERS },
       body: `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls.join('\n')}\n</urlset>\n`,
     };
   } catch (err) {

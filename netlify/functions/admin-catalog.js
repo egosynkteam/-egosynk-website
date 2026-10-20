@@ -1,4 +1,5 @@
 const { getStore } = require('../lib/blob-store');
+const { purgeCatalog } = require('../lib/cdn');
 const { requireAdmin } = require('../lib/admin-auth');
 const { logEvent } = require('../lib/audit');
 const { getCategories, getSizeGuides } = require('../lib/settings');
@@ -78,6 +79,7 @@ exports.handler = async (event) => {
         p.updatedAt = new Date().toISOString();
         await store.setJSON(String(p.id), p);
         await logEvent(`product_${body.action}d`, 'admin', { id: p.id, name: p.name }, event);
+        await purgeCatalog();
         return { statusCode: 200, body: JSON.stringify({ product: p }) };
       }
       const [cats, guides] = await Promise.all([getCategories(), getSizeGuides()]);
@@ -138,6 +140,7 @@ exports.handler = async (event) => {
       await store.setJSON(String(id), product);
 
       await logEvent(isNew ? 'product_created' : 'product_updated', 'admin', { id, name: product.name }, event);
+      await purgeCatalog();
 
       // A size (or the whole product) coming back into stock emails everyone who asked.
       let restock = { sent: 0 };
@@ -161,6 +164,7 @@ exports.handler = async (event) => {
 
       await store.delete(String(id));
       await logEvent('product_deleted', 'admin', { id }, event);
+      await purgeCatalog();
 
       return { statusCode: 200, body: JSON.stringify({ ok: true }) };
     }

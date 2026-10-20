@@ -9,6 +9,34 @@
   # explicitly rather than rely on the account default.
   NODE_VERSION = "20"
 
+# The repo root is published, so source and tooling files would be downloadable; they're
+# answered with a 404 instead. (Functions run from /.netlify/functions, not these paths.)
+[[redirects]]
+  from = "/netlify/*"
+  to = "/not-found"
+  status = 404
+  force = true
+[[redirects]]
+  from = "/tests/*"
+  to = "/not-found"
+  status = 404
+  force = true
+[[redirects]]
+  from = "/.github/*"
+  to = "/not-found"
+  status = 404
+  force = true
+[[redirects]]
+  from = "/package.json"
+  to = "/not-found"
+  status = 404
+  force = true
+[[redirects]]
+  from = "/package-lock.json"
+  to = "/not-found"
+  status = 404
+  force = true
+
 # Product pages, server-rendered by netlify/functions/product-page.js. Values travel in
 # the path, not a ?query on `to` — Netlify doesn't pass query params added in rewrites.
 [[redirects]]
@@ -43,6 +71,11 @@
     X-Frame-Options = "SAMEORIGIN"
     Referrer-Policy = "strict-origin-when-cross-origin"
     Permissions-Policy = "camera=(), microphone=(), geolocation=()"
+    # Report-only for now: browsers log anything outside this list in the console without
+    # blocking it. Once a few weeks pass with nothing unexpected, rename the header to
+    # Content-Security-Policy to enforce it. 'unsafe-inline' stays until the inline scripts
+    # move to files.
+    Content-Security-Policy-Report-Only = "default-src 'self'; script-src 'self' 'unsafe-inline' https://checkout.razorpay.com https://www.googletagmanager.com https://connect.facebook.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https:; media-src 'self' https:; connect-src 'self' https://api.razorpay.com https://lumberjack.razorpay.com https://*.google-analytics.com https://*.analytics.google.com https://www.googletagmanager.com https://www.facebook.com https://connect.facebook.net; frame-src https://api.razorpay.com https://checkout.razorpay.com; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'self'"
 
 # Pages with personal or admin data must never be indexed.
 [[headers]]
@@ -65,3 +98,8 @@
 # Abandoned-checkout reminder emails (netlify/lib/abandoned.js), every 30 minutes.
 [functions."abandoned-carts"]
   schedule = "*/30 * * * *"
+
+# Deletes expired sessions, one-time links and old rate-limit records (netlify/lib/cleanup.js),
+# daily at 03:00 IST (21:30 UTC).
+[functions."nightly-cleanup"]
+  schedule = "30 21 * * *"

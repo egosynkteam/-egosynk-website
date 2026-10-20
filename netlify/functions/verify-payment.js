@@ -1,4 +1,5 @@
 const crypto = require('crypto');
+const { viewKey } = require('../lib/order-access');
 const { markOrderPaid } = require('../lib/orders');
 
 // Confirms the payment Razorpay's checkout widget reported is genuine, by recomputing
@@ -21,13 +22,17 @@ exports.handler = async (event) => {
       .update(`${razorpay_order_id}|${razorpay_payment_id}`)
       .digest('hex');
 
-    const verified = expected === razorpay_signature;
+    // Constant-time compare so the response time doesn't leak how much of a guess matched.
+    const got = Buffer.from(String(razorpay_signature));
+    const want = Buffer.from(expected);
+    const verified = got.length === want.length && crypto.timingSafeEqual(got, want);
 
     // The confirmation URL carries the payment params, so a page reload re-verifies;
     // markOrderPaid is a no-op once the order is already paid.
     if (verified) await markOrderPaid(razorpay_order_id, razorpay_payment_id, event, 'checkout');
 
-    return { statusCode: verified ? 200 : 400, body: JSON.stringify({ verified, orderId: razorpay_order_id }) };
+    // The buyer gets the order's view key to load the receipt and invoice (lib/order-access.js).
+    return { statusCode: verified ? 200 : 400, body: JSON.stringify({ verified, orderId: razorpay_order_id, k: verified ? viewKey(razorpay_order_id) : undefined }) };
   } catch (err) {
     console.error(err);
     return { statusCode: 500, body: JSON.stringify({ error: 'Verification failed' }) };

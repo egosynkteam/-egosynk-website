@@ -30,6 +30,8 @@
 <script>
 async function init(){
   const token = new URLSearchParams(window.location.search).get('token');
+  // Out of the address bar (history, analytics, screenshots) once read.
+  if(token) history.replaceState(null, '', location.pathname);
   const card = document.getElementById('card');
   if(!token){
     card.innerHTML = '<div class="icon">✕</div><h1>Missing Link</h1><p>No verification token found in this link.</p>';

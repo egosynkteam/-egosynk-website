@@ -78,6 +78,9 @@
 
   .mono{font-family:'JetBrains Mono',monospace;letter-spacing:0.04em;}
   .display{font-family:'Archivo Black',sans-serif;text-transform:uppercase;}
+  .skip-link{position:absolute;left:12px;top:-60px;z-index:300;background:var(--bone);color:var(--bg);padding:10px 14px;border-radius:2px;font-weight:700;transition:top .15s;}
+  .skip-link:focus{top:12px;}
+  :focus-visible{outline:2px solid var(--rust-bright);outline-offset:2px;}
 
   /* OFFER STRIP (the coupon marked "Top bar" in admin → Coupons) */
   .promo-bar{position:fixed;top:0;left:0;right:0;z-index:101;height:34px;display:flex;align-items:center;justify-content:center;gap:10px;
@@ -85,8 +88,8 @@
   .promo-bar .promo-text{overflow:hidden;text-overflow:ellipsis;}
   .promo-bar .promo-short{display:none;}
   @media(max-width:600px){.promo-bar .promo-text{display:none;}.promo-bar .promo-short{display:inline;}}
-  .promo-bar .promo-code{background:var(--bone);color:var(--bg);border:none;border-radius:2px;padding:3px 8px;font:inherit;font-weight:700;cursor:pointer;flex-shrink:0;}
-  .promo-bar .promo-close{position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--bone);font-size:18px;line-height:1;cursor:pointer;padding:4px 8px;}
+  .promo-bar .promo-code{background:var(--bone);color:var(--bg);border:none;border-radius:2px;padding:3px 8px;min-height:24px;font:inherit;font-weight:700;cursor:pointer;flex-shrink:0;}
+  .promo-bar .promo-close{position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--bone);font-size:18px;line-height:1;cursor:pointer;padding:4px 8px;min-width:34px;min-height:34px;}
   body.has-promo nav{top:34px;}
   body.has-promo .hero{padding-top:134px;}
 
@@ -194,7 +197,7 @@
   }
   .section-tag{
     font-family:'JetBrains Mono',monospace;font-size:12px;
-    color:var(--rust-bright);letter-spacing:0.1em;margin-bottom:8px;display:block;
+    color:var(--rust-bright);letter-spacing:0.1em;margin-bottom:8px;display:block;font-weight:500;
   }
   .section-head h2{
     font-family:'Archivo Black',sans-serif;
@@ -223,7 +226,7 @@
   .filter-row::-webkit-scrollbar{display:none;}
   .filter-chip{
     font-family:'JetBrains Mono',monospace;font-size:12px;
-    padding:8px 14px;border:1px solid var(--line);border-radius:20px;
+    padding:8px 14px;min-height:36px;min-width:36px;border:1px solid var(--line);border-radius:20px;
     background:transparent;color:var(--bone-dim);cursor:pointer;
     white-space:nowrap;flex-shrink:0;
   }
@@ -247,7 +250,7 @@
   .refine-row .sep{width:1px;height:20px;background:var(--line);flex-shrink:0;}
   .refine-row .clear{color:var(--rust-bright);border-color:transparent;}
   .result-count{font-size:11px;color:var(--steel);margin-bottom:14px;letter-spacing:0.05em;}
-  .card-spec{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--bone-dim);text-transform:uppercase;letter-spacing:0.04em;margin:-6px 0 10px;}
+  .card-spec{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--bone-dim);text-transform:uppercase;letter-spacing:0.04em;margin:-6px 0 10px;}
   .heart{position:absolute;top:8px;right:8px;z-index:2;width:34px;height:34px;border-radius:50%;border:none;background:rgba(13,14,16,.72);color:var(--bone);display:flex;align-items:center;justify-content:center;cursor:pointer;}
   .heart svg{width:16px;height:16px;}
   .heart.on{color:var(--rust-bright);}
@@ -310,7 +313,7 @@
   .card-tag{
     position:absolute;top:8px;left:8px;background:var(--rust);
     color:var(--bone);font-family:'JetBrains Mono',monospace;
-    font-size:10px;padding:3px 8px;border-radius:2px;text-transform:uppercase;
+    font-size:11px;padding:3px 8px;border-radius:2px;text-transform:uppercase;
   }
   .card-body{padding:14px;}
   .card-body h4{font-size:14px;font-weight:600;margin-bottom:4px;line-height:1.35;}
@@ -319,7 +322,7 @@
   .card-body .price-row{display:flex;justify-content:space-between;align-items:center;}
   .price{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:15px;}
   .add-btn{
-    width:30px;height:30px;border-radius:50%;border:1px solid var(--rust);
+    width:38px;height:38px;border-radius:50%;border:1px solid var(--rust);
     background:transparent;color:var(--rust);font-size:16px;cursor:pointer;
     display:flex;align-items:center;justify-content:center;
   }
@@ -346,6 +349,7 @@
 
   /* FOOTER */
   footer{padding:60px 24px 40px;border-top:1px solid var(--line);}
+  footer li a{display:inline-block;padding:5px 0;}
   .footer-grid{
     display:grid;grid-template-columns:1fr;gap:32px;max-width:1200px;margin:0 auto 40px;
   }
@@ -379,7 +383,7 @@
     display:flex;justify-content:space-between;align-items:center;
   }
   .drawer-head h3{font-family:'Archivo Black',sans-serif;text-transform:uppercase;font-size:18px;}
-  .close-btn{background:none;border:none;color:var(--bone);font-size:22px;cursor:pointer;}
+  .close-btn{background:none;border:none;color:var(--bone);font-size:22px;cursor:pointer;min-width:40px;min-height:40px;display:inline-flex;align-items:center;justify-content:center;}
   .drawer-items{flex:1;overflow-y:auto;padding:16px 20px;}
   .empty-cart{color:var(--steel);font-size:13px;text-align:center;padding:60px 0;}
   .drawer-item{
@@ -395,11 +399,11 @@
   .drawer-item-info .meta{font-size:11px;color:var(--steel);margin-bottom:6px;}
   .qty-row{display:flex;align-items:center;gap:10px;}
   .qty-btn{
-    width:22px;height:22px;border:1px solid var(--line);background:none;
+    width:32px;height:32px;border:1px solid var(--line);background:none;
     color:var(--bone);cursor:pointer;font-size:13px;border-radius:2px;
   }
   .drawer-item .price{font-size:13px;}
-  .remove-btn{background:none;border:none;color:var(--steel);font-size:11px;cursor:pointer;text-decoration:underline;margin-top:4px;}
+  .remove-btn{background:none;border:none;color:var(--steel);font-size:12px;cursor:pointer;text-decoration:underline;margin-top:2px;padding:6px 0;min-height:28px;}
   .drawer-foot{padding:20px;border-top:1px solid var(--line);}
   .subtotal-row{display:flex;justify-content:space-between;margin-bottom:16px;font-size:14px;}
   .subtotal-row.ship-row{margin-top:-8px;color:var(--bone-dim);font-size:13px;}
@@ -514,9 +518,11 @@
   }
   .addr-field select{appearance:auto;}
   .addr-field input:focus, .addr-field select:focus{outline:none;border-color:var(--rust);}
+  .addr-hint{font-size:12px;color:var(--steel);margin-top:6px;min-height:1em;}
 </style>
 </head>
 <body>
+<a class="skip-link" href="#shop">Skip to products</a>
 
 <div class="promo-bar" id="promoBar" role="region" aria-label="Offer" hidden></div>
 <nav>
@@ -535,6 +541,7 @@
   </div>
 </nav>
 
+<main id="main">
 <section class="hero" id="hero">
   <div class="hero-eyebrow mono" id="heroEyebrow">FORGED FOR THE GRIND · MUMBAI</div>
   <h1 id="heroHeadline"><span class="line" style="--i:0"><span>Sync your</span></span><span class="line" style="--i:1"><span>ego to the</span></span><span class="line" style="--i:2"><span><span class="accent">iron.</span></span></span></h1>
@@ -551,7 +558,7 @@
 
 <section class="section" style="padding-left:0;padding-right:0;">
   <div style="padding:0 24px;max-width:1200px;margin:0 auto;">
-    <span class="section-tag mono">SHOP BY CATEGORY</span>
+    <h2 class="section-tag mono">SHOP BY CATEGORY</h2>
   </div>
   <div class="cat-rail" id="catRail"></div>
 </section>
@@ -588,6 +595,8 @@
   <div class="manifesto-sub">EGOSYNK · BUILT FOR BOLD · WORN UNDER LOAD</div>
 </section>
 
+</main>
+
 <footer>
   <div class="footer-grid">
     <div>
@@ -612,7 +621,7 @@
 
 <!-- CART -->
 <div class="overlay" id="overlay" onclick="toggleCart(false)"></div>
-<div class="drawer" id="drawer">
+<div class="drawer" id="drawer" role="dialog" aria-modal="true" aria-label="Your bag" inert>
   <div class="drawer-head">
     <h3>Your Bag</h3>
     <button class="close-btn" onclick="toggleCart(false)">×</button>
@@ -654,7 +663,7 @@
 
 <!-- QUICK ADD SHEET -->
 <div class="overlay" id="sheetOverlay" onclick="closeSheet()"></div>
-<div class="sheet" id="sheet">
+<div class="sheet" id="sheet" role="dialog" aria-modal="true" aria-labelledby="sheetName" inert>
   <div class="sheet-handle"></div>
   <div class="sheet-head">
     <div>
@@ -703,34 +712,34 @@
     <form class="addr-form" id="addressForm" onsubmit="submitAddressAndPay(event)">
       <div class="addr-field">
         <label for="addr-name">Full Name</label>
-        <input id="addr-name" name="name" type="text" required>
+        <input id="addr-name" name="name" type="text" autocomplete="shipping name" required>
       </div>
       <div class="addr-row">
         <div class="addr-field">
           <label for="addr-phone">Phone</label>
-          <input id="addr-phone" name="phone" type="tel" inputmode="numeric" pattern="[6-9][0-9]{9}" maxlength="10" placeholder="10-digit mobile" required>
+          <input id="addr-phone" name="phone" type="tel" autocomplete="shipping tel-national" inputmode="numeric" pattern="[6-9][0-9]{9}" maxlength="10" placeholder="10-digit mobile" required>
         </div>
         <div class="addr-field">
           <label for="addr-email">Email</label>
-          <input id="addr-email" name="email" type="email" required>
+          <input id="addr-email" name="email" type="email" autocomplete="email" required>
         </div>
       </div>
       <div class="addr-field">
         <label for="addr-a1">Address Line 1</label>
-        <input id="addr-a1" name="address1" type="text" required>
+        <input id="addr-a1" name="address1" type="text" autocomplete="shipping address-line1" required>
       </div>
       <div class="addr-field">
         <label for="addr-a2">Address Line 2 (optional)</label>
-        <input id="addr-a2" name="address2" type="text">
+        <input id="addr-a2" name="address2" type="text" autocomplete="shipping address-line2">
       </div>
       <div class="addr-row">
         <div class="addr-field">
           <label for="addr-city">City</label>
-          <input id="addr-city" name="city" type="text" required>
+          <input id="addr-city" name="city" type="text" autocomplete="shipping address-level2" required>
         </div>
         <div class="addr-field">
           <label for="addr-state">State</label>
-          <select id="addr-state" name="state" required>
+          <select id="addr-state" name="state" autocomplete="shipping address-level1" required>
             <option value="">Select state</option>
             <option>Andaman and Nicobar Islands</option>
             <option>Andhra Pradesh</option>
@@ -773,7 +782,8 @@
       </div>
       <div class="addr-field">
         <label for="addr-pin">Pincode</label>
-        <input id="addr-pin" name="pincode" type="text" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" required>
+        <input id="addr-pin" name="pincode" type="text" autocomplete="shipping postal-code" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" required>
+        <div class="addr-hint" id="pinHint" aria-live="polite"></div>
       </div>
       <button type="submit" class="sheet-add-btn" id="addrSubmitBtn">Continue to Payment</button>
     </form>
@@ -1282,10 +1292,12 @@ function openSheet(id){
   updateSheetAddBtn();
   document.getElementById('sheet').classList.add('open');
   document.getElementById('sheetOverlay').classList.add('open');
+  document.getElementById('sheet').inert = false;
 }
 
 function closeSheet(){
   document.getElementById('sheet').classList.remove('open');
+  document.getElementById('sheet').inert = true;
   document.getElementById('sheetOverlay').classList.remove('open');
 }
 
@@ -1526,8 +1538,11 @@ function renderSkeletons(){
 }
 
 function toggleCart(open){
-  document.getElementById('drawer').classList.toggle('open', open);
+  const d = document.getElementById('drawer');
+  d.classList.toggle('open', open);
   document.getElementById('overlay').classList.toggle('open', open);
+  d.inert = !open;
+  if(open) setTimeout(() => d.querySelector('.close-btn').focus(), 50);
 }
 
 function showToast(msg){
@@ -1634,12 +1649,11 @@ async function proceedToPayment(){
       handler: function(response){
         // Verification + cart-clearing happens on the confirmation page itself, so a payment
         // is only ever counted as final in exactly one place, right before it's displayed.
-        const q = new URLSearchParams({
-          order: response.razorpay_order_id,
-          payment_id: response.razorpay_payment_id,
-          signature: response.razorpay_signature
-        });
-        window.location.href = `/order-confirmation.html?${q.toString()}`;
+        // The payment proof goes in sessionStorage, not the URL, so it never lands in
+        // browser history, analytics or a shared link.
+        try{ sessionStorage.setItem('egosynk_payment', JSON.stringify({
+          order: response.razorpay_order_id, payment_id: response.razorpay_payment_id, signature: response.razorpay_signature })); } catch(e){}
+        window.location.href = `/order-confirmation.html?order=${encodeURIComponent(response.razorpay_order_id)}`;
       },
       modal: {
         ondismiss: function(){ showToast('Checkout cancelled'); }
@@ -1663,6 +1677,50 @@ renderFilterRow();
 renderFooterShop();
 observeReveals();
 // Product pages link to /#bag to open the bag here.
+// Pincode → state, from India Post's zones. Zones shared by two states are left out on
+// purpose (the state decides CGST+SGST vs IGST on the invoice), and a state the customer
+// picked is never overwritten.
+const PIN_STATE = (() => {
+  const m = {}, set = (from, to, state) => { for(let i = from; i <= to; i++) m[i] = state; };
+  set(110, 110, 'Delhi'); set(120, 136, 'Haryana'); set(140, 159, 'Punjab'); set(170, 177, 'Himachal Pradesh');
+  set(180, 193, 'Jammu and Kashmir'); set(194, 194, 'Ladakh'); set(200, 239, 'Uttar Pradesh'); set(248, 249, 'Uttarakhand');
+  set(250, 259, 'Uttar Pradesh'); set(263, 263, 'Uttarakhand'); set(270, 285, 'Uttar Pradesh'); set(301, 345, 'Rajasthan');
+  set(360, 395, 'Gujarat'); set(400, 402, 'Maharashtra'); set(403, 403, 'Goa'); set(404, 445, 'Maharashtra');
+  set(450, 488, 'Madhya Pradesh'); set(490, 497, 'Chhattisgarh'); set(500, 509, 'Telangana'); set(515, 535, 'Andhra Pradesh');
+  set(560, 591, 'Karnataka'); set(600, 604, 'Tamil Nadu'); set(606, 608, 'Tamil Nadu'); set(610, 643, 'Tamil Nadu');
+  set(670, 695, 'Kerala'); set(700, 736, 'West Bengal'); set(737, 737, 'Sikkim'); set(738, 743, 'West Bengal');
+  set(744, 744, 'Andaman and Nicobar Islands'); set(751, 770, 'Odisha'); set(781, 788, 'Assam'); set(790, 792, 'Arunachal Pradesh');
+  set(793, 794, 'Meghalaya'); set(795, 795, 'Manipur'); set(796, 796, 'Mizoram'); set(797, 798, 'Nagaland'); set(799, 799, 'Tripura');
+  set(800, 813, 'Bihar'); set(814, 816, 'Jharkhand'); set(821, 821, 'Bihar'); set(822, 835, 'Jharkhand'); set(841, 855, 'Bihar');
+  return m;
+})();
+function stateForPin(pin){
+  if(!/^\d{6}$/.test(pin)) return null;
+  if(pin === '673310') return 'Puducherry';                 // Mahe
+  if(+pin >= 682551 && +pin <= 682559) return 'Lakshadweep';
+  return PIN_STATE[pin.slice(0, 3)] || null;
+}
+let stateAutofilled = false;
+document.getElementById('addr-state').addEventListener('change', () => { stateAutofilled = false; document.getElementById('pinHint').textContent = ''; });
+document.getElementById('addr-pin').addEventListener('input', (e) => {
+  const pin = e.target.value.replace(/\D/g, '').slice(0, 6);
+  if(pin !== e.target.value) e.target.value = pin;
+  const sel = document.getElementById('addr-state'), hint = document.getElementById('pinHint');
+  const st = stateForPin(pin);
+  if(st && (!sel.value || stateAutofilled)){
+    sel.value = st; stateAutofilled = true;
+    hint.textContent = `State set to ${st} from your pincode. Change it if that's wrong.`;
+  } else if(pin.length < 6 && stateAutofilled){
+    hint.textContent = '';
+  }
+});
+
+addEventListener('keydown', (e) => {
+  if(e.key !== 'Escape') return;
+  if(document.getElementById('sheet').classList.contains('open')) closeSheet();
+  else if(document.getElementById('drawer').classList.contains('open')) toggleCart(false);
+});
+
 function openBagFromHash(){ if(location.hash === '#bag'){ toggleCart(true); history.replaceState(null, '', location.pathname); } }
 addEventListener('hashchange', openBagFromHash);
 // The bag changed in another tab (e.g. a product page) — pick it up.

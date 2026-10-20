@@ -17,6 +17,17 @@
   function getChoice() { try { return localStorage.getItem(KEY); } catch (e) { return null; } }
   function setChoice(v) { try { localStorage.setItem(KEY, v); } catch (e) {} }
 
+  var KEEP = /^(utm_[a-z]+|gclid|gbraid|wbraid|fbclid)$/;
+  function cleanUrl(href) {
+    if (!href) return '';
+    try {
+      var u = new URL(href), out = new URLSearchParams();
+      u.searchParams.forEach(function (v, k) { if (KEEP.test(k)) out.append(k, v); });
+      var q = out.toString();
+      return u.origin + u.pathname + (q ? '?' + q : '');
+    } catch (e) { return ''; }
+  }
+
   function loadScript(src) {
     var s = document.createElement('script');
     s.async = true; s.src = src;
@@ -32,7 +43,9 @@
       // Consent Mode v2: everything granted only because the visitor accepted.
       window.gtag('consent', 'default', { ad_storage: 'granted', analytics_storage: 'granted', ad_user_data: 'granted', ad_personalization: 'granted' });
       window.gtag('js', new Date());
-      window.gtag('config', config.ga4Id, { anonymize_ip: true });
+      // Google gets the page address without its query string (reset/verify tokens, order
+      // and bag links stay private), except campaign tags so ad attribution still works.
+      window.gtag('config', config.ga4Id, { anonymize_ip: true, page_location: cleanUrl(location.href), page_referrer: cleanUrl(document.referrer) });
       loadScript('https://www.googletagmanager.com/gtag/js?id=' + encodeURIComponent(config.ga4Id));
     }
     if (config.metaPixelId) {

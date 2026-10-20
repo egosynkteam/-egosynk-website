@@ -1,4 +1,5 @@
 const { getStore } = require('../lib/blob-store');
+const { purgeCatalog } = require('../lib/cdn');
 const { requireAdmin } = require('../lib/admin-auth');
 const { logEvent } = require('../lib/audit');
 const { STATUSES, listReviews, rebuildSummary } = require('../lib/reviews');
@@ -36,6 +37,7 @@ exports.handler = async (event) => {
       }
       const summary = await rebuildSummary(review.productId);
       await logEvent(`review_${b.action === 'delete' ? 'deleted' : b.status}`, 'admin', { key: b.key }, event);
+      await purgeCatalog(); // ratings show on cards and product pages
       return { statusCode: 200, body: JSON.stringify({ review: b.action === 'delete' ? null : review, summary }) };
     }
     return { statusCode: 405, body: 'Method Not Allowed' };
