@@ -13,7 +13,7 @@ export async function getCatalog(): Promise<Catalog> {
     const res = await fetch(`${ORIGIN}/.netlify/functions/get-catalog`);
     if (!res.ok) return EMPTY;
     const data = (await res.json()) as Catalog;
-    return { products: data.products || [], categories: data.categories || [], settings: data.settings || {} };
+    return { products: data.products || [], categories: data.categories || [], settings: data.settings || {}, bundles: data.bundles };
   } catch {
     // The page still renders (with the launch content) if the catalog is unreachable.
     return EMPTY;

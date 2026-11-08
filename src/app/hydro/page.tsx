@@ -7,6 +7,8 @@ import { Faq } from "@/components/faq";
 import { Marquee } from "@/components/marquee";
 import { EMark } from "@/components/logo";
 import { HYDRO } from "@/lib/hydro";
+import { Bundles, FALLBACK_BUNDLES } from "@/components/bundles";
+import { getCatalog } from "@/lib/catalog";
 
 export const metadata: Metadata = {
   title: "HYDRO 150 pre-workout",
@@ -29,7 +31,8 @@ const FAQ: [string, string][] = [
   ["Who shouldn't take it?", "Anyone under 18, pregnant or breastfeeding, or sensitive to caffeine. If you have a heart condition or high blood pressure, or take medication, check with a doctor first."],
 ];
 
-export default function HydroPage() {
+export default async function HydroPage() {
+  const { bundles } = await getCatalog();
   return (
     <>
       <section className="gutter grain relative overflow-hidden pb-16 pt-28 md:pb-24 md:pt-32">
@@ -155,6 +158,8 @@ export default function HydroPage() {
           </Reveal>
         </div>
       </section>
+
+      <Bundles bundles={bundles ?? FALLBACK_BUNDLES} />
 
       <section id="drop" className="gutter scroll-mt-24 py-24 md:py-32" aria-labelledby="drop-h">
         <div className="mx-auto grid max-w-[1400px] gap-12 md:grid-cols-[1fr_1.1fr]">

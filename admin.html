@@ -365,6 +365,7 @@
     <button class="tab-btn" data-tab="reviews" onclick="switchTab('reviews');loadReviews()"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l2.6 5.6 6 .7-4.5 4.1 1.2 6L12 16.4 6.7 19.4l1.2-6L3.4 9.3l6-.7z"/></svg>Reviews <span id="pendingBadge" class="status pending" hidden></span></button>
     <button class="tab-btn" data-tab="batches" onclick="switchTab('batches');loadBatches()"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 3h6M10 3v6l-5 9a2 2 0 0 0 2 3h10a2 2 0 0 0 2-3l-5-9V3"/><path d="M7.5 14h9"/></svg>Batch tests</button>
     <div class="nav-group">Catalog</div>
+    <button class="tab-btn" data-tab="bundles" onclick="switchTab('bundles');loadBundles()"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 8l9-5 9 5v8l-9 5-9-5z"/><path d="M3 8l9 5 9-5M12 13v8"/></svg>Bundles</button>
     <button class="tab-btn" data-tab="catalog" onclick="switchTab('catalog')"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3l-5 4 2 3 2-1v12h10V9l2 1 2-3-5-4c0 2-2 3-4 3S8 5 8 3z"/></svg>Products</button>
     <button class="tab-btn" data-tab="categories" onclick="switchTab('categories')"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM13 13h7v7h-7z"/></svg>Categories</button>
     <button class="tab-btn" data-tab="guides" onclick="switchTab('guides')"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 8h18v8H3z"/><path d="M7 8v3M11 8v4M15 8v3M19 8v4"/></svg>Size guides</button>
@@ -446,6 +447,19 @@
     </div>
     <p class="muted" style="margin-bottom:10px;">Only verified buyers (order ID + order email) can submit. Approved reviews show on the product page and in Google results. A public reply shows under the review.</p>
     <div id="reviewsWrap"><div class="skeleton" aria-label="Loading"><i></i><i></i><i></i></div></div>
+  </div>
+
+  <!-- BUNDLES -->
+  <div class="panel" id="panel-bundles">
+    <div class="toolbar">
+      <h2>Launch bundles</h2>
+      <div class="row-actions">
+        <button class="secondary" onclick="addBundle()">Add bundle</button>
+        <button onclick="saveBundles()">Save bundles</button>
+      </div>
+    </div>
+    <p class="muted" style="margin-bottom:10px;">Offers shown on the HYDRO page. <b>Coming</b> sends people to the drop list. To sell one, create it as a product in <b>Products</b> (so the bag and checkout work), then set it to <b>Live</b> and paste the end of its product page address (for example <code>hydro-starter-17</code>). Until you tick <b>Price is final</b>, the site labels the price "Indicative".</p>
+    <div id="bundlesWrap"><div class="skeleton" aria-label="Loading"><i></i><i></i><i></i></div></div>
   </div>
 
   <!-- BATCH TESTS -->
@@ -889,7 +903,7 @@ function enterApp(admin){
   document.getElementById('resetZone').hidden = admin.role !== 'owner';
   document.getElementById('gstBox').hidden = !(admin.permissions || []).includes('reports');
   // Tabs this account can't use are hidden (the server refuses them anyway).
-  const TAB_PERM = { dashboard: 'orders', orders: 'orders', reviews: 'reviews', enquiries: 'enquiries', waitlist: 'waitlist', batches: 'batches', coupons: 'coupons',
+  const TAB_PERM = { dashboard: 'orders', orders: 'orders', reviews: 'reviews', enquiries: 'enquiries', bundles: 'catalog', waitlist: 'waitlist', batches: 'batches', coupons: 'coupons',
     categories: 'settings', guides: 'settings', audit: 'audit' };
   document.querySelectorAll('.tab-btn').forEach(b => { const p = TAB_PERM[b.dataset.tab]; b.hidden = !!p && !can(p); });
   const first = [...document.querySelectorAll('.tab-btn')].find(b => !b.hidden);
@@ -1661,6 +1675,72 @@ async function updateEnquiry(key){
 async function deleteEnquiry(key){
   if(!confirm('Delete this enquiry permanently?')) return;
   if(await enquiryAction({ action: 'delete', key })){ flash('Enquiry deleted'); loadEnquiries(); }
+}
+
+/* ---------- BUNDLES ---------- */
+const BUNDLE_ART = { sachets: 'Sachets', 'tub-shaker': 'Tub + shaker', stack: 'Tub + shaker + gear', tub: 'Tub' };
+let bundlesCache = [];
+async function loadBundles(){
+  try{
+    const res = await adminFetch('/.netlify/functions/admin-bundles');
+    if(res.status === 401){ handleUnauthorized(); return; }
+    if(!res.ok) throw new Error('load');
+    bundlesCache = (await res.json()).bundles || [];
+    renderBundles();
+  } catch(err){
+    document.getElementById('bundlesWrap').innerHTML = '<div class="msg">Could not load bundles.</div>';
+  }
+}
+function renderBundles(){
+  const canPrice = can('prices');
+  document.getElementById('bundlesWrap').innerHTML = bundlesCache.length ? bundlesCache.map((b, i) => `
+    <div class="review-card bundle-card" data-i="${i}">
+      <div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;">
+        <strong>${esc(b.name || 'New bundle')}</strong>
+        <span class="status ${b.status === 'live' ? 'paid' : 'pending'}">${esc(b.status)}${b.priceFinal ? '' : ' · indicative price'}</span>
+      </div>
+      <div class="row-actions" style="margin-top:10px;flex-wrap:wrap;">
+        <label>Name<br><input data-f="name" value="${esc(b.name)}"></label>
+        <label>Tagline<br><input data-f="tagline" value="${esc(b.tagline || '')}"></label>
+        <label>Price ₹<br><input data-f="price" type="number" min="1" value="${esc(b.price)}" ${canPrice ? '' : 'disabled'}></label>
+        <label>MRP ₹ (optional)<br><input data-f="mrp" type="number" min="1" value="${b.mrp == null ? '' : esc(b.mrp)}" ${canPrice ? '' : 'disabled'}></label>
+        <label>Picture<br><select data-f="art">${Object.entries(BUNDLE_ART).map(([k, v]) => `<option value="${k}" ${k === b.art ? 'selected' : ''}>${v}</option>`).join('')}</select></label>
+        <label>Status<br><select data-f="status">${['coming', 'live', 'hidden'].map(s => `<option ${s === b.status ? 'selected' : ''}>${s}</option>`).join('')}</select></label>
+        <label>Product link (when live)<br><input data-f="productSlug" value="${esc(b.productSlug || '')}" placeholder="hydro-starter-17"></label>
+      </div>
+      <label style="display:block;margin:8px 0;">What's in it (one per line)<br><textarea data-f="items" rows="3">${esc((b.items || []).join('\n'))}</textarea></label>
+      <label><input type="checkbox" data-f="priceFinal" ${b.priceFinal ? 'checked' : ''} ${canPrice ? '' : 'disabled'}> Price is final</label>
+      <input type="hidden" data-f="id" value="${esc(b.id)}">
+      <div class="row-actions" style="margin-top:8px;">
+        <button class="secondary" onclick="moveBundle(${i}, -1)" ${i === 0 ? 'disabled' : ''}>Move up</button>
+        <button class="secondary" onclick="moveBundle(${i}, 1)" ${i === bundlesCache.length - 1 ? 'disabled' : ''}>Move down</button>
+        <button class="danger" onclick="removeBundle(${i})">Remove</button>
+      </div>
+    </div>`).join('') : '<div class="msg">No bundles. Add one, then save.</div>';
+}
+function readBundles(){
+  return [...document.querySelectorAll('#bundlesWrap .bundle-card')].map(card => {
+    const f = (k) => card.querySelector(`[data-f="${k}"]`);
+    return { id: f('id').value || f('name').value, name: f('name').value, tagline: f('tagline').value, price: f('price').value, mrp: f('mrp').value,
+      art: f('art').value, status: f('status').value, productSlug: f('productSlug').value, priceFinal: f('priceFinal').checked,
+      items: f('items').value.split('\n').map(s => s.trim()).filter(Boolean) };
+  });
+}
+function addBundle(){
+  bundlesCache = readBundles();
+  bundlesCache.push({ id: '', name: '', tagline: '', items: [], price: '', mrp: null, priceFinal: false, art: 'tub', status: 'coming', productSlug: '' });
+  renderBundles();
+}
+function moveBundle(i, d){ bundlesCache = readBundles(); const [b] = bundlesCache.splice(i, 1); bundlesCache.splice(i + d, 0, b); renderBundles(); }
+function removeBundle(i){ if(!confirm('Remove this bundle from the site?')) return; bundlesCache = readBundles(); bundlesCache.splice(i, 1); renderBundles(); }
+async function saveBundles(){
+  const res = await adminFetch('/.netlify/functions/admin-bundles', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ bundles: readBundles() }) });
+  if(res.status === 401){ handleUnauthorized(); return; }
+  const out = await res.json().catch(() => ({}));
+  if(!res.ok){ alert(out.error || (res.status === 403 ? 'Changing bundle prices needs the "Change prices & MRP" permission.' : 'Failed')); return; }
+  bundlesCache = out.bundles;
+  renderBundles();
+  flash('Bundles saved');
 }
 
 /* ---------- BATCH TESTS ---------- */

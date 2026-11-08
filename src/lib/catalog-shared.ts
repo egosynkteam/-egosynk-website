@@ -17,9 +17,14 @@ export type Product = {
   specs?: { fit?: string; fabric?: string; compression?: string };
 };
 export type Category = { id: string; name: string; desc?: string };
+export type Bundle = {
+  id: string; name: string; tagline?: string; items: string[]; price: number; mrp: number | null;
+  priceFinal: boolean; art: "sachets" | "tub-shaker" | "stack" | "tub"; status: "coming" | "live"; productSlug?: string;
+};
 export type Catalog = {
   products: Product[];
   categories: Category[];
+  bundles?: Bundle[];
   settings: {
     shippingFee?: number;
     freeShippingThreshold?: number;
