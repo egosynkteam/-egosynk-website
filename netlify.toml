@@ -37,6 +37,13 @@
   status = 404
   force = true
 
+# The original store page (bag, coupons, checkout) at a second address, so the new
+# storefront can send /#bag and /?restore=<token> links here once it owns "/".
+[[redirects]]
+  from = "/shop.html"
+  to = "/index.html"
+  status = 200
+
 # Product pages, server-rendered by netlify/functions/product-page.js. Values travel in
 # the path, not a ?query on `to` — Netlify doesn't pass query params added in rewrites.
 [[redirects]]

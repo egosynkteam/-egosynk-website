@@ -1,0 +1,59 @@
+@import "tailwindcss";
+
+/* EGOSYNK storefront tokens: the same black, bone and rust as the live store, so the new
+   pages and the existing product, account and policy pages read as one site. */
+@theme {
+  --color-ink: #0d0e10;
+  --color-surface: #17181b;
+  --color-surface-2: #1f2023;
+  --color-line: #2a2b2f;
+  --color-bone: #edeae3;
+  --color-dim: #a8a6a0;
+  --color-steel: #8b8d93;
+  --color-rust: #c41e3a;
+  --color-rust-bright: #e63950;
+  --color-rust-dim: #3d0f16;
+
+  --font-display: var(--font-archivo), "Arial Black", Impact, sans-serif;
+  --font-sans: var(--font-inter), system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: var(--font-jetbrains), ui-monospace, Consolas, monospace;
+
+  --animate-marquee: marquee 38s linear infinite;
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes marquee {
+  to { transform: translateX(-50%); }
+}
+
+:root { color-scheme: dark; }
+html { background: var(--color-ink); overflow-x: clip; scroll-behavior: smooth; }
+body { background: var(--color-ink); color: var(--color-bone); font-family: var(--font-sans); -webkit-font-smoothing: antialiased; }
+::selection { background: var(--color-rust); color: var(--color-bone); }
+:focus-visible { outline: 2px solid var(--color-rust-bright); outline-offset: 3px; }
+
+@layer components {
+  .display { font-family: var(--font-display); text-transform: uppercase; letter-spacing: -0.02em; line-height: 0.92; }
+  .eyebrow { font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--color-rust-bright); }
+  .mono { font-family: var(--font-mono); letter-spacing: 0.04em; }
+  .gutter { padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+  @media (min-width: 768px) { .gutter { padding-left: 40px; padding-right: 40px; } }
+  .btn { display: inline-flex; align-items: center; justify-content: center; gap: 10px; height: 52px; padding: 0 26px;
+    font-family: var(--font-mono); font-size: 13px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase;
+    border-radius: 2px; transition: background-color .2s, border-color .2s, color .2s, transform .2s var(--ease-out-expo); }
+  .btn:active { transform: scale(0.98); }
+  .btn-primary { background: var(--color-rust); color: var(--color-bone); }
+  .btn-primary:hover { background: var(--color-rust-bright); }
+  .btn-ghost { border: 1px solid var(--color-line); color: var(--color-bone); }
+  .btn-ghost:hover { border-color: var(--color-dim); }
+  .chip { display: inline-flex; align-items: center; gap: 6px; font-family: var(--font-mono); font-size: 11px; font-weight: 700;
+    letter-spacing: 0.1em; text-transform: uppercase; padding: 5px 9px; border-radius: 2px; white-space: nowrap; }
+  /* Fine noise so big black fields don't band on cheap phone screens. */
+  .grain::after { content: ""; position: absolute; inset: 0; pointer-events: none; opacity: .06; mix-blend-mode: overlay;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence baseFrequency='.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  .animate-marquee { animation: none; }
+}
