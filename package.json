@@ -4,7 +4,7 @@
   "private": true,
   "description": "EGOSYNK storefront + Razorpay checkout functions",
   "dependencies": {
-    "@netlify/blobs": "^8.1.0",
+    "@netlify/blobs": "^11.1.7",
     "bcryptjs": "^2.4.3",
     "pg": "^8.23.1",
     "razorpay": "^2.9.4"
