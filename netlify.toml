@@ -6,6 +6,11 @@
   publish = ".next"
   functions = "netlify/functions"
 
+# Netlify's Next.js runtime: serves the app's pages, images and caching. The site was first
+# set up as a static site, so the dashboard has no framework set; this turns it on.
+[[plugins]]
+  package = "@netlify/plugin-nextjs"
+
 [build.environment]
   # Next.js 16 needs Node 20.9+; pinned so the build and the functions don't drift with the
   # account default.
