@@ -1,6 +1,5 @@
-// The existing store pages (product pages, bag, account, policies) keep running from the
-// original site. In production they share the domain, so plain paths work. In local dev,
-// next.config.ts proxies any path Next doesn't own to egosynk.com, so the same paths work.
+// The original store pages (bag, account, policies) are published from public/ by
+// scripts/copy-legacy.mjs; product pages come from the product-page function.
 export const legacy = {
   product: (slug: string) => `/p/${encodeURIComponent(slug)}`,
   // The bag, coupons and checkout stay on the original store page, served at /shop.html.

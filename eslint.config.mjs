@@ -12,6 +12,12 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // The original store and its functions: plain CommonJS with their own tests (npm test).
+    "netlify/**",
+    "tests/**",
+    "public/**",
+    "*.html",
+    "*.js",
   ]),
 ]);
 

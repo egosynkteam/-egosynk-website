@@ -1,2 +1,16 @@
 node_modules/
 .netlify/
+
+# Next.js storefront
+/.next/
+/out/
+*.tsbuildinfo
+next-env.d.ts
+.env*
+# Copies of the original store pages, made by scripts/copy-legacy.mjs at build time
+/public/*.html
+/public/site.css
+/public/site.js
+/public/consent.js
+/public/favicon.svg
+/public/robots.txt

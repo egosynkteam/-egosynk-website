@@ -1,16 +1,18 @@
+# The storefront is a Next.js app (src/), built by Netlify's Next.js runtime. The original
+# store pages are copied into public/ by scripts/copy-legacy.mjs (the prebuild step), and
+# the functions in netlify/functions keep running alongside it.
 [build]
-  command = "npm install"
-  publish = "."
+  command = "npm run build"
+  publish = ".next"
   functions = "netlify/functions"
 
 [build.environment]
-  # @netlify/blobs requires Node 18+ (uses global fetch). This site predates the Blobs
-  # code, so its function runtime may still default to an older Node version — pin it
-  # explicitly rather than rely on the account default.
-  NODE_VERSION = "20"
+  # Next.js 16 needs Node 20.9+; pinned so the build and the functions don't drift with the
+  # account default.
+  NODE_VERSION = "22"
 
-# The repo root is published, so source and tooling files would be downloadable; they're
-# answered with a 404 instead. (Functions run from /.netlify/functions, not these paths.)
+# Only public/ and the Next.js output are published now, but these stay as a safety net in
+# case a source file ever lands in public/ by mistake.
 [[redirects]]
   from = "/netlify/*"
   to = "/not-found"
@@ -37,12 +39,8 @@
   status = 404
   force = true
 
-# The original store page (bag, coupons, checkout) at a second address, so the new
-# storefront can send /#bag and /?restore=<token> links here once it owns "/".
-[[redirects]]
-  from = "/shop.html"
-  to = "/index.html"
-  status = 200
+# The original store page (bag, coupons, checkout) is published as /shop.html by
+# scripts/copy-legacy.mjs; the new homepage hands /#bag and /?restore=<token> links to it.
 
 # Product pages, server-rendered by netlify/functions/product-page.js. Values travel in
 # the path, not a ?query on `to` — Netlify doesn't pass query params added in rewrites.
