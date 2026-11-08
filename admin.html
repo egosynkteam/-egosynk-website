@@ -122,7 +122,7 @@
 
   /* ---------- tables ---------- */
   table{width:100%;border-collapse:separate;border-spacing:0;font-size:13px;}
-  .panel > div > table,#ordersWrap > table,#catalogWrap > table{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);overflow:hidden;}
+  .panel > div > table,#ordersWrap > table,#catalogWrap > table,#waitlistWrap > div > table{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);overflow:hidden;}
   th,td{text-align:left;padding:12px 12px;border-bottom:1px solid var(--line);vertical-align:top;}
   tbody tr:last-child td{border-bottom:none;}
   th{color:var(--steel);font-weight:600;font-size:12px;background:#141518;}
@@ -361,6 +361,7 @@
     <button class="tab-btn active" data-tab="dashboard" onclick="switchTab('dashboard')"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 13h6V4H4zM14 20h6v-9h-6zM4 20h6v-3H4zM14 7h6V4h-6z"/></svg>Dashboard</button>
     <button class="tab-btn" data-tab="orders" onclick="switchTab('orders')"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7l9-4 9 4-9 4-9-4z"/><path d="M3 7v10l9 4 9-4V7"/><path d="M12 11v10"/></svg>Orders</button>
     <button class="tab-btn" data-tab="enquiries" onclick="switchTab('enquiries');loadEnquiries()"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11H8l-4 4z"/><path d="M8 9h8M8 12h5"/></svg>Enquiries <span id="enquiryBadge" class="status pending" hidden></span></button>
+    <button class="tab-btn" data-tab="waitlist" onclick="switchTab('waitlist');loadWaitlist()"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h10M4 18h7"/><path d="M17 15l2 2 3-4"/></svg>Drop lists</button>
     <button class="tab-btn" data-tab="reviews" onclick="switchTab('reviews');loadReviews()"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l2.6 5.6 6 .7-4.5 4.1 1.2 6L12 16.4 6.7 19.4l1.2-6L3.4 9.3l6-.7z"/></svg>Reviews <span id="pendingBadge" class="status pending" hidden></span></button>
     <div class="nav-group">Catalog</div>
     <button class="tab-btn" data-tab="catalog" onclick="switchTab('catalog')"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3l-5 4 2 3 2-1v12h10V9l2 1 2-3-5-4c0 2-2 3-4 3S8 5 8 3z"/></svg>Products</button>
@@ -444,6 +445,22 @@
     </div>
     <p class="muted" style="margin-bottom:10px;">Only verified buyers (order ID + order email) can submit. Approved reviews show on the product page and in Google results. A public reply shows under the review.</p>
     <div id="reviewsWrap"><div class="skeleton" aria-label="Loading"><i></i><i></i><i></i></div></div>
+  </div>
+
+  <!-- DROP LISTS -->
+  <div class="panel" id="panel-waitlist">
+    <div class="toolbar">
+      <h2>Drop lists</h2>
+      <div class="row-actions">
+        <select id="waitlistProduct" onchange="renderWaitlist()"></select>
+        <input id="waitlistSearch" type="search" placeholder="Search email or number" oninput="renderWaitlist()">
+        <button class="secondary" onclick="downloadWaitlist()">Download CSV</button>
+        <button class="secondary" onclick="loadWaitlist()">Refresh</button>
+      </div>
+    </div>
+    <p class="muted" style="margin-bottom:10px;">People who joined a "Join the drop" list on the storefront before the product is on sale. Everyone gets the launch email; only those with the marketing opt-in may get other offers. Each sign-up gets a confirmation email once Resend is set up.</p>
+    <div id="waitlistStats" class="row-actions" style="margin-bottom:12px;"></div>
+    <div id="waitlistWrap"><div class="skeleton" aria-label="Loading"><i></i><i></i><i></i></div></div>
   </div>
 
   <!-- ENQUIRIES -->
@@ -857,7 +874,7 @@ function enterApp(admin){
   document.getElementById('resetZone').hidden = admin.role !== 'owner';
   document.getElementById('gstBox').hidden = !(admin.permissions || []).includes('reports');
   // Tabs this account can't use are hidden (the server refuses them anyway).
-  const TAB_PERM = { dashboard: 'orders', orders: 'orders', reviews: 'reviews', enquiries: 'enquiries', coupons: 'coupons',
+  const TAB_PERM = { dashboard: 'orders', orders: 'orders', reviews: 'reviews', enquiries: 'enquiries', waitlist: 'waitlist', coupons: 'coupons',
     categories: 'settings', guides: 'settings', audit: 'audit' };
   document.querySelectorAll('.tab-btn').forEach(b => { const p = TAB_PERM[b.dataset.tab]; b.hidden = !!p && !can(p); });
   const first = [...document.querySelectorAll('.tab-btn')].find(b => !b.hidden);
@@ -876,6 +893,7 @@ function enterApp(admin){
   if(can('audit')) loadAudit();
   if(can('reviews')) refreshPendingBadge();
   if(can('enquiries')) loadEnquiries();
+  if(can('waitlist')) loadWaitlist();
   if(admin.role === 'owner') loadTeam();
 }
 
@@ -941,7 +959,7 @@ async function changePassword(e){
 // Labels match PERMISSIONS in lib/admin-auth.js.
 const PERMS = {
   orders: 'View & update orders', ship: 'Ship orders', catalog: 'Edit products & stock', prices: 'Change prices & MRP',
-  coupons: 'Coupons', settings: 'Store settings', reviews: 'Reviews', enquiries: 'Bulk enquiries', reports: 'GST reports', audit: 'Audit log',
+  coupons: 'Coupons', settings: 'Store settings', reviews: 'Reviews', enquiries: 'Bulk enquiries', waitlist: 'Drop lists', reports: 'GST reports', audit: 'Audit log',
 };
 const STAFF_DEFAULT = ['orders', 'ship', 'reviews', 'enquiries'];
 const permBoxes = (id, selected, disabled) => Object.entries(PERMS).map(([k, label]) =>
@@ -1627,6 +1645,64 @@ async function updateEnquiry(key){
 async function deleteEnquiry(key){
   if(!confirm('Delete this enquiry permanently?')) return;
   if(await enquiryAction({ action: 'delete', key })){ flash('Enquiry deleted'); loadEnquiries(); }
+}
+
+/* ---------- DROP LISTS ---------- */
+let waitlistCache = [];
+async function loadWaitlist(){
+  try{
+    const res = await adminFetch('/.netlify/functions/admin-waitlist');
+    if(res.status === 401){ handleUnauthorized(); return; }
+    if(!res.ok) throw new Error('load');
+    waitlistCache = (await res.json()).products || [];
+    const sel = document.getElementById('waitlistProduct');
+    const keep = sel.value;
+    sel.innerHTML = waitlistCache.map(p => `<option value="${esc(p.id)}">${esc(p.name)} (${p.count})</option>`).join('');
+    if(keep && waitlistCache.some(p => p.id === keep)) sel.value = keep;
+    renderWaitlist();
+  } catch(err){
+    document.getElementById('waitlistWrap').innerHTML = '<div class="msg">Could not load the drop lists.</div>';
+  }
+}
+function renderWaitlist(){
+  const p = waitlistCache.find(x => x.id === document.getElementById('waitlistProduct').value) || waitlistCache[0];
+  if(!p){ document.getElementById('waitlistWrap').innerHTML = '<div class="msg">No drop lists yet.</div>'; return; }
+  const stat = (n, label) => `<div class="review-card" style="margin:0;padding:10px 14px;"><strong style="font-size:20px;">${n.toLocaleString('en-IN')}</strong><div class="muted">${label}</div></div>`;
+  document.getElementById('waitlistStats').innerHTML = stat(p.count, 'signed up') + stat(p.last7, 'in the last 7 days') + stat(p.phones, 'gave a WhatsApp number') + stat(p.marketing, 'opted in to offers');
+  const term = document.getElementById('waitlistSearch').value.trim().toLowerCase();
+  const rows = p.rows.filter(r => !term || r.email.includes(term) || (r.phone || '').replace(/\s/g, '').includes(term.replace(/\s/g, '')));
+  document.getElementById('waitlistWrap').innerHTML = rows.length ? `<div style="overflow-x:auto;"><table>
+    <thead><tr><th>Signed up</th><th>Email</th><th>WhatsApp</th><th>Offers</th><th>Confirmed</th><th></th></tr></thead>
+    <tbody>${rows.map(r => `<tr>
+      <td>${new Date(r.at).toLocaleString('en-IN')}</td>
+      <td><a href="mailto:${esc(r.email)}">${esc(r.email)}</a></td>
+      <td>${r.phone ? `<a href="https://wa.me/${esc(r.phone.replace(/[^0-9]/g, '').replace(/^(?!91)(\d{10})$/, '91$1'))}" target="_blank" rel="noopener">${esc(r.phone)}</a>` : '<span class="muted">—</span>'}</td>
+      <td>${r.marketing ? 'Yes' : '<span class="muted">No</span>'}</td>
+      <td>${r.confirmedEmailAt ? 'Emailed' : '<span class="muted">Not yet</span>'}</td>
+      <td><button class="danger" onclick="deleteWaitlist('${esc(p.id)}', '${esc(r.email)}')">Remove</button></td>
+    </tr>`).join('')}</tbody></table></div>`
+    : `<div class="msg">${term ? 'Nobody on this list matches.' : `Nobody on this list yet. Share <a href="https://egosynk.com/hydro" target="_blank" rel="noopener">egosynk.com/hydro</a> to start it.`}</div>`;
+}
+async function downloadWaitlist(){
+  const id = document.getElementById('waitlistProduct').value;
+  if(!id) return;
+  const res = await adminFetch('/.netlify/functions/admin-waitlist?format=csv&product=' + encodeURIComponent(id));
+  if(res.status === 401){ handleUnauthorized(); return; }
+  if(!res.ok){ alert('Could not download the list'); return; }
+  const url = URL.createObjectURL(await res.blob());
+  const a = document.createElement('a');
+  a.href = url; a.download = `egosynk-${id}-drop-list.csv`;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+async function deleteWaitlist(product, email){
+  if(!confirm(`Remove ${email} from this drop list?`)) return;
+  const res = await adminFetch('/.netlify/functions/admin-waitlist', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ action: 'delete', product, email }) });
+  if(res.status === 401){ handleUnauthorized(); return; }
+  const out = await res.json().catch(() => ({}));
+  if(!res.ok){ alert(out.error || 'Failed'); return; }
+  flash('Removed from the drop list');
+  loadWaitlist();
 }
 
 /* ---------- COUPONS ---------- */

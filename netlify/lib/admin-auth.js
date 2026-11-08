@@ -62,6 +62,7 @@ const PERMISSIONS = {
   settings: 'Store settings, categories, size guides, shipping',
   reviews: 'Moderate reviews',
   enquiries: 'Bulk enquiries',
+  waitlist: 'Drop lists (pre-launch sign-ups)',
   reports: 'GST reports',
   audit: 'View the audit log',
 };

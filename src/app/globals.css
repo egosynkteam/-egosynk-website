@@ -12,6 +12,8 @@
   --color-steel: #8b8d93;
   --color-rust: #c41e3a;
   --color-rust-bright: #e63950;
+  /* Small red text: passes 4.5:1 on every dark surface (rust-bright is 3.9-4.7). */
+  --color-rust-text: #ec4d62;
   --color-rust-dim: #3d0f16;
 
   --font-display: var(--font-archivo), "Arial Black", Impact, sans-serif;
@@ -34,7 +36,7 @@ body { background: var(--color-ink); color: var(--color-bone); font-family: var(
 
 @layer components {
   .display { font-family: var(--font-display); text-transform: uppercase; letter-spacing: -0.02em; line-height: 0.92; }
-  .eyebrow { font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--color-rust-bright); }
+  .eyebrow { font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--color-rust-text); }
   .mono { font-family: var(--font-mono); letter-spacing: 0.04em; }
   .gutter { padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
   @media (min-width: 768px) { .gutter { padding-left: 40px; padding-right: 40px; } }
@@ -48,6 +50,8 @@ body { background: var(--color-ink); color: var(--color-bone); font-family: var(
   .btn-ghost:hover { border-color: var(--color-dim); }
   .chip { display: inline-flex; align-items: center; gap: 6px; font-family: var(--font-mono); font-size: 11px; font-weight: 700;
     letter-spacing: 0.1em; text-transform: uppercase; padding: 5px 9px; border-radius: 2px; white-space: nowrap; }
+  /* The BOLD studio renders sit on a grey sweep; this fades their edges into the page. */
+  .fade-edges { -webkit-mask-image: radial-gradient(closest-side, #000 60%, transparent 100%); mask-image: radial-gradient(closest-side, #000 60%, transparent 100%); }
   /* Fine noise so big black fields don't band on cheap phone screens. */
   .grain::after { content: ""; position: absolute; inset: 0; pointer-events: none; opacity: .06; mix-blend-mode: overlay;
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence baseFrequency='.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"); }

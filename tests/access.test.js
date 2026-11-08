@@ -37,7 +37,7 @@ const acct = (body, cookie) => call('admin-account.js', { body, cookie });
   let r = await acct({ action: 'setup', setupKey: 'setup-key-123', name: 'Ashish', email: 'Owner@x.com', password: 'ownerpass123' });
   assert.strictEqual(r.status, 200, JSON.stringify(r.body));
   let owner = cookieOf(r);
-  assert.strictEqual(r.body.admin.permissions.length, 10);
+  assert.strictEqual(r.body.admin.permissions.length, 11);
   r = await acct({ action: 'add-user', name: 'Sam', email: 'sam@x.com', password: 'staffpass123', role: 'staff', permissions: ['orders', 'bogus'] }, owner);
   assert.deepStrictEqual(r.body.users.find((u) => u.email === 'sam@x.com').permissions, ['orders']);
   r = await acct({ action: 'login', email: 'sam@x.com', password: 'staffpass123' });
@@ -139,6 +139,23 @@ const acct = (body, cookie) => call('admin-account.js', { body, cookie });
   assert.strictEqual((await acct({ action: 'login', email: 'sam@x.com', password: 'newstaffpw1' })).status, 200);
   r = await acct({ action: 'list-users' }, staff);
   assert.strictEqual(r.status, 401);
+
+  // ---- drop lists: owner can read and export, staff without the permission can't
+  await getStore('waitlist').setJSON('hydro-150__a%40b.co', { product: 'hydro-150', email: 'a@b.co', phone: '=cmd', marketing: true, at: '2026-11-08T10:00:00.000Z' });
+  const ownerW = cookieOf(await acct({ action: 'login', email: 'owner@x.com', password: 'recovered123' }));
+  r = await call('admin-waitlist.js', { method: 'GET', cookie: ownerW });
+  assert.strictEqual(r.status, 200);
+  const hydro = r.body.products.find((p) => p.id === 'hydro-150');
+  assert.deepStrictEqual([hydro.count, hydro.marketing, hydro.phones], [1, 1, 1]);
+  const csv = await require(fn('admin-waitlist.js')).handler({ httpMethod: 'GET', headers: { 'x-egosynk-admin': '1', cookie: ownerW }, queryStringParameters: { format: 'csv', product: 'hydro-150' } });
+  assert.strictEqual(csv.statusCode, 200);
+  assert.match(csv.headers['Content-Disposition'], /hydro-150/);
+  assert.ok(csv.body.includes("'=cmd"), 'formula-looking cells are neutralised');
+  const staffW = cookieOf(await acct({ action: 'login', email: 'sam@x.com', password: 'newstaffpw1' }));
+  assert.strictEqual((await call('admin-waitlist.js', { method: 'GET', cookie: staffW })).status, 403);
+  r = await call('admin-waitlist.js', { body: { action: 'delete', product: 'hydro-150', email: 'a@b.co' }, cookie: ownerW });
+  assert.strictEqual(r.status, 200);
+  assert.strictEqual((await call('admin-waitlist.js', { method: 'GET', cookie: ownerW })).body.products[0].count, 0);
 
   // ---- sign out everywhere
   const ownerB = cookieOf(await acct({ action: 'login', email: 'owner@x.com', password: 'recovered123' }));

@@ -75,7 +75,7 @@ export default function HydroPage() {
             {HYDRO.arms.map((a, i) => (
               <Reveal key={a.key} delay={i * 0.1} className="relative overflow-hidden bg-ink p-8">
                 <EMark className="mb-10 h-16 w-auto text-surface-2" accent={i === 1 ? "var(--color-rust)" : "var(--color-surface-2)"} />
-                <span className="mono text-xs text-rust-bright">{String(i + 1).padStart(2, "0")} · {a.key}</span>
+                <span className="mono text-xs text-rust-text">{String(i + 1).padStart(2, "0")} · {a.key}</span>
                 <p className="display mt-3 text-[64px] leading-none">{a.stat}<span className="mono ml-2 align-top text-sm font-bold normal-case text-dim">{a.unit}</span></p>
                 <h3 className="mt-6 text-xl font-semibold">{a.line}</h3>
                 <p className="mt-2 text-dim">{a.detail}</p>
@@ -94,7 +94,7 @@ export default function HydroPage() {
             <h3 className="mono mt-10 text-xs font-bold uppercase tracking-[0.14em] text-dim">How to use</h3>
             <ol className="mt-4 space-y-3">
               {HYDRO.use.map((u, i) => (
-                <li key={u} className="flex gap-4"><span className="mono text-rust-bright">{i + 1}</span><span>{u}</span></li>
+                <li key={u} className="flex gap-4"><span className="mono text-rust-text">{i + 1}</span><span>{u}</span></li>
               ))}
             </ol>
           </Reveal>

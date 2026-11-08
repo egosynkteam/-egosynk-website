@@ -162,7 +162,7 @@ function Art({ kind, active, priority }: { kind: Slide["art"]; active: boolean; 
   }
   const img = kind === "hydro"
     ? { src: "/img/hydro-tub-34.webp", w: 1200, h: 1500, alt: "HYDRO 150 pre-workout tub, Salted Nimbu", cls: "right-[-18%] w-[min(560px,92vw)] md:right-[6%] md:w-[min(560px,42vw)]" }
-    : { src: "/img/bold-pair.webp", w: 1600, h: 1200, alt: "BOLD eau de parfum, 100 and 30 ml", cls: "right-[-25%] w-[min(760px,120vw)] md:right-[2%] md:w-[min(760px,52vw)]" };
+    : { src: "/img/bold-pair.webp", w: 1600, h: 1200, alt: "BOLD eau de parfum, 100 and 30 ml", cls: "fade-edges right-[-25%] w-[min(760px,120vw)] md:right-[2%] md:w-[min(760px,52vw)]" };
   return (
     <motion.div {...enter} className="pointer-events-none absolute inset-0">
       <div className={`absolute inset-0 ${kind === "hydro" ? "bg-[radial-gradient(55%_65%_at_72%_50%,#3d0f16_0%,transparent_72%)]" : "bg-[radial-gradient(55%_60%_at_74%_55%,#2a0a10_0%,transparent_70%)]"}`} />

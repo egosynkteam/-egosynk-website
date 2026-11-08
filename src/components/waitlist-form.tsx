@@ -63,7 +63,7 @@ export function WaitlistForm({ product, label = "Join the drop" }: { product: st
             <button type="submit" disabled={state.kind === "sending"} className="btn btn-primary min-w-[200px] disabled:opacity-60">
               {state.kind === "sending" ? "Adding you…" : `${label} →`}
             </button>
-            {state.kind === "error" && <p role="alert" className="text-sm text-rust-bright">{state.message}</p>}
+            {state.kind === "error" && <p role="alert" className="text-sm text-rust-text">{state.message}</p>}
           </div>
         </motion.form>
       )}

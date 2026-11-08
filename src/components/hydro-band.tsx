@@ -50,7 +50,7 @@ function Arm({ i, progress, arm }: { i: number; progress: ReturnType<typeof useS
   return (
     <li className="relative grid grid-cols-[auto_1fr_auto] items-center gap-5 bg-ink px-5 py-5">
       <motion.span style={{ width: fill }} className="absolute inset-y-0 left-0 w-0 bg-rust-dim/70" aria-hidden="true" />
-      <span className="mono relative text-xs text-rust-bright">{String(i + 1).padStart(2, "0")}</span>
+      <span className="mono relative text-xs text-rust-text">{String(i + 1).padStart(2, "0")}</span>
       <span className="relative">
         <span className="display block text-2xl">{arm.title}</span>
         <span className="text-sm text-dim">{arm.line}</span>

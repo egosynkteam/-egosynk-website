@@ -25,13 +25,13 @@ export function Lines() {
             <Reveal key={l.key} delay={i * 0.08} className="bg-ink">
               <Link href={l.href} className="group relative flex h-full min-h-[440px] flex-col overflow-hidden p-7 md:min-h-[520px]">
                 <div className="flex items-center justify-between">
-                  <span className="mono text-xs text-rust-bright">{l.n}</span>
+                  <span className="mono text-xs text-rust-text">{l.n}</span>
                   <span className={`chip ${l.live ? "bg-[#5fb98a]/15 text-[#7fd1a4]" : "border border-line text-dim"}`}>{l.status}</span>
                 </div>
                 <div className="relative my-6 flex flex-1 items-center justify-center">
                   {l.img ? (
                     <Image src={l.img} alt="" width={600} height={600} sizes="(min-width: 768px) 30vw, 80vw"
-                      className="h-[240px] w-auto object-contain transition-transform duration-700 ease-out-expo group-hover:-translate-y-2 group-hover:scale-[1.04]" />
+                      className={`h-[240px] w-auto object-contain transition-transform duration-700 ease-out-expo group-hover:-translate-y-2 group-hover:scale-[1.04] ${l.key === "scent" ? "fade-edges" : ""}`} />
                   ) : (
                     <EMark className="h-[200px] w-auto text-surface-2 transition-transform duration-700 ease-out-expo group-hover:-translate-y-2 group-hover:scale-[1.04]" />
                   )}

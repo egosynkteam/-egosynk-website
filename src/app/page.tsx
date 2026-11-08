@@ -21,7 +21,7 @@ export const metadata: Metadata = {
   title: { absolute: "EGOSYNK · Fuel, gear and scent for lifters" },
   description: DESCRIPTION,
   alternates: { canonical: "/" },
-  openGraph: { url: "/", title: "EGOSYNK · Fuel, gear and scent for lifters", description: DESCRIPTION, images: [{ url: "/og-image" }] },
+  openGraph: { url: "/", title: "EGOSYNK · Fuel, gear and scent for lifters", description: DESCRIPTION, images: [{ url: "/img/og-home.jpg", width: 1200, height: 630, alt: "EGOSYNK: HYDRO 150 pre-workout and BOLD eau de parfum" }] },
 };
 
 export default async function Home() {
@@ -85,7 +85,7 @@ export default async function Home() {
             <div className="mt-8 max-w-[560px]"><WaitlistForm product="bold" label="Notify me" /></div>
           </Reveal>
           <Reveal delay={0.1} className="relative">
-            <Image src="/img/bold-pack.webp" alt="BOLD in its rigid box with the red WEAR YOUR EGO flap, next to the 30 ml bottle and boxes" width={1800} height={1227} sizes="(min-width: 768px) 50vw, 100vw" className="h-auto w-full" />
+            <Image src="/img/bold-pack.webp" alt="BOLD in its rigid box with the red WEAR YOUR EGO flap, next to the 30 ml bottle and boxes" width={1800} height={1227} sizes="(min-width: 768px) 50vw, 100vw" className="fade-edges h-auto w-full" />
           </Reveal>
         </div>
       </section>
