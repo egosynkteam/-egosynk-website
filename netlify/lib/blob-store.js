@@ -23,7 +23,7 @@ function blobsStore(name) {
 const STORES = [
   'orders', 'catalog', 'settings', 'invoices', 'reviews', 'users', 'sessions', 'admin-users',
   'admin-sessions', 'audit-log', 'security', 'email-optout', 'stock-alerts', 'wishlists',
-  'buyers', 'enquiries', 'password-resets', 'email-verifications', 'admin-resets', 'waitlist',
+  'buyers', 'enquiries', 'password-resets', 'email-verifications', 'admin-resets', 'waitlist', 'batches',
 ];
 
 // Each function instance re-reads the switch at most every 10 s.

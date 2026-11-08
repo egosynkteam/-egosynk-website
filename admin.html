@@ -363,6 +363,7 @@
     <button class="tab-btn" data-tab="enquiries" onclick="switchTab('enquiries');loadEnquiries()"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11H8l-4 4z"/><path d="M8 9h8M8 12h5"/></svg>Enquiries <span id="enquiryBadge" class="status pending" hidden></span></button>
     <button class="tab-btn" data-tab="waitlist" onclick="switchTab('waitlist');loadWaitlist()"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h10M4 18h7"/><path d="M17 15l2 2 3-4"/></svg>Drop lists</button>
     <button class="tab-btn" data-tab="reviews" onclick="switchTab('reviews');loadReviews()"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l2.6 5.6 6 .7-4.5 4.1 1.2 6L12 16.4 6.7 19.4l1.2-6L3.4 9.3l6-.7z"/></svg>Reviews <span id="pendingBadge" class="status pending" hidden></span></button>
+    <button class="tab-btn" data-tab="batches" onclick="switchTab('batches');loadBatches()"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 3h6M10 3v6l-5 9a2 2 0 0 0 2 3h10a2 2 0 0 0 2-3l-5-9V3"/><path d="M7.5 14h9"/></svg>Batch tests</button>
     <div class="nav-group">Catalog</div>
     <button class="tab-btn" data-tab="catalog" onclick="switchTab('catalog')"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3l-5 4 2 3 2-1v12h10V9l2 1 2-3-5-4c0 2-2 3-4 3S8 5 8 3z"/></svg>Products</button>
     <button class="tab-btn" data-tab="categories" onclick="switchTab('categories')"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM13 13h7v7h-7z"/></svg>Categories</button>
@@ -445,6 +446,20 @@
     </div>
     <p class="muted" style="margin-bottom:10px;">Only verified buyers (order ID + order email) can submit. Approved reviews show on the product page and in Google results. A public reply shows under the review.</p>
     <div id="reviewsWrap"><div class="skeleton" aria-label="Loading"><i></i><i></i><i></i></div></div>
+  </div>
+
+  <!-- BATCH TESTS -->
+  <div class="panel" id="panel-batches">
+    <div class="toolbar">
+      <h2>Batch tests</h2>
+      <div class="row-actions">
+        <button onclick="editBatch()">Add batch</button>
+        <button class="secondary" onclick="loadBatches()">Refresh</button>
+      </div>
+    </div>
+    <p class="muted" style="margin-bottom:10px;">Lab results for each manufactured batch. The QR code on the tub opens <b>egosynk.com/batch/&lt;code&gt;</b>, which shows what the lab measured against the label. Drafts stay private until you tick <b>Published</b>.</p>
+    <div id="batchForm" hidden></div>
+    <div id="batchesWrap"><div class="skeleton" aria-label="Loading"><i></i><i></i><i></i></div></div>
   </div>
 
   <!-- DROP LISTS -->
@@ -874,7 +889,7 @@ function enterApp(admin){
   document.getElementById('resetZone').hidden = admin.role !== 'owner';
   document.getElementById('gstBox').hidden = !(admin.permissions || []).includes('reports');
   // Tabs this account can't use are hidden (the server refuses them anyway).
-  const TAB_PERM = { dashboard: 'orders', orders: 'orders', reviews: 'reviews', enquiries: 'enquiries', waitlist: 'waitlist', coupons: 'coupons',
+  const TAB_PERM = { dashboard: 'orders', orders: 'orders', reviews: 'reviews', enquiries: 'enquiries', waitlist: 'waitlist', batches: 'batches', coupons: 'coupons',
     categories: 'settings', guides: 'settings', audit: 'audit' };
   document.querySelectorAll('.tab-btn').forEach(b => { const p = TAB_PERM[b.dataset.tab]; b.hidden = !!p && !can(p); });
   const first = [...document.querySelectorAll('.tab-btn')].find(b => !b.hidden);
@@ -894,6 +909,7 @@ function enterApp(admin){
   if(can('reviews')) refreshPendingBadge();
   if(can('enquiries')) loadEnquiries();
   if(can('waitlist')) loadWaitlist();
+  if(can('batches')) loadBatches();
   if(admin.role === 'owner') loadTeam();
 }
 
@@ -959,7 +975,7 @@ async function changePassword(e){
 // Labels match PERMISSIONS in lib/admin-auth.js.
 const PERMS = {
   orders: 'View & update orders', ship: 'Ship orders', catalog: 'Edit products & stock', prices: 'Change prices & MRP',
-  coupons: 'Coupons', settings: 'Store settings', reviews: 'Reviews', enquiries: 'Bulk enquiries', waitlist: 'Drop lists', reports: 'GST reports', audit: 'Audit log',
+  coupons: 'Coupons', settings: 'Store settings', reviews: 'Reviews', enquiries: 'Bulk enquiries', waitlist: 'Drop lists', batches: 'Batch tests', reports: 'GST reports', audit: 'Audit log',
 };
 const STAFF_DEFAULT = ['orders', 'ship', 'reviews', 'enquiries'];
 const permBoxes = (id, selected, disabled) => Object.entries(PERMS).map(([k, label]) =>
@@ -1645,6 +1661,129 @@ async function updateEnquiry(key){
 async function deleteEnquiry(key){
   if(!confirm('Delete this enquiry permanently?')) return;
   if(await enquiryAction({ action: 'delete', key })){ flash('Enquiry deleted'); loadEnquiries(); }
+}
+
+/* ---------- BATCH TESTS ---------- */
+const BATCH_PRODUCTS = { 'hydro-150': 'HYDRO 150', 'hydro-0': 'HYDRO 0', 'hydro-200': 'HYDRO 200', eaa: 'EAA' };
+// Starting rows: every label claim, plus the safety tests buyers look for. Edit to match the lab report.
+const BATCH_TEMPLATE = {
+  'hydro-150': [['Caffeine anhydrous', '150 mg'], ['L-theanine', '100 mg'], ['Citrulline malate 2:1', '8 g'], ['Beta-alanine', '1.6 g'], ['Taurine', '1 g'],
+    ['Sodium', '300 mg'], ['Potassium', '150 mg'], ['Magnesium', '50 mg'], ['Lead', 'Within FSSAI limit'], ['Arsenic', 'Within FSSAI limit'],
+    ['Cadmium', 'Within FSSAI limit'], ['Mercury', 'Within FSSAI limit'], ['Total plate count', 'Within FSSAI limit'], ['E. coli / Salmonella', 'Absent']],
+};
+let batchesCache = [];
+async function loadBatches(){
+  try{
+    const res = await adminFetch('/.netlify/functions/admin-batches');
+    if(res.status === 401){ handleUnauthorized(); return; }
+    if(!res.ok) throw new Error('load');
+    batchesCache = (await res.json()).batches || [];
+    renderBatches();
+  } catch(err){
+    document.getElementById('batchesWrap').innerHTML = '<div class="msg">Could not load batches.</div>';
+  }
+}
+const monthLabel = (m) => m ? new Date(m + '-01T00:00:00').toLocaleDateString('en-IN', { month: 'short', year: 'numeric' }) : '';
+function renderBatches(){
+  document.getElementById('batchesWrap').innerHTML = batchesCache.length ? batchesCache.map(b => `
+    <div class="review-card">
+      <div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;">
+        <strong>${esc(b.code)} · ${esc(BATCH_PRODUCTS[b.product] || b.product)}</strong>
+        <span class="status ${b.published ? 'paid' : 'pending'}">${b.published ? 'published' : 'draft'}</span>
+      </div>
+      <div class="muted">Made ${esc(monthLabel(b.mfg))} · best before ${esc(monthLabel(b.expiry))}${b.lab ? ' · ' + esc(b.lab) : ''} · ${b.results.length} result${b.results.length === 1 ? '' : 's'} · ${b.reportKey ? 'PDF attached' : 'no PDF yet'}</div>
+      <div class="row-actions" style="margin-top:8px;">
+        <button onclick="editBatch('${esc(b.code)}')">Edit</button>
+        ${b.published ? `<a class="secondary" style="padding:8px 12px;border:1px solid var(--line);border-radius:var(--r);" href="/batch/${encodeURIComponent(b.code)}" target="_blank" rel="noopener">Open public page</a>` : ''}
+        <button class="secondary" onclick="copyBatchLink('${esc(b.code)}')">Copy QR link</button>
+        <button class="danger" onclick="deleteBatch('${esc(b.code)}')">Delete</button>
+      </div>
+    </div>`).join('') : '<div class="msg">No batches yet. Add one when the first lab report for a production batch arrives.</div>';
+}
+function batchRow(r){
+  return `<div class="row-actions batch-row" style="margin-bottom:6px;flex-wrap:nowrap;">
+    <input data-f="test" placeholder="Test (e.g. Caffeine)" value="${esc(r.test || '')}" style="flex:2;min-width:0;">
+    <input data-f="label" placeholder="On the label" value="${esc(r.label || '')}" style="flex:1;min-width:0;">
+    <input data-f="found" placeholder="Lab found" value="${esc(r.found || '')}" style="flex:1;min-width:0;">
+    <label style="white-space:nowrap;"><input type="checkbox" data-f="ok" ${r.ok ? 'checked' : ''}> Pass</label>
+    <button class="danger" type="button" onclick="this.parentElement.remove()" aria-label="Remove row">×</button>
+  </div>`;
+}
+function editBatch(code){
+  const b = batchesCache.find(x => x.code === code) || { code: '', product: 'hydro-150', mfg: '', expiry: '', lab: '', reportDate: '', results: [], notes: '', published: false };
+  const box = document.getElementById('batchForm');
+  box.hidden = false;
+  box.innerHTML = `<div class="review-card" style="border-color:#C41E3A;">
+    <strong>${code ? 'Edit batch ' + esc(code) : 'Add batch'}</strong>
+    <div class="row-actions" style="margin-top:10px;flex-wrap:wrap;">
+      <label>Batch code<br><input id="bf-code" value="${esc(b.code)}" placeholder="H150-2702-01" ${code ? 'readonly' : ''} style="text-transform:uppercase;"></label>
+      <label>Product<br><select id="bf-product">${Object.entries(BATCH_PRODUCTS).map(([k, v]) => `<option value="${k}" ${k === b.product ? 'selected' : ''}>${v}</option>`).join('')}</select></label>
+      <label>Manufactured<br><input id="bf-mfg" type="month" value="${esc(b.mfg)}"></label>
+      <label>Best before<br><input id="bf-expiry" type="month" value="${esc(b.expiry)}"></label>
+      <label>Lab<br><input id="bf-lab" value="${esc(b.lab)}" placeholder="NABL-accredited lab name"></label>
+      <label>Report date<br><input id="bf-date" type="date" value="${esc(b.reportDate)}"></label>
+    </div>
+    <p class="muted" style="margin:12px 0 6px;">Results: what the label says, what the lab measured, and whether it passed.</p>
+    <div id="bf-rows">${b.results.map(batchRow).join('')}</div>
+    <div class="row-actions" style="margin:6px 0 10px;">
+      <button class="secondary" type="button" onclick="document.getElementById('bf-rows').insertAdjacentHTML('beforeend', batchRow({}))">Add row</button>
+      <button class="secondary" type="button" onclick="fillBatchTemplate()">Fill rows from the label</button>
+    </div>
+    <textarea id="bf-notes" rows="2" placeholder="Note shown on the public page (optional), e.g. Heavy metals and microbes within FSSAI limits.">${esc(b.notes)}</textarea>
+    <label style="display:block;margin:10px 0;"><input type="checkbox" id="bf-published" ${b.published ? 'checked' : ''}> Published (visible at egosynk.com/batch/&lt;code&gt;)</label>
+    ${code ? `<p class="muted">Lab report PDF: ${b.reportKey ? '<b>attached</b>. Upload again to replace it.' : 'none yet.'}</p>
+      <input type="file" id="bf-pdf" accept="application/pdf"> <button class="secondary" type="button" onclick="uploadBatchReport('${esc(code)}')">Upload PDF</button>` : '<p class="muted">Save the batch first, then upload the lab report PDF.</p>'}
+    <div class="row-actions" style="margin-top:12px;">
+      <button onclick="saveBatch('${esc(code || '')}')">Save batch</button>
+      <button class="secondary" onclick="document.getElementById('batchForm').hidden = true">Close</button>
+    </div>
+  </div>`;
+  box.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+function fillBatchTemplate(){
+  const rows = BATCH_TEMPLATE[document.getElementById('bf-product').value];
+  if(!rows){ alert('No template for this product yet. Add rows by hand.'); return; }
+  document.getElementById('bf-rows').innerHTML = rows.map(([test, label]) => batchRow({ test, label })).join('');
+}
+async function batchAction(payload){
+  const res = await adminFetch('/.netlify/functions/admin-batches', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(payload) });
+  if(res.status === 401){ handleUnauthorized(); return null; }
+  const out = await res.json().catch(() => ({}));
+  if(!res.ok){ alert(out.error || 'Failed'); return null; }
+  return out;
+}
+async function saveBatch(originalCode){
+  const v = (id) => document.getElementById(id).value;
+  const results = [...document.querySelectorAll('#bf-rows .batch-row')].map(row => ({
+    test: row.querySelector('[data-f=test]').value, label: row.querySelector('[data-f=label]').value,
+    found: row.querySelector('[data-f=found]').value, ok: row.querySelector('[data-f=ok]').checked,
+  }));
+  const batch = { code: v('bf-code'), product: v('bf-product'), mfg: v('bf-mfg'), expiry: v('bf-expiry'), lab: v('bf-lab'),
+    reportDate: v('bf-date'), notes: v('bf-notes'), published: document.getElementById('bf-published').checked, results };
+  const out = await batchAction({ action: 'save', batch, originalCode: originalCode || undefined });
+  if(!out) return;
+  flash('Batch saved');
+  await loadBatches();
+  editBatch(out.batch.code);
+}
+async function uploadBatchReport(code){
+  const file = document.getElementById('bf-pdf').files[0];
+  if(!file){ alert('Choose the PDF first'); return; }
+  if(file.size > 4 * 1024 * 1024){ alert('Report too large (max 4 MB). Save it as a smaller PDF.'); return; }
+  const data = await new Promise((resolve, reject) => { const r = new FileReader(); r.onload = () => resolve(String(r.result).split(',')[1]); r.onerror = reject; r.readAsDataURL(file); });
+  const out = await batchAction({ action: 'upload-report', code, data });
+  if(!out) return;
+  flash('Report uploaded');
+  await loadBatches();
+  editBatch(code);
+}
+async function deleteBatch(code){
+  if(!confirm(`Delete batch ${code} and its lab report? The QR on tubs from this batch will stop showing results.`)) return;
+  if(await batchAction({ action: 'delete', code })){ flash('Batch deleted'); document.getElementById('batchForm').hidden = true; loadBatches(); }
+}
+function copyBatchLink(code){
+  const url = `https://egosynk.com/batch/${encodeURIComponent(code)}`;
+  navigator.clipboard.writeText(url).then(() => flash('Copied ' + url), () => prompt('QR link for this batch:', url));
 }
 
 /* ---------- DROP LISTS ---------- */

@@ -37,7 +37,7 @@ const acct = (body, cookie) => call('admin-account.js', { body, cookie });
   let r = await acct({ action: 'setup', setupKey: 'setup-key-123', name: 'Ashish', email: 'Owner@x.com', password: 'ownerpass123' });
   assert.strictEqual(r.status, 200, JSON.stringify(r.body));
   let owner = cookieOf(r);
-  assert.strictEqual(r.body.admin.permissions.length, 11);
+  assert.strictEqual(r.body.admin.permissions.length, 12);
   r = await acct({ action: 'add-user', name: 'Sam', email: 'sam@x.com', password: 'staffpass123', role: 'staff', permissions: ['orders', 'bogus'] }, owner);
   assert.deepStrictEqual(r.body.users.find((u) => u.email === 'sam@x.com').permissions, ['orders']);
   r = await acct({ action: 'login', email: 'sam@x.com', password: 'staffpass123' });

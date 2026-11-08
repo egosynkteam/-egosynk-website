@@ -25,6 +25,7 @@ const FAQ: [string, string][] = [
   ["How much will it cost?", "We'll publish the price with the launch date. The drop list hears it first."],
   ["Why 150 mg of caffeine?", "It's enough to feel the session without a crash for most lifters. A caffeine-free version and a stronger 200 mg version are planned, so you can pick your number."],
   ["What's in it, exactly?", "Every active and its dose is printed on this page and on the tub: no proprietary blends. The full ingredient list, allergens and FSSAI licence numbers will be on the label and here at launch."],
+  ["How do I know my tub matches the label?", "Every batch goes to a lab before it ships. Scan the QR code on the tub, or enter the batch code at egosynk.com/batch, to see what the lab measured against the label."],
   ["Who shouldn't take it?", "Anyone under 18, pregnant or breastfeeding, or sensitive to caffeine. If you have a heart condition or high blood pressure, or take medication, check with a doctor first."],
 ];
 

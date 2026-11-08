@@ -67,6 +67,12 @@
   status = 200
   force = true
 
+# Batch lab report PDFs (published batches only), served by netlify/functions/batch-report.js.
+[[redirects]]
+  from = "/batch-report/:key"
+  to = "/.netlify/functions/batch-report/:key"
+  status = 200
+
 # Admin-uploaded images, served by netlify/functions/media.js.
 [[redirects]]
   from = "/media/:key"
