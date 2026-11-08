@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { AnimatePresence, motion, useMotionValueEvent, useScroll } from "motion/react";
 import { Wordmark } from "./logo";
 import { legacy } from "@/lib/links";
+import { SearchDialog } from "./search-dialog";
 
 const NAV = [
   { href: "/hydro", label: "Fuel", note: "HYDRO 150" },
@@ -35,6 +36,7 @@ function useBagCount() {
 export function SiteHeader() {
   const bag = useBagCount();
   const [open, setOpen] = useState(false);
+  const [searching, setSearching] = useState(false);
   const [solid, setSolid] = useState(false);
   const { scrollY } = useScroll();
   useMotionValueEvent(scrollY, "change", (y) => setSolid(y > 24));
@@ -42,6 +44,20 @@ export function SiteHeader() {
   useEffect(() => {
     document.documentElement.style.overflow = open ? "hidden" : "";
   }, [open]);
+
+  // Ctrl/⌘ K anywhere, or "/" when not typing in a field, opens search.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      const typing = e.target instanceof HTMLElement && (e.target.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName));
+      if ((e.key.toLowerCase() === "k" && (e.metaKey || e.ctrlKey)) || (e.key === "/" && !typing)) {
+        e.preventDefault();
+        setOpen(false);
+        setSearching(true);
+      }
+    };
+    addEventListener("keydown", onKey);
+    return () => removeEventListener("keydown", onKey);
+  }, []);
 
   return (
     <header
@@ -64,6 +80,10 @@ export function SiteHeader() {
         </nav>
 
         <div className="flex items-center gap-2.5">
+          <button type="button" onClick={() => { setOpen(false); setSearching(true); }} aria-label="Search (Ctrl K)"
+            className="grid size-10 place-items-center rounded-[2px] border border-line transition-colors hover:border-dim">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" /></svg>
+          </button>
           <a href={legacy.account} aria-label="Account" className="grid size-10 place-items-center rounded-[2px] border border-line transition-colors hover:border-dim">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>
           </a>
@@ -110,6 +130,7 @@ export function SiteHeader() {
           </motion.nav>
         )}
       </AnimatePresence>
+      <SearchDialog open={searching} onClose={() => setSearching(false)} />
     </header>
   );
 }

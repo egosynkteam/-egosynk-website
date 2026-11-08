@@ -6,6 +6,7 @@ import { motion } from "motion/react";
 import { inr, type Category, type Product } from "@/lib/catalog-shared";
 import { legacy } from "@/lib/links";
 import { EMark } from "./logo";
+import { Stars } from "./stars";
 
 // Live gear from the catalog, as a swipeable rail with category filters. Each card opens the
 // existing product page, where sizes, bag and checkout already work.
@@ -74,6 +75,7 @@ export function GearRail({ products, categories }: { products: Product[]; catego
                   <h3 className="text-[15px] font-semibold leading-snug">{p.name}</h3>
                   <span className="mono shrink-0 text-[15px] font-bold">{inr(p.price)}</span>
                 </div>
+                {p.rating && p.rating.count > 0 && <div className="mt-1.5"><Stars avg={p.rating.avg} count={p.rating.count} /></div>}
                 {p.sizes && p.sizes.length > 1 && <p className="mono mt-1 text-[11px] uppercase text-steel">{p.sizes.join(" · ")}</p>}
               </motion.a>
             </li>

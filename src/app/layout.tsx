@@ -5,6 +5,8 @@ import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { MotionRoot } from "@/components/motion-root";
 import { JsonLd, ORGANIZATION } from "@/components/json-ld";
+import { WhatsAppButton } from "@/components/whatsapp-button";
+import { getCatalog, whatsappLink } from "@/lib/catalog";
 import "./globals.css";
 
 const archivo = Archivo_Black({ weight: "400", subsets: ["latin"], variable: "--font-archivo", display: "swap" });
@@ -22,7 +24,9 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = { themeColor: "#0d0e10", viewportFit: "cover" };
 
-export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+export default async function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+  const { settings } = await getCatalog();
+  const whatsapp = whatsappLink(settings.social?.whatsapp, "Hi EGOSYNK, I have a question");
   return (
     <html lang="en-IN" className={`${archivo.variable} ${inter.variable} ${jetbrains.variable}`}>
       <body className="min-h-dvh">
@@ -31,6 +35,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
           <SiteHeader />
           <main id="main">{children}</main>
           <SiteFooter />
+          <WhatsAppButton href={whatsapp} />
         </MotionRoot>
         {/* The live site's cookie banner and consent settings, shared with every other page. */}
         <Script src="/consent.js" strategy="afterInteractive" />
