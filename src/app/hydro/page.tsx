@@ -9,6 +9,7 @@ import { EMark } from "@/components/logo";
 import { HYDRO } from "@/lib/hydro";
 import { Bundles, FALLBACK_BUNDLES } from "@/components/bundles";
 import { getCatalog } from "@/lib/catalog";
+import { Countdown } from "@/components/countdown";
 
 export const metadata: Metadata = {
   title: "HYDRO 150 pre-workout",
@@ -32,7 +33,7 @@ const FAQ: [string, string][] = [
 ];
 
 export default async function HydroPage() {
-  const { bundles } = await getCatalog();
+  const { bundles, settings } = await getCatalog();
   return (
     <>
       <section className="gutter grain relative overflow-hidden pb-16 pt-28 md:pb-24 md:pt-32">
@@ -59,6 +60,7 @@ export default async function HydroPage() {
               <a href="#drop" className="btn btn-primary">Join the drop →</a>
               <a href="#formula" className="btn btn-ghost">Every gram</a>
             </div>
+            <Countdown launch={settings.launch} path="/hydro" className="mt-8" />
           </Reveal>
           <Reveal delay={0.15} className="mx-auto w-full max-w-[min(520px,60dvh)]">
             <TubViewer />

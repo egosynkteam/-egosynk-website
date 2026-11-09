@@ -28,7 +28,16 @@ stand-in (`src/app/dev-api/waitlist`) and never touches the real list.
 - `netlify/functions/drop-waitlist.js` + `netlify/lib/waitlist.js`: the waitlist backend
   (store `waitlist`, one record per product + email; tests in `tests/waitlist.test.js`)
 
-## Not done yet (before this replaces the live homepage)
+## Bag and checkout
 
-- Admin view and CSV export of the waitlist.
-- The bag drawer and checkout live on the old homepage; the new header's bag icon links there.
+`src/components/bag.tsx` is the bag drawer and checkout on every page of the app (header bag
+button, `/#bag`, and `/?restore=<token>` from reminder emails). It uses the same
+`egosynk_cart` localStorage bag as the product pages and the same functions as before
+(`apply-coupon`, `me`, `create-order`, Razorpay, `/order-confirmation.html`). The old store
+page is still served at `/shop.html`.
+
+## Launch countdown
+
+Admin → Settings → Launch countdown (date in IST, name, page). `src/components/countdown.tsx`
+shows it on that page's hero slide on the homepage and on the page itself; it's hidden
+while the date is empty and once it has passed.

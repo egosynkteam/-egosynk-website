@@ -6,7 +6,7 @@ import { EMark } from "./logo";
 const LINES = [
   { key: "fuel", n: "01", name: "Fuel", status: "Launching", live: false, href: "/hydro", cta: "HYDRO 150", body: "Pre-workout, EAA and the supplements we trust. Open labels, no proprietary blends.", img: "/img/hydro-tub-front.webp" },
   { key: "gear", n: "02", name: "Gear", status: "Live", live: true, href: "/#gear", cta: "Shop gear", body: "Compression wear, sleeves, belts and grips, built for load rather than looks.", img: null },
-  { key: "scent", n: "03", name: "Scent", status: "In development", live: false, href: "/#scent", cta: "BOLD", body: "BOLD eau de parfum. Ruby juice, clear glass, and the E on the cap.", img: "/img/bold-pair.webp" },
+  { key: "scent", n: "03", name: "Scent", status: "In development", live: false, href: "/bold", cta: "BOLD", body: "BOLD eau de parfum. Ruby juice, clear glass, and the E on the cap.", img: "/img/bold-pair.webp" },
 ];
 
 export function Lines() {

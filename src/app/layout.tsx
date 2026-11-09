@@ -7,6 +7,7 @@ import { MotionRoot } from "@/components/motion-root";
 import { JsonLd, ORGANIZATION } from "@/components/json-ld";
 import { WhatsAppButton } from "@/components/whatsapp-button";
 import { getCatalog, whatsappLink } from "@/lib/catalog";
+import { BagProvider } from "@/components/bag";
 import "./globals.css";
 
 const archivo = Archivo_Black({ weight: "400", subsets: ["latin"], variable: "--font-archivo", display: "swap" });
@@ -25,17 +26,22 @@ export const metadata: Metadata = {
 export const viewport: Viewport = { themeColor: "#0d0e10", viewportFit: "cover" };
 
 export default async function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
-  const { settings } = await getCatalog();
+  const { settings, products } = await getCatalog();
+  // Just what the bag needs to re-price a restored bag; the rest of the catalog stays on the server.
+  const shop = products.map((p) => ({ id: p.id, name: p.name, cat: p.cat, price: p.price, image: p.images?.[0] || null, available: p.available !== false }));
+  const ship = { fee: settings.shippingFee ?? 79, freeOver: settings.freeShippingThreshold ?? 999 };
   const whatsapp = whatsappLink(settings.social?.whatsapp, "Hi EGOSYNK, I have a question");
   return (
     <html lang="en-IN" className={`${archivo.variable} ${inter.variable} ${jetbrains.variable}`}>
       <body className="min-h-dvh">
         <JsonLd data={ORGANIZATION} />
         <MotionRoot>
-          <SiteHeader />
-          <main id="main">{children}</main>
-          <SiteFooter />
-          <WhatsAppButton href={whatsapp} />
+          <BagProvider products={shop} ship={ship}>
+            <SiteHeader />
+            <main id="main">{children}</main>
+            <SiteFooter />
+            <WhatsAppButton href={whatsapp} />
+          </BagProvider>
         </MotionRoot>
         {/* The live site's cookie banner and consent settings, shared with every other page. */}
         <Script src="/consent.js" strategy="afterInteractive" />

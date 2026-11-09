@@ -10,7 +10,6 @@ import { Manifesto } from "@/components/manifesto";
 import { Reveal } from "@/components/reveal";
 import { WaitlistForm } from "@/components/waitlist-form";
 import { getCatalog, isGear, inr } from "@/lib/catalog";
-import { LegacyHandoff } from "@/components/legacy-handoff";
 import { legacy } from "@/lib/links";
 import { JsonLd } from "@/components/json-ld";
 
@@ -52,9 +51,8 @@ export default async function Home() {
 
   return (
     <>
-      <LegacyHandoff />
       {products.length > 0 && <JsonLd data={productList} />}
-      <HeroCarousel gearSub={settings.hero?.sub} />
+      <HeroCarousel gearSub={settings.hero?.sub} launch={settings.launch} />
       <Marquee items={[...new Set(ticker)]} />
       <Lines />
       <HydroBand />
@@ -83,6 +81,7 @@ export default async function Home() {
             <h2 id="scent-h" className="display mt-4 text-[clamp(44px,7vw,104px)]">Wear your<br /><span className="text-rust">ego.</span></h2>
             <p className="mt-5 max-w-[44ch] text-dim">BOLD eau de parfum, in 30 and 100 ml. Ruby juice in clear glass, with the three arms of the E as the cap. Join the list to hear when it&apos;s ready.</p>
             <div className="mt-8 max-w-[560px]"><WaitlistForm product="bold" label="Notify me" /></div>
+            <a href="/bold" className="mono mt-6 inline-block text-xs font-bold uppercase tracking-[0.12em] text-dim underline decoration-rust underline-offset-4 hover:text-bone">Meet BOLD →</a>
           </Reveal>
           <Reveal delay={0.1} className="relative">
             <Image src="/img/bold-pack.webp" alt="BOLD in its rigid box with the red WEAR YOUR EGO flap, next to the 30 ml bottle and boxes" width={1800} height={1227} sizes="(min-width: 768px) 50vw, 100vw" className="fade-edges h-auto w-full" />

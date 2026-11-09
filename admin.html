@@ -646,6 +646,14 @@
       </section>
 
       <section class="settings-card">
+        <h4>Launch countdown</h4>
+        <p class="muted">Shows a countdown on the homepage and the product's page. Leave the date empty to hide it; it also hides itself once the time has passed. Times are Indian time (IST).</p>
+        <div class="field"><label for="s-launch-date">Launch date and time</label><input id="s-launch-date" type="datetime-local"></div>
+        <div class="field"><label for="s-launch-name">What's launching</label><input id="s-launch-name" placeholder="HYDRO 150" maxlength="40"></div>
+        <div class="field"><label for="s-launch-href">Page it links to</label><input id="s-launch-href" placeholder="/hydro"></div>
+      </section>
+
+      <section class="settings-card">
         <h4>Abandoned-bag emails</h4>
         <p class="muted">One reminder to shoppers who reached checkout but didn't pay, with a link that refills their bag. Not sent if they've since ordered or unsubscribed, or after 2 days. Needs email (Resend) set up to actually send.</p>
         <div class="checkbox-field"><input type="checkbox" id="s-ac-on"><label for="s-ac-on" style="margin:0;">Send reminders</label></div>
@@ -2231,6 +2239,8 @@ function fillSettingsForm(st){
   set('s-eyebrow', h.eyebrow); set('s-headline', h.headline); set('s-video', h.videoUrl); set('s-accent', h.accent); set('s-sub', h.sub);
   const so = st.social || {};
   set('s-ig', so.instagram); set('s-wa', so.whatsapp); set('s-yt', so.youtube); set('s-fb', so.facebook);
+  const la = st.launch || {};
+  set('s-launch-date', la.date ? String(la.date).slice(0, 16) : ''); set('s-launch-name', la.name); set('s-launch-href', la.href);
   const ac = st.abandonedCart || {};
   document.getElementById('s-ac-on').checked = ac.enabled !== false;
   set('s-ac-delay', ac.delayHours || 1); set('s-ac-code', ac.couponCode);
@@ -2273,6 +2283,7 @@ async function saveSettings(){
     announcement: { enabled: document.getElementById('s-ann-on').checked, items: val('s-ann').split('\n').map(s => s.trim()).filter(Boolean) },
     hero: { eyebrow: val('s-eyebrow'), headline: val('s-headline'), accent: val('s-accent'), sub: val('s-sub'), imageKey: settingsImages.hero, videoUrl: val('s-video').trim() },
     social: { instagram: val('s-ig'), whatsapp: val('s-wa'), youtube: val('s-yt'), facebook: val('s-fb') },
+    launch: { date: val('s-launch-date'), name: val('s-launch-name').trim(), href: val('s-launch-href').trim() },
     analytics: { ga4Id: val('s-ga4').trim(), metaPixelId: val('s-pixel').trim() },
     abandonedCart: { enabled: document.getElementById('s-ac-on').checked, delayHours: Number(val('s-ac-delay')) || 1, couponCode: val('s-ac-code').trim() },
     ogImageKey: settingsImages.og,

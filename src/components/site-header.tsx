@@ -6,35 +6,16 @@ import { AnimatePresence, motion, useMotionValueEvent, useScroll } from "motion/
 import { Wordmark } from "./logo";
 import { legacy } from "@/lib/links";
 import { SearchDialog } from "./search-dialog";
+import { useBag } from "./bag";
 
 const NAV = [
   { href: "/hydro", label: "Fuel", note: "HYDRO 150" },
   { href: "/#gear", label: "Gear", note: "Live" },
-  { href: "/#scent", label: "Scent", note: "BOLD" },
+  { href: "/bold", label: "Scent", note: "BOLD" },
 ];
 
-// Reads the same bag the product pages write, so the count matches across the old and new pages.
-function useBagCount() {
-  const [n, setN] = useState(0);
-  useEffect(() => {
-    const read = () => {
-      try {
-        const cart = JSON.parse(localStorage.getItem("egosynk_cart") || sessionStorage.getItem("egosynk_cart") || "[]");
-        setN(Array.isArray(cart) ? cart.reduce((s: number, c: { qty?: number }) => s + (Number(c.qty) || 0), 0) : 0);
-      } catch {
-        setN(0);
-      }
-    };
-    read();
-    const onStorage = (e: StorageEvent) => e.key === "egosynk_cart" && read();
-    addEventListener("storage", onStorage);
-    return () => removeEventListener("storage", onStorage);
-  }, []);
-  return n;
-}
-
 export function SiteHeader() {
-  const bag = useBagCount();
+  const { count: bag, open: openBag } = useBag();
   const [open, setOpen] = useState(false);
   const [searching, setSearching] = useState(false);
   const [solid, setSolid] = useState(false);
@@ -87,12 +68,12 @@ export function SiteHeader() {
           <a href={legacy.account} aria-label="Account" className="grid size-10 place-items-center rounded-[2px] border border-line transition-colors hover:border-dim">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>
           </a>
-          <a href={legacy.bag} aria-label={`Bag, ${bag} items`} className="relative grid size-10 place-items-center rounded-[2px] border border-line transition-colors hover:border-dim">
+          <button type="button" onClick={() => { setOpen(false); openBag(); }} aria-label={`Bag, ${bag} items`} aria-haspopup="dialog" className="relative grid size-10 place-items-center rounded-[2px] border border-line transition-colors hover:border-dim">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><circle cx="9" cy="21" r="1" /><circle cx="20" cy="21" r="1" /><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" /></svg>
             {bag > 0 && (
               <span className="absolute -right-1.5 -top-1.5 grid h-4 min-w-4 place-items-center rounded-full bg-rust px-1 text-[10px] font-bold">{bag}</span>
             )}
-          </a>
+          </button>
           <button
             type="button"
             aria-label={open ? "Close menu" : "Open menu"}

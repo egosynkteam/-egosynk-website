@@ -10,7 +10,7 @@ type Hit = { key: string; href: string; title: string; meta: string; note?: stri
 // Launches that aren't in the catalog yet, so searching "pre workout" or "perfume" finds them.
 const LAUNCHES: (Hit & { words: string })[] = [
   { key: "hydro", href: "/hydro", title: "HYDRO 150 pre-workout", meta: "Fuel", note: "Drop list open", words: "hydro 150 pre-workout preworkout pre workout supplement caffeine citrulline electrolytes fuel energy salted nimbu" },
-  { key: "bold", href: "/#scent", title: "BOLD eau de parfum", meta: "Scent", note: "In development", words: "bold perfume fragrance scent eau de parfum edp cologne" },
+  { key: "bold", href: "/bold", title: "BOLD eau de parfum", meta: "Scent", note: "In development", words: "bold perfume fragrance scent eau de parfum edp cologne" },
 ];
 
 let catalogPromise: Promise<Catalog | null> | null = null;

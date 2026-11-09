@@ -5,7 +5,7 @@ import { CookieSettingsLink } from "./cookie-settings-link";
 import { Year } from "./year";
 
 const COLS: { title: string; links: [string, string][] }[] = [
-  { title: "Shop", links: [["/hydro", "Fuel · HYDRO 150"], ["/#gear", "Gear"], ["/#scent", "Scent · BOLD"], [legacy.bulk, "Bulk orders"]] },
+  { title: "Shop", links: [["/hydro", "Fuel · HYDRO 150"], ["/#gear", "Gear"], ["/bold", "Scent · BOLD"], [legacy.bulk, "Bulk orders"]] },
   { title: "Help", links: [["/batch", "Check your batch"], [legacy.shipping, "Shipping"], [legacy.returns, "Returns & exchanges"], [legacy.contact, "Contact"], [legacy.account, "Your account"]] },
   { title: "Legal", links: [[legacy.terms, "Terms"], [legacy.privacy, "Privacy"]] },
 ];

@@ -17,12 +17,24 @@ const MEDIA_KEY = /^[a-f0-9]{16}\.(webp|jpg|png)$/;
 const str = (v, max) => String(v == null ? '' : v).trim().slice(0, max);
 const money = (v) => { const n = Math.round(Number(v)); return Number.isFinite(n) && n >= 0 ? n : null; };
 const mediaKey = (v) => (v && MEDIA_KEY.test(v) ? v : null);
+// The admin form sends Indian time as YYYY-MM-DDTHH:MM; stored with the +05:30 offset.
+function launchDate(v) {
+  const s = str(v, 40);
+  if (!s) return { value: null };
+  const m = /^(\d{4}-\d{2}-\d{2}T\d{2}:\d{2})(?::00)?(?:\+05:30)?$/.exec(s);
+  const iso = m && `${m[1]}:00+05:30`;
+  if (!iso || Number.isNaN(Date.parse(iso))) return { error: 'Launch date: pick a date and time' };
+  return { value: iso };
+}
 
 function cleanStore(d) {
   const shippingFee = money(d.shippingFee);
   const freeShippingThreshold = money(d.freeShippingThreshold);
   if (shippingFee === null || freeShippingThreshold === null) return { error: 'Shipping fee and threshold must be whole rupees ≥ 0' };
-  const a = d.announcement || {}, h = d.hero || {}, s = d.social || {};
+  const a = d.announcement || {}, h = d.hero || {}, s = d.social || {}, l = d.launch || {};
+  const date = launchDate(l.date);
+  if (date.error) return { error: date.error };
+  const href = str(l.href, 100);
   return {
     value: {
       shippingFee,
@@ -44,6 +56,12 @@ function cleanStore(d) {
         whatsapp: str(s.whatsapp, 15).replace(/\D/g, ''),
         youtube: str(s.youtube, 200),
         facebook: str(s.facebook, 200),
+      },
+      launch: {
+        date: date.value,
+        name: str(l.name, 40) || 'HYDRO 150',
+        // Only links inside the store, so the countdown can't send people off-site.
+        href: /^\/(?!\/)[^\s"'<>]*$/.test(href) ? href : '/hydro',
       },
       ogImageKey: mediaKey(d.ogImageKey),
       abandonedCart: {

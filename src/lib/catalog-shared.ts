@@ -31,6 +31,7 @@ export type Catalog = {
     announcement?: { enabled?: boolean; items?: string[] };
     hero?: { eyebrow?: string; headline?: string; accent?: string; sub?: string };
     social?: { instagram?: string; whatsapp?: string; youtube?: string; facebook?: string };
+    launch?: { date?: string | null; name?: string; href?: string };
   };
 };
 

@@ -9,7 +9,7 @@ const { sendEmail, emailWrapper, buttonHtml } = require('./email');
 //   value { product, email, phone, marketing, at, source, confirmedEmailAt }
 const PRODUCTS = {
   'hydro-150': { name: 'HYDRO 150', page: '/hydro', line: 'our first pre-workout' },
-  bold: { name: 'BOLD eau de parfum', page: '/#scent', line: 'our eau de parfum' },
+  bold: { name: 'BOLD eau de parfum', page: '/bold', line: 'our eau de parfum' },
 };
 const SITE = 'https://egosynk.com';
 const keyFor = (product, email) => `${product}__${encodeURIComponent(email)}`;

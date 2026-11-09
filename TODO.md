@@ -5,9 +5,11 @@ Last updated 8 Nov 2026. Preview of the new store: https://storefront-next--egos
 ## Next to build
 - [ ] **BOLD scent page (`/bold`)**: hero "WEAR YOUR EGO." with the 100 ml ruby bottle and a "Notify me" drop list; the design story (three-fin E cap, clear glass, ruby juice, ml gauge); 30 ml vs 100 ml; unboxing (rigid flap box with red reveal, 30 ml carton); scent notes "revealed at launch"; FAQ. No made-up notes or prices. Then point Scent links, search and the drop-list email to `/bold`.
   - New bottle renders need Blender (heavy on memory). Ask before running, or use the existing BOLD images.
-- [ ] EAA product page
+- [ ] EAA product page (needs the formula, flavour, size and a render)
 - [ ] Full review of the preview on a phone
-- [ ] Launch countdown in the hero (needs a launch date)
+- [x] BOLD scent page (`/bold`), built 10 Nov
+- [x] Launch countdown: set the date in Admin → Settings → Launch countdown
+- [x] Bag and checkout moved into the new storefront (drawer, codes, address, Razorpay, restore links)
 
 ## Waiting on you
 - [ ] **15 Nov:** Netlify credits reset. Publish the 12 waiting updates to egosynk.com (or upgrade Netlify to Personal, $9/month), then put the new store live in "coming soon" mode

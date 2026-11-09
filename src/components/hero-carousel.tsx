@@ -7,6 +7,7 @@ import useEmblaCarousel from "embla-carousel-react";
 import Autoplay from "embla-carousel-autoplay";
 import { AnimatePresence, motion } from "motion/react";
 import { EMark } from "./logo";
+import { Countdown, type Launch } from "./countdown";
 
 type Slide = {
   id: string;
@@ -21,7 +22,7 @@ type Slide = {
 
 const DELAY = 6500;
 
-export function HeroCarousel({ gearSub }: { gearSub?: string }) {
+export function HeroCarousel({ gearSub, launch }: { gearSub?: string; launch?: Launch }) {
   const slides: Slide[] = [
     {
       id: "hydro", line: "Fuel", status: "Drop list open", title: ["Prime the", "ego."],
@@ -36,7 +37,7 @@ export function HeroCarousel({ gearSub }: { gearSub?: string }) {
     {
       id: "bold", line: "Scent", status: "In development", title: ["Wear your", "ego."],
       sub: "BOLD eau de parfum in 30 and 100 ml, with a cap shaped like the E. Join the drop list to hear first.",
-      cta: { href: "/#scent", label: "Meet BOLD" }, art: "bold",
+      cta: { href: "/bold", label: "Meet BOLD" }, art: "bold",
     },
   ];
 
@@ -68,7 +69,7 @@ export function HeroCarousel({ gearSub }: { gearSub?: string }) {
         <div className="flex touch-pan-y">
           {slides.map((s, i) => (
             <div key={s.id} className="relative min-w-0 flex-[0_0_100%]" role="group" aria-roledescription="slide" aria-label={`${i + 1} of ${slides.length}: ${s.line}`}>
-              <SlideView s={s} active={i === index} priority={i === 0} />
+              <SlideView s={s} active={i === index} priority={i === 0} launch={launch} />
             </div>
           ))}
         </div>
@@ -104,7 +105,9 @@ export function HeroCarousel({ gearSub }: { gearSub?: string }) {
   );
 }
 
-function SlideView({ s, active, priority }: { s: Slide; active: boolean; priority: boolean }) {
+function SlideView({ s, active, priority, launch }: { s: Slide; active: boolean; priority: boolean; launch?: Launch }) {
+  // The countdown sits on the slide for whatever is launching (admin → Settings → Launch countdown).
+  const page = (s.alt?.href || s.cta.href).split("#")[0];
   const words = { hidden: { y: "105%" }, show: { y: "0%" } };
   return (
     <div className="gutter relative flex min-h-[min(92dvh,900px)] items-center pb-28 pt-28 md:pb-24">
@@ -139,6 +142,9 @@ function SlideView({ s, active, priority }: { s: Slide; active: boolean; priorit
                 <motion.div variants={{ hidden: { opacity: 0, y: 14 }, show: { opacity: 1, y: 0 } }} className="mt-9 flex flex-wrap gap-3">
                   <Link href={s.cta.href} className="btn btn-primary">{s.cta.label} <span aria-hidden="true">→</span></Link>
                   {s.alt && <Link href={s.alt.href} className="btn btn-ghost">{s.alt.label}</Link>}
+                </motion.div>
+                <motion.div variants={{ hidden: { opacity: 0, y: 14 }, show: { opacity: 1, y: 0 } }}>
+                  <Countdown launch={launch} path={page} className="mt-8" />
                 </motion.div>
               </motion.div>
             )}

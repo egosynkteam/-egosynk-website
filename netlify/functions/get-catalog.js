@@ -16,14 +16,14 @@ exports.handler = async () => {
     const [{ products, categories }, settings, sizeGuides, coupons, bundles] = await Promise.all([
       getPublicCatalog(), getSettings(), getSizeGuides(), getCoupons(), getBundles(),
     ]);
-    const { shippingFee, freeShippingThreshold, announcement, hero, social } = settings;
+    const { shippingFee, freeShippingThreshold, announcement, hero, social, launch } = settings;
     return {
       statusCode: 200,
       headers: { 'Cache-Control': 'public, max-age=30', ...CATALOG_HEADERS },
       body: JSON.stringify({
         products,
         categories: categories.map(({ id, name, desc, guide }) => ({ id, name, desc, guide })),
-        settings: { shippingFee, freeShippingThreshold, announcement, hero, social },
+        settings: { shippingFee, freeShippingThreshold, announcement, hero, social, launch },
         sizeGuides,
         offers: publicOffers(coupons),
         bundles: publicBundles(bundles),

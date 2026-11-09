@@ -2,9 +2,10 @@
 // scripts/copy-legacy.mjs; product pages come from the product-page function.
 export const legacy = {
   product: (slug: string) => `/p/${encodeURIComponent(slug)}`,
-  // The bag, coupons and checkout stay on the original store page, served at /shop.html.
+  // The old store page (full catalog grid) is still served at /shop.html. The bag and checkout
+  // now live in this app: /#bag opens the bag drawer on any page.
   shop: "/shop.html",
-  bag: "/shop.html#bag",
+  bag: "/#bag",
   account: "/account.html",
   shipping: "/shipping-policy.html",
   returns: "/refund-policy.html",
