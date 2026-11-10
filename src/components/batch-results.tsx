@@ -34,12 +34,12 @@ export function BatchResults({ code }: { code: string }) {
   }, [code]);
 
   if (state.kind === "loading") {
-    return <div className="space-y-3" aria-busy="true" aria-label="Loading batch">{[0, 1, 2, 3].map((i) => <div key={i} className="h-12 animate-pulse rounded-[2px] bg-surface" />)}</div>;
+    return <div className="space-y-3" aria-busy="true" aria-label="Loading batch">{[0, 1, 2, 3].map((i) => <div key={i} className="h-12 animate-pulse rounded-sharp bg-surface" />)}</div>;
   }
   if (state.kind !== "found") {
     return (
-      <div className="max-w-[640px]">
-        <h1 className="display text-[clamp(40px,7vw,80px)]">{state.kind === "missing" ? "Batch not found" : "Something went wrong"}</h1>
+      <div className="max-w-2xl">
+        <h1 className="display text-display-lg">{state.kind === "missing" ? "Batch not found" : "Something went wrong"}</h1>
         <p className="mt-4 text-dim">
           {state.kind === "missing"
             ? <>We don&apos;t have results for <span className="mono text-bone">{code}</span> yet. Check the code on the base of the tub, or the label next to “Batch”. Results go up when the lab report for the batch is in.</>
@@ -58,28 +58,28 @@ export function BatchResults({ code }: { code: string }) {
       <div className="flex flex-wrap items-center gap-3">
         <span className="eyebrow">Batch lab report</span>
         {b.results.length > 0 && (
-          <span className={`chip ${allPass ? "bg-[#5fb98a]/15 text-[#7fd1a4]" : "border border-line text-dim"}`}>
+          <span className={`chip ${allPass ? "bg-ok/15 text-ok-bright" : "border border-line text-dim"}`}>
             {allPass ? "All tests passed" : `${passed} of ${b.results.length} passed`}
           </span>
         )}
       </div>
-      <h1 className="display mt-4 text-[clamp(44px,8vw,104px)]">{b.productName}</h1>
+      <h1 className="display mt-4 text-display-md">{b.productName}</h1>
       <p className="mono mt-3 text-lg tracking-[0.08em] text-rust-text">BATCH {b.code}</p>
 
-      <dl className="mt-8 grid max-w-[760px] grid-cols-2 gap-px overflow-hidden rounded-[2px] border border-line bg-line sm:grid-cols-4">
+      <dl className="mt-8 grid max-w-3xl grid-cols-2 gap-px overflow-hidden rounded-sharp border border-line bg-line sm:grid-cols-4">
         {[["Manufactured", month(b.mfg)], ["Best before", month(b.expiry)], ["Tested by", b.lab || "—"], ["Report date", day(b.reportDate) || "—"]].map(([k, v]) => (
           <div key={k} className="min-w-0 bg-ink p-4">
-            <dt className="mono text-[11px] uppercase tracking-[0.12em] text-steel">{k}</dt>
+            <dt className="mono text-micro uppercase tracking-[0.12em] text-steel">{k}</dt>
             <dd className="mt-1 break-words font-semibold">{v}</dd>
           </div>
         ))}
       </dl>
 
       {b.results.length > 0 && (
-        <div className="mt-10 overflow-x-auto rounded-[2px] border border-line">
-          <table className="w-full min-w-[520px] text-[15px]">
+        <div className="mt-10 overflow-x-auto rounded-sharp border border-line">
+          <table className="w-full min-w-130 text-body">
             <thead>
-              <tr className="mono border-b border-line text-left text-[11px] uppercase tracking-[0.12em] text-steel">
+              <tr className="mono border-b border-line text-left text-micro uppercase tracking-[0.12em] text-steel">
                 <th className="p-4 font-bold">Test</th><th className="p-4 font-bold">On the label</th><th className="p-4 font-bold">Lab found</th><th className="p-4 text-right font-bold">Result</th>
               </tr>
             </thead>
@@ -91,7 +91,7 @@ export function BatchResults({ code }: { code: string }) {
                   <td className="mono p-4 text-dim">{r.label || "—"}</td>
                   <td className="mono p-4 font-bold">{r.found || "—"}</td>
                   <td className="p-4 text-right">
-                    <span className={`chip ${r.ok ? "bg-[#5fb98a]/15 text-[#7fd1a4]" : "bg-rust-dim text-rust-text"}`}>{r.ok ? "Pass" : "Fail"}</span>
+                    <span className={`chip ${r.ok ? "bg-ok/15 text-ok-bright" : "bg-rust-dim text-rust-text"}`}>{r.ok ? "Pass" : "Fail"}</span>
                   </td>
                 </motion.tr>
               ))}

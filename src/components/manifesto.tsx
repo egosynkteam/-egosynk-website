@@ -12,9 +12,9 @@ export function Manifesto() {
   const words = TEXT.split(" ");
   return (
     <section className="gutter py-28 md:py-40" aria-label="Manifesto">
-      <div className="mx-auto max-w-[1200px]">
+      <div className="mx-auto max-w-6xl">
         <span className="eyebrow">Manifesto</span>
-        <p ref={ref} className="display mt-6 flex flex-wrap text-[clamp(30px,4.6vw,64px)] leading-[1.02]">
+        <p ref={ref} className="display mt-6 flex flex-wrap text-statement leading-[1.02]">
           {words.map((w, i) => (
             <Word key={i} progress={scrollYProgress} range={[i / words.length, (i + 1) / words.length]} accent={/iron\.$|ego$/.test(w)}>
               {w}

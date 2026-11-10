@@ -5,6 +5,7 @@ import Image from "next/image";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { Center, ContactShadows, Environment, Lightformer, OrbitControls, useGLTF } from "@react-three/drei";
 import type { Group } from "three";
+import { BRAND } from "@/lib/brand";
 
 const MODEL = "/models/hydro-150.glb";
 
@@ -44,7 +45,7 @@ export function Tub3D() {
             <Environment resolution={256}>
               <Lightformer intensity={2.2} position={[0, 3, 2]} scale={[6, 2, 1]} />
               <Lightformer intensity={1.4} position={[-3, 1, 1]} scale={[2, 4, 1]} />
-              <Lightformer intensity={2.6} color="#e63950" position={[3, 0.5, -1]} scale={[1, 4, 1]} />
+              <Lightformer intensity={2.6} color={BRAND.rustBright} position={[3, 0.5, -1]} scale={[1, 4, 1]} />
             </Environment>
             <ambientLight intensity={0.25} />
             <directionalLight position={[1.5, 2, 2]} intensity={1.6} />
@@ -58,7 +59,7 @@ export function Tub3D() {
         </Canvas>
       )}
       {mode === "3d" && (
-        <p className="mono pointer-events-none absolute bottom-2 left-1/2 -translate-x-1/2 text-[11px] uppercase tracking-[0.14em] text-steel">Drag to turn</p>
+        <p className="mono pointer-events-none absolute bottom-2 left-1/2 -translate-x-1/2 text-micro uppercase tracking-[0.14em] text-steel">Drag to turn</p>
       )}
     </div>
   );

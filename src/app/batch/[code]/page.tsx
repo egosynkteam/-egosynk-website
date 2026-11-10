@@ -17,8 +17,8 @@ async function Results({ params }: { params: Promise<{ code: string }> }) {
 export default function BatchPage({ params }: { params: Promise<{ code: string }> }) {
   return (
     <section className="gutter pb-24 pt-32 md:pt-40">
-      <div className="mx-auto max-w-[1100px]">
-        <Suspense fallback={<div className="h-64 animate-pulse rounded-[2px] bg-surface" aria-label="Loading batch" />}>
+      <div className="mx-auto max-w-6xl">
+        <Suspense fallback={<div className="h-64 animate-pulse rounded-sharp bg-surface" aria-label="Loading batch" />}>
           <Results params={params} />
         </Suspense>
       </div>

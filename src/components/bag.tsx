@@ -6,6 +6,7 @@ import { AnimatePresence, motion } from "motion/react";
 import { STATES, bagServerSnapshot, bagSnapshot, mediaUrl, parseBag, readBag, stateForPin, subscribeBag, totals, writeBag, type BagLine, type Coupon, type ShopProduct } from "@/lib/bag";
 import { inr, track } from "@/lib/catalog-shared";
 import { legacy } from "@/lib/links";
+import { BRAND } from "@/lib/brand";
 
 type Bag = { lines: BagLine[]; count: number; open: () => void };
 const BagContext = createContext<Bag>({ lines: [], count: 0, open: () => {} });
@@ -123,11 +124,11 @@ export function BagProvider({ products, ship, children }: { products: ShopProduc
         onRemoveCoupon={() => setCoupon(null)}
         onCheckout={() => { if (!lines.length) { say("Your bag is empty"); return; } setCheckingOut(true); }} />
       <CheckoutDialog open={checkingOut} onClose={() => setCheckingOut(false)} lines={lines} coupon={coupon} total={sum.total} say={say} />
-      <div aria-live="polite" className="pointer-events-none fixed inset-x-0 bottom-6 z-[80] flex justify-center px-4">
+      <div aria-live="polite" className="pointer-events-none fixed inset-x-0 bottom-6 z-(--z-toast) flex justify-center px-4">
         <AnimatePresence>
           {toast && (
             <motion.p initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 12 }}
-              className="rounded-[2px] border border-line bg-surface px-5 py-3 text-sm shadow-2xl">{toast}</motion.p>
+              className="rounded-sharp border border-line bg-surface px-5 py-3 text-sm shadow-2xl">{toast}</motion.p>
           )}
         </AnimatePresence>
       </div>
@@ -166,14 +167,14 @@ function BagDrawer(props: {
   return (
     <AnimatePresence>
       {open && (
-        <div className="fixed inset-0 z-[70]">
+        <div className="fixed inset-0 z-(--z-drawer)">
           <motion.div className="absolute inset-0 bg-black/60 backdrop-blur-[2px]" onClick={onClose} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} />
           <motion.aside role="dialog" aria-modal="true" aria-labelledby="bag-h"
-            className="absolute inset-y-0 right-0 flex w-full max-w-[440px] flex-col border-l border-line bg-ink pb-[env(safe-area-inset-bottom,0px)]"
+            className="absolute inset-y-0 right-0 flex w-full max-w-md flex-col border-l border-line bg-ink pb-[env(safe-area-inset-bottom,0px)]"
             initial={{ x: "100%" }} animate={{ x: 0 }} exit={{ x: "100%" }} transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}>
-            <div className="flex h-[68px] items-center justify-between border-b border-line px-5">
+            <div className="flex h-(--header-h) items-center justify-between border-b border-line px-5">
               <h2 id="bag-h" className="display text-2xl">Your bag{sum.count ? <span className="mono ml-2 text-sm text-dim">({sum.count})</span> : null}</h2>
-              <button ref={closeRef} type="button" onClick={onClose} aria-label="Close bag" className="grid size-10 place-items-center rounded-[2px] border border-line hover:border-dim">
+              <button ref={closeRef} type="button" onClick={onClose} aria-label="Close bag" className="grid size-10 pointer-coarse:size-11 place-items-center rounded-sharp border border-line hover:border-dim">
                 <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M3 3l10 10M13 3L3 13" stroke="currentColor" strokeWidth="2" /></svg>
               </button>
             </div>
@@ -196,7 +197,7 @@ function BagDrawer(props: {
                   <AnimatePresence initial={false}>
                     {lines.map((l) => (
                       <motion.li key={l.lineId} layout exit={{ opacity: 0, x: 40 }} className="flex gap-4 py-5">
-                        <div className="grid size-20 shrink-0 place-items-center overflow-hidden rounded-[2px] border border-line bg-surface">
+                        <div className="grid size-20 shrink-0 place-items-center overflow-hidden rounded-sharp border border-line bg-surface">
                           {/* eslint-disable-next-line @next/next/no-img-element */}
                           {l.image ? <img src={mediaUrl(l.image)} alt="" className="size-full object-cover" /> : <span className="mono text-xs text-steel">ES</span>}
                         </div>
@@ -207,10 +208,10 @@ function BagDrawer(props: {
                           </div>
                           {l.size && <p className="mono mt-1 text-xs uppercase text-dim">Size · {l.size}</p>}
                           <div className="mt-3 flex items-center justify-between">
-                            <div className="flex items-center rounded-[2px] border border-line">
-                              <button type="button" onClick={() => props.onQty(l.lineId, -1)} aria-label={`One fewer ${l.name}`} className="grid size-9 place-items-center text-dim hover:text-bone">−</button>
+                            <div className="flex items-center rounded-sharp border border-line">
+                              <button type="button" onClick={() => props.onQty(l.lineId, -1)} aria-label={`One fewer ${l.name}`} className="grid size-9 pointer-coarse:size-11 place-items-center text-dim hover:text-bone">−</button>
                               <span className="mono w-8 text-center text-sm tabular-nums" aria-label={`Quantity ${l.qty}`}>{l.qty}</span>
-                              <button type="button" onClick={() => props.onQty(l.lineId, 1)} aria-label={`One more ${l.name}`} className="grid size-9 place-items-center text-dim hover:text-bone">+</button>
+                              <button type="button" onClick={() => props.onQty(l.lineId, 1)} aria-label={`One more ${l.name}`} className="grid size-9 pointer-coarse:size-11 place-items-center text-dim hover:text-bone">+</button>
                             </div>
                             <button type="button" onClick={() => props.onRemove(l.lineId)} className="mono text-xs uppercase tracking-[0.1em] text-steel underline-offset-4 hover:text-bone hover:underline">Remove</button>
                           </div>
@@ -222,14 +223,14 @@ function BagDrawer(props: {
 
                 <div className="border-t border-line bg-surface px-5 pb-5 pt-4">
                   {coupon ? (
-                    <div className="flex items-center justify-between gap-3 rounded-[2px] border border-[#3fa96a]/50 px-3 py-2.5 text-sm">
+                    <div className="flex items-center justify-between gap-3 rounded-sharp border border-ok/50 px-3 py-2.5 text-sm">
                       <span><span className="mono font-bold">{coupon.code}</span> applied · you save {inr(sum.discount)}{coupon.firstOrderOnly ? " · first orders only" : ""}</span>
                       <button type="button" onClick={props.onRemoveCoupon} className="mono text-xs uppercase text-dim hover:text-bone">Remove</button>
                     </div>
                   ) : (
                     <form className="flex gap-2" onSubmit={async (e) => { e.preventDefault(); if (!code.trim()) return; setApplying(true); if (await props.onCoupon(code.trim())) setCode(""); setApplying(false); }}>
                       <input value={code} onChange={(e) => setCode(e.target.value)} placeholder="Discount code" aria-label="Discount code" autoComplete="off"
-                        className="h-11 min-w-0 flex-1 rounded-[2px] border border-line bg-ink px-3 uppercase placeholder:normal-case placeholder:text-steel focus:border-dim focus:outline-none" />
+                        className="h-11 min-w-0 flex-1 rounded-sharp border border-line bg-ink px-3 uppercase placeholder:normal-case placeholder:text-steel focus:border-dim focus:outline-none" />
                       <button type="submit" disabled={applying} className="btn btn-ghost h-11 px-4 disabled:opacity-60">{applying ? "…" : "Apply"}</button>
                     </form>
                   )}
@@ -237,12 +238,12 @@ function BagDrawer(props: {
 
                   <dl className="mt-4 space-y-1.5 text-sm">
                     <div className="flex justify-between"><dt className="text-dim">Subtotal</dt><dd className="mono tabular-nums">{inr(sum.subtotal)}</dd></div>
-                    {sum.discount > 0 && <div className="flex justify-between"><dt className="text-dim">Discount ({coupon?.code})</dt><dd className="mono tabular-nums text-[#5fb98a]">−{inr(sum.discount)}</dd></div>}
+                    {sum.discount > 0 && <div className="flex justify-between"><dt className="text-dim">Discount ({coupon?.code})</dt><dd className="mono tabular-nums text-ok">−{inr(sum.discount)}</dd></div>}
                     <div className="flex justify-between"><dt className="text-dim">Shipping</dt><dd className="mono tabular-nums">{sum.shipping ? inr(sum.shipping) : "Free"}</dd></div>
                     <div className="flex justify-between border-t border-line pt-2.5 text-base"><dt className="font-semibold">Total</dt><dd className="display text-xl tabular-nums">{inr(sum.total)}</dd></div>
                   </dl>
                   <button type="button" onClick={props.onCheckout} className="btn btn-primary mt-4 w-full">Checkout · {inr(sum.total)}</button>
-                  <p className="mono mt-3 text-center text-[11px] uppercase tracking-[0.1em] text-steel">Secure checkout via Razorpay · UPI, cards, netbanking</p>
+                  <p className="mono mt-3 text-center text-micro uppercase tracking-[0.1em] text-steel">Secure checkout via Razorpay · UPI, cards, netbanking</p>
                 </div>
               </>
             )}
@@ -303,7 +304,7 @@ function CheckoutDialog({ open, onClose, lines, coupon, total, say }: { open: bo
         key: data.keyId, order_id: data.orderId, amount: data.amount, currency: "INR", name: "EGOSYNK",
         description: "Fuel, gear and scent for lifters",
         prefill: { name: shipping.name, contact: shipping.phone, email: shipping.email || "" },
-        theme: { color: "#C41E3A" },
+        theme: { color: BRAND.rust },
         handler: (r) => {
           // The confirmation page verifies the payment and clears the bag. The proof goes in
           // sessionStorage, not the URL, so it never lands in history or analytics.
@@ -323,23 +324,23 @@ function CheckoutDialog({ open, onClose, lines, coupon, total, say }: { open: bo
     }
   }
 
-  const field = "h-12 w-full rounded-[2px] border border-line bg-ink px-3.5 text-bone placeholder:text-steel focus:border-dim focus:outline-none";
-  const label = "mono text-[11px] uppercase tracking-[0.12em] text-dim";
+  const field = "h-12 w-full rounded-sharp border border-line bg-ink px-3.5 text-bone placeholder:text-steel focus:border-dim focus:outline-none";
+  const label = "mono text-micro uppercase tracking-[0.12em] text-dim";
 
   return (
     <AnimatePresence>
       {open && (
-        <div className="fixed inset-0 z-[75] grid place-items-end sm:place-items-center">
+        <div className="fixed inset-0 z-(--z-dialog) grid place-items-end sm:place-items-center">
           <motion.div className="absolute inset-0 bg-black/70 backdrop-blur-[2px]" onClick={onClose} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} />
           <motion.div role="dialog" aria-modal="true" aria-labelledby="co-h"
-            className="relative max-h-[92dvh] w-full overflow-y-auto overscroll-contain border border-line bg-surface p-5 pb-[max(20px,env(safe-area-inset-bottom))] sm:max-w-[560px] sm:rounded-[2px] sm:p-8"
+            className="relative max-h-[92dvh] w-full overflow-y-auto overscroll-contain border border-line bg-surface p-5 pb-[max(20px,env(safe-area-inset-bottom))] sm:max-w-xl sm:rounded-sharp sm:p-8"
             initial={{ y: 40, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 40, opacity: 0 }} transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}>
             <div className="flex items-start justify-between gap-4">
               <div>
                 <h2 id="co-h" className="display text-3xl">Delivery details</h2>
                 <p className="mt-1 text-sm text-dim">Where should we send your order?{!me && <> <a href={legacy.account} className="underline decoration-rust underline-offset-4">Sign in</a> to fill this in.</>}</p>
               </div>
-              <button type="button" onClick={onClose} aria-label="Close" className="grid size-10 shrink-0 place-items-center rounded-[2px] border border-line hover:border-dim">
+              <button type="button" onClick={onClose} aria-label="Close" className="grid size-10 pointer-coarse:size-11 shrink-0 place-items-center rounded-sharp border border-line hover:border-dim">
                 <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M3 3l10 10M13 3L3 13" stroke="currentColor" strokeWidth="2" /></svg>
               </button>
             </div>

@@ -41,3 +41,22 @@ page is still served at `/shop.html`.
 Admin → Settings → Launch countdown (date in IST, name, page). `src/components/countdown.tsx`
 shows it on that page's hero slide on the homepage and on the page itself; it's hidden
 while the date is empty and once it has passed.
+
+## Design system (keep to these)
+
+All values live as tokens in `src/app/globals.css`; components use the classes, never raw values.
+`tests/brand.test.js` fails `npm test` on a hex colour, a px font size or a `vw` size in `src/`.
+
+- **Colour:** `ink`, `surface`, `surface-2/3`, `line`, `line-2`, `bone`, `dim`, `steel`, `rust`,
+  `rust-bright`, `rust-text` (small red text), `rust-dim`, `ember`, `ok`, `ok-bright`, `whatsapp`.
+  Code that needs a value (Razorpay, three.js, theme colour) imports `BRAND` from `src/lib/brand.ts`.
+- **Type:** rem-based, so it follows the visitor's browser text size. `text-nano/micro/small/body/lead`
+  for UI; `text-display-xl/lg/md/sm`, `text-statement`, `text-stat` for headings. Display sizes are
+  fluid in `cqi`: they size to the page column (`.page`, a container), not the screen.
+  The hero uses `text-display-hero`, which is also capped by screen height.
+- **Layout:** wrap section content in `.page` (centred, max `--container-page`, the type container)
+  inside a `.gutter` section (fluid side padding, safe-area aware). Use `rounded-sharp` for corners,
+  `h-(--header-h)` for the header height and the `--z-*` scale for stacking (`z-(--z-drawer)`).
+- **Devices:** decide by capability, not width alone. Icon buttons add `pointer-coarse:size-11` (44px
+  touch target on touch screens); `hover:` styles only apply on devices that can hover; motion
+  respects `prefers-reduced-motion`; full-height sections use `dvh`.

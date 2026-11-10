@@ -60,11 +60,11 @@ export default async function Home() {
       {/* Older pages link to /#shop; it lands here. */}
       <span id="shop" className="block scroll-mt-24" aria-hidden="true" />
       <section id="gear" className="gutter scroll-mt-24 py-24 md:py-32" aria-labelledby="gear-h">
-        <div className="mx-auto max-w-[1400px]">
+        <div className="page">
           <Reveal className="mb-10 flex flex-wrap items-end justify-between gap-6">
             <div>
               <span className="eyebrow">Gear · live now</span>
-              <h2 id="gear-h" className="display mt-4 text-[clamp(40px,6vw,84px)]">Shop the drop</h2>
+              <h2 id="gear-h" className="display mt-4 text-display-lg">Shop the drop</h2>
             </div>
             <p className="max-w-[40ch] text-dim">Compression and lifting gear, ready to ship.{free ? ` Free shipping over ${inr(free)}.` : ""}</p>
           </Reveal>
@@ -75,12 +75,12 @@ export default async function Home() {
       </section>
 
       <section id="scent" className="gutter scroll-mt-24 border-y border-line bg-surface py-24 md:py-32" aria-labelledby="scent-h">
-        <div className="mx-auto grid max-w-[1400px] items-center gap-12 md:grid-cols-[1fr_1.1fr]">
+        <div className=" grid page items-center gap-12 md:grid-cols-[1fr_1.1fr]">
           <Reveal>
             <span className="eyebrow">Scent · in development</span>
-            <h2 id="scent-h" className="display mt-4 text-[clamp(44px,7vw,104px)]">Wear your<br /><span className="text-rust">ego.</span></h2>
+            <h2 id="scent-h" className="display mt-4 text-display-md">Wear your<br /><span className="text-rust">ego.</span></h2>
             <p className="mt-5 max-w-[44ch] text-dim">BOLD eau de parfum, in 30 and 100 ml. Ruby juice in clear glass, with the three arms of the E as the cap. Join the list to hear when it&apos;s ready.</p>
-            <div className="mt-8 max-w-[560px]"><WaitlistForm product="bold" label="Notify me" /></div>
+            <div className="mt-8 max-w-xl"><WaitlistForm product="bold" label="Notify me" /></div>
             <a href="/bold" className="mono mt-6 inline-block text-xs font-bold uppercase tracking-[0.12em] text-dim underline decoration-rust underline-offset-4 hover:text-bone">Meet BOLD →</a>
           </Reveal>
           <Reveal delay={0.1} className="relative">
@@ -103,7 +103,7 @@ function RailSkeleton() {
   return (
     <div className="flex gap-4 overflow-hidden" aria-hidden="true">
       {Array.from({ length: 4 }).map((_, i) => (
-        <div key={i} className="aspect-[4/5] min-w-[78%] animate-pulse rounded-[2px] bg-surface sm:min-w-[44%] lg:min-w-[23.5%]" />
+        <div key={i} className="aspect-[4/5] min-w-[78%] animate-pulse rounded-sharp bg-surface sm:min-w-[44%] lg:min-w-[23.5%]" />
       ))}
     </div>
   );

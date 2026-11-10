@@ -18,6 +18,8 @@ type Slide = {
   cta: { href: string; label: string };
   alt?: { href: string; label: string };
   art: "hydro" | "gear" | "bold";
+  // Gear's art is only a background shape, so its longer headline gets a wider column.
+  wide?: boolean;
 };
 
 const DELAY = 6500;
@@ -32,7 +34,7 @@ export function HeroCarousel({ gearSub, launch }: { gearSub?: string; launch?: L
     {
       id: "gear", line: "Gear", status: "Live now", title: ["Sync your ego", "to the iron."],
       sub: gearSub || "Compression gear engineered for lifters who train past the point everyone else stops.",
-      cta: { href: "/#gear", label: "Shop gear" }, art: "gear",
+      cta: { href: "/#gear", label: "Shop gear" }, art: "gear", wide: true,
     },
     {
       id: "bold", line: "Scent", status: "In development", title: ["Wear your", "ego."],
@@ -76,10 +78,10 @@ export function HeroCarousel({ gearSub, launch }: { gearSub?: string; launch?: L
       </div>
 
       <div className="gutter absolute inset-x-0 bottom-6 z-10 md:bottom-10">
-        <div className="mx-auto flex max-w-[1400px] items-center gap-3">
+        <div className=" flex page items-center gap-3">
           {slides.map((s, i) => (
             <button key={s.id} type="button" onClick={() => go(i)} aria-label={`Show ${s.line}`} aria-current={i === index}
-              className="group flex flex-1 flex-col gap-2 text-left md:max-w-[220px]">
+              className="group flex flex-1 flex-col gap-2 text-left md:max-w-56">
               <span className="relative h-0.5 w-full overflow-hidden bg-line">
                 {i === index && (
                   <motion.span key={`${index}-${playing}`} className="absolute inset-y-0 left-0 bg-bone"
@@ -87,12 +89,12 @@ export function HeroCarousel({ gearSub, launch }: { gearSub?: string; launch?: L
                     transition={{ duration: playing ? DELAY / 1000 : 0, ease: "linear" }} />
                 )}
               </span>
-              <span className={`mono hidden text-[11px] uppercase tracking-[0.14em] transition-colors md:block ${i === index ? "text-bone" : "text-steel group-hover:text-dim"}`}>
+              <span className={`mono hidden text-micro uppercase tracking-[0.14em] transition-colors md:block ${i === index ? "text-bone" : "text-steel group-hover:text-dim"}`}>
                 {String(i + 1).padStart(2, "0")} · {s.line}
               </span>
             </button>
           ))}
-          <button type="button" onClick={toggle} aria-label={playing ? "Pause slides" : "Play slides"} className="ml-auto grid size-9 place-items-center rounded-[2px] border border-line text-dim hover:text-bone">
+          <button type="button" onClick={toggle} aria-label={playing ? "Pause slides" : "Play slides"} className="ml-auto grid size-9 pointer-coarse:size-11 place-items-center rounded-sharp border border-line text-dim hover:text-bone">
             {playing ? (
               <svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><rect x="2" y="1" width="3" height="10" fill="currentColor" /><rect x="7" y="1" width="3" height="10" fill="currentColor" /></svg>
             ) : (
@@ -110,10 +112,11 @@ function SlideView({ s, active, priority, launch }: { s: Slide; active: boolean;
   const page = (s.alt?.href || s.cta.href).split("#")[0];
   const words = { hidden: { y: "105%" }, show: { y: "0%" } };
   return (
-    <div className="gutter relative flex min-h-[min(92dvh,900px)] items-center pb-28 pt-28 md:pb-24">
+    <div className="gutter relative flex min-h-[min(92dvh,56.25rem)] items-center pb-28 pt-28 md:pb-24">
       <Art kind={s.art} active={active} priority={priority} />
-      <div className="relative z-10 mx-auto w-full max-w-[1400px]">
-        <div className="max-w-[940px]">
+      <div className="relative z-10 w-full page">
+        {/* From tablet up the copy keeps to the left half, so it never runs into the product art. */}
+        <div className={`max-w-4xl ${s.wide ? "md:max-w-[64%]" : "md:max-w-[46%]"}`}>
           {/* initial={false}: the first slide is in the server HTML fully visible, so it paints
               before any JavaScript runs. Later slides animate in. */}
           <AnimatePresence mode="wait" initial={false}>
@@ -123,11 +126,11 @@ function SlideView({ s, active, priority, launch }: { s: Slide; active: boolean;
                 <motion.div variants={{ hidden: { opacity: 0, y: 10 }, show: { opacity: 1, y: 0 } }} className="mb-6 flex items-center gap-3">
                   <span className="eyebrow">{s.line}</span>
                   <span className="chip border border-line text-dim">
-                    <span className={`size-1.5 rounded-full ${s.status === "Live now" ? "bg-[#5fb98a]" : "bg-rust-bright"}`} />
+                    <span className={`size-1.5 rounded-full ${s.status === "Live now" ? "bg-ok" : "bg-rust-bright"}`} />
                     {s.status}
                   </span>
                 </motion.div>
-                <h1 className="display text-[clamp(50px,8.4vw,128px)]">
+                <h1 className="display text-display-hero">
                   {s.title.map((line, k) => (
                     <span key={k} className="block overflow-hidden pb-[0.04em]">
                       <motion.span variants={words} transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1] }} className={`block ${k === 1 ? "text-rust" : ""}`}>
@@ -136,7 +139,7 @@ function SlideView({ s, active, priority, launch }: { s: Slide; active: boolean;
                     </span>
                   ))}
                 </h1>
-                <motion.p variants={{ hidden: { opacity: 0, y: 14 }, show: { opacity: 1, y: 0 } }} className="mt-6 max-w-[46ch] text-[17px] leading-relaxed text-dim">
+                <motion.p variants={{ hidden: { opacity: 0, y: 14 }, show: { opacity: 1, y: 0 } }} className="mt-6 max-w-[46ch] text-lead leading-relaxed text-dim">
                   {s.sub}
                 </motion.p>
                 <motion.div variants={{ hidden: { opacity: 0, y: 14 }, show: { opacity: 1, y: 0 } }} className="mt-9 flex flex-wrap gap-3">
@@ -160,18 +163,18 @@ function Art({ kind, active, priority }: { kind: Slide["art"]; active: boolean; 
   if (kind === "gear") {
     return (
       <motion.div {...enter} aria-hidden="true" className="pointer-events-none absolute inset-0">
-        <div className="absolute inset-0 bg-[radial-gradient(60%_70%_at_75%_45%,#3d0f16_0%,transparent_70%)]" />
-        <EMark className="absolute -bottom-[6%] -right-[22%] w-[78vw] text-surface-2 opacity-60 md:bottom-auto md:right-[4%] md:top-1/2 md:w-[min(720px,48vw)] md:-translate-y-1/2 md:opacity-90" accent="var(--color-rust-dim)" />
+        <div className="absolute inset-0 bg-[radial-gradient(60%_70%_at_75%_45%,var(--color-rust-dim)_0%,transparent_70%)]" />
+        <EMark className="absolute -bottom-[6%] -right-[22%] w-[78%] text-surface-2 opacity-35 md:bottom-auto md:right-[3%] md:top-1/2 md:w-[min(32.5rem,30%)] md:-translate-y-1/2 md:opacity-90" accent="var(--color-rust-dim)" />
         <div className="absolute inset-0 bg-[repeating-linear-gradient(115deg,transparent_0_22px,rgba(237,234,227,.025)_22px_23px)]" />
       </motion.div>
     );
   }
   const img = kind === "hydro"
-    ? { src: "/img/hydro-tub-34.webp", w: 1200, h: 1500, alt: "HYDRO 150 pre-workout tub, Salted Nimbu", cls: "right-[-18%] w-[min(560px,92vw)] md:right-[6%] md:w-[min(560px,42vw)]" }
-    : { src: "/img/bold-pair.webp", w: 1600, h: 1200, alt: "BOLD eau de parfum, 100 and 30 ml", cls: "fade-edges right-[-25%] w-[min(760px,120vw)] md:right-[2%] md:w-[min(760px,52vw)]" };
+    ? { src: "/img/hydro-tub-34.webp", w: 1200, h: 1500, alt: "HYDRO 150 pre-workout tub, Salted Nimbu", cls: "right-[-18%] w-[min(35rem,92%)] md:right-[6%] md:w-[min(35rem,42%)]" }
+    : { src: "/img/bold-pair.webp", w: 1600, h: 1200, alt: "BOLD eau de parfum, 100 and 30 ml", cls: "fade-edges right-[-25%] w-[min(47.5rem,120%)] md:right-[1%] md:w-[min(45rem,47%)]" };
   return (
     <motion.div {...enter} className="pointer-events-none absolute inset-0">
-      <div className={`absolute inset-0 ${kind === "hydro" ? "bg-[radial-gradient(55%_65%_at_72%_50%,#3d0f16_0%,transparent_72%)]" : "bg-[radial-gradient(55%_60%_at_74%_55%,#2a0a10_0%,transparent_70%)]"}`} />
+      <div className={`absolute inset-0 ${kind === "hydro" ? "bg-[radial-gradient(55%_65%_at_72%_50%,var(--color-rust-dim)_0%,transparent_72%)]" : "bg-[radial-gradient(55%_60%_at_74%_55%,var(--color-ember)_0%,transparent_70%)]"}`} />
       <Image src={img.src} alt={img.alt} width={img.w} height={img.h} priority={priority} sizes="(min-width: 768px) 45vw, 90vw"
         className={`absolute top-1/2 h-auto -translate-y-1/2 opacity-40 md:opacity-100 ${img.cls}`} />
     </motion.div>

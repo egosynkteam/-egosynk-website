@@ -9,8 +9,9 @@ export function launchFor(launch: Launch | undefined, path?: string) {
   if (!launch?.date) return null;
   const at = Date.parse(launch.date);
   if (Number.isNaN(at)) return null;
-  if (path && (launch.href || "/hydro").split("#")[0] !== path) return null;
-  return { at, name: launch.name || "HYDRO 150", href: launch.href || "/hydro" };
+  if (!launch.name || !launch.href) return null;
+  if (path && launch.href.split("#")[0] !== path) return null;
+  return { at, name: launch.name, href: launch.href };
 }
 
 const pad = (n: number) => String(n).padStart(2, "0");
@@ -35,14 +36,14 @@ export function Countdown({ launch, path, className = "" }: { launch?: Launch; p
 
   return (
     <div className={`inline-flex flex-col gap-2 ${className}`}>
-      <p className="mono text-[11px] uppercase tracking-[0.14em] text-dim">
+      <p className="mono text-micro uppercase tracking-[0.14em] text-dim">
         <span className="text-rust-text">{l.name}</span> drops {when} IST
       </p>
       <div role="timer" aria-label={`${parts[0][0]} days, ${parts[1][0]} hours and ${parts[2][0]} minutes until ${l.name} launches`} className="flex items-stretch gap-1.5">
         {parts.map(([v, label], i) => (
-          <div key={label} className={`min-w-[64px] rounded-[2px] border px-3 py-2 text-center ${i === 0 ? "border-rust bg-rust-dim/40" : "border-line bg-ink/70"}`} aria-hidden="true">
-            <span className="display block text-[30px] leading-none tabular-nums">{i === 0 ? v : pad(v)}</span>
-            <span className="mono mt-1 block text-[10px] uppercase tracking-[0.14em] text-steel">{label}</span>
+          <div key={label} className={`min-w-16 rounded-sharp border px-3 py-2 text-center ${i === 0 ? "border-rust bg-rust-dim/40" : "border-line bg-ink/70"}`} aria-hidden="true">
+            <span className="display block text-3xl leading-none tabular-nums">{i === 0 ? v : pad(v)}</span>
+            <span className="mono mt-1 block text-nano uppercase tracking-[0.14em] text-steel">{label}</span>
           </div>
         ))}
       </div>

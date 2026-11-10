@@ -35,6 +35,10 @@ export type Catalog = {
   };
 };
 
+// Only used if the catalog can't be reached; the admin's values always win. Must equal
+// DEFAULTS in netlify/lib/settings.js (tests/brand.test.js checks).
+export const SHIPPING_FALLBACK = { shippingFee: 79, freeShippingThreshold: 999 } as const;
+
 // FUEL and SCENT launch from this storefront; the gear rail shows everything else.
 export const SCENT_CATS = new Set(["fragrance"]);
 export const FUEL_CATS = new Set(["supplements", "fuel", "pre-workout"]);

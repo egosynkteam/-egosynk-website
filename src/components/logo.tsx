@@ -14,7 +14,7 @@ export function EMark({ className = "", accent = "var(--color-rust)" }: { classN
 
 export function Wordmark({ className = "" }: { className?: string }) {
   return (
-    <span className={`font-display text-[20px] uppercase tracking-[0.02em] ${className}`}>
+    <span className={`font-display text-xl uppercase tracking-[0.02em] ${className}`}>
       <span className="text-rust">EGO</span>SYNK
     </span>
   );

@@ -15,6 +15,37 @@
   /* Small red text: passes 4.5:1 on every dark surface (rust-bright is 3.9-4.7). */
   --color-rust-text: #ec4d62;
   --color-rust-dim: #3d0f16;
+  /* Deeper glow behind the BOLD renders. */
+  --color-ember: #2a0a10;
+  --color-surface-3: #26272b;
+  --color-line-2: #34353a;
+  /* "Live", "Available", "Pass": a fill at 15% with the bright tone as text. */
+  --color-ok: #5fb98a;
+  --color-ok-bright: #7fd1a4;
+  --color-whatsapp: #25d366;
+
+  /* Type scale, in rem so it follows the visitor's browser text size. Display sizes are fluid
+     and measured in cqi: against the nearest @container (the page column), not the screen,
+     so a heading sizes to the space it's in. With no container, cqi falls back to the viewport. */
+  --text-nano: 0.625rem;
+  --text-micro: 0.6875rem;
+  --text-small: 0.8125rem;
+  --text-body: 0.9375rem;
+  --text-lead: 1.0625rem;
+  --text-display-xl: clamp(3rem, 11cqi, 10.5rem);
+  --text-display-lg: clamp(2.5rem, 6.5cqi, 5.25rem);
+  --text-display-md: clamp(2.75rem, 7.5cqi, 6.5rem);
+  --text-display-sm: clamp(2rem, 4.5cqi, 3.5rem);
+  --text-statement: clamp(1.875rem, 5cqi, 4rem);
+  --text-stat: clamp(3.5rem, 9cqi, 6rem);
+  /* Hero headline: same size on every slide; capped by screen height so the slide tabs stay
+     on screen on short laptop windows. */
+  --text-display-hero: clamp(3.125rem, min(6cqi, 10.5dvh), 7rem);
+
+  /* Page column. */
+  --container-page: 87.5rem;
+  /* The brand's near-square corner. */
+  --radius-sharp: 2px;
 
   --font-display: var(--font-archivo), "Arial Black", Impact, sans-serif;
   --font-sans: var(--font-inter), system-ui, -apple-system, "Segoe UI", sans-serif;
@@ -28,7 +59,17 @@
   to { transform: translateX(-50%); }
 }
 
-:root { color-scheme: dark; }
+:root {
+  color-scheme: dark;
+  --header-h: 4.25rem;
+  /* Stacking order, lowest to highest. */
+  --z-whatsapp: 40;
+  --z-header: 50;
+  --z-search: 60;
+  --z-drawer: 70;
+  --z-dialog: 75;
+  --z-toast: 80;
+}
 html { background: var(--color-ink); overflow-x: clip; scroll-behavior: smooth; }
 body { background: var(--color-ink); color: var(--color-bone); font-family: var(--font-sans); -webkit-font-smoothing: antialiased; }
 ::selection { background: var(--color-rust); color: var(--color-bone); }
@@ -36,20 +77,24 @@ body { background: var(--color-ink); color: var(--color-bone); font-family: var(
 
 @layer components {
   .display { font-family: var(--font-display); text-transform: uppercase; letter-spacing: -0.02em; line-height: 0.92; }
-  .eyebrow { font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--color-rust-text); }
+  .eyebrow { font-family: var(--font-mono); font-size: 0.75rem; letter-spacing: 0.18em; text-transform: uppercase; color: var(--color-rust-text); }
   .mono { font-family: var(--font-mono); letter-spacing: 0.04em; }
-  .gutter { padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
-  @media (min-width: 768px) { .gutter { padding-left: 40px; padding-right: 40px; } }
-  .btn { display: inline-flex; align-items: center; justify-content: center; gap: 10px; height: 52px; padding: 0 26px;
-    font-family: var(--font-mono); font-size: 13px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase;
-    border-radius: 2px; transition: background-color .2s, border-color .2s, color .2s, transform .2s var(--ease-out-expo); }
+  /* Side padding grows smoothly with the screen (16px phone → 40px desktop) and never sits
+     under a notch or rounded corner. */
+  .gutter { --gutter: clamp(1rem, 4vw, 2.5rem);
+    padding-left: max(var(--gutter), env(safe-area-inset-left, 0px)); padding-right: max(var(--gutter), env(safe-area-inset-right, 0px)); }
+  /* The page column: centred, capped width, and the container that display type sizes against. */
+  .page { width: 100%; max-width: var(--container-page); margin-inline: auto; container-type: inline-size; }
+  .btn { display: inline-flex; align-items: center; justify-content: center; gap: 0.625rem; min-height: 3.25rem; padding: 0 1.625rem;
+    font-family: var(--font-mono); font-size: var(--text-small); font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase;
+    border-radius: var(--radius-sharp); transition: background-color .2s, border-color .2s, color .2s, transform .2s var(--ease-out-expo); }
   .btn:active { transform: scale(0.98); }
   .btn-primary { background: var(--color-rust); color: var(--color-bone); }
   .btn-primary:hover { background: var(--color-rust-bright); }
   .btn-ghost { border: 1px solid var(--color-line); color: var(--color-bone); }
   .btn-ghost:hover { border-color: var(--color-dim); }
-  .chip { display: inline-flex; align-items: center; gap: 6px; font-family: var(--font-mono); font-size: 11px; font-weight: 700;
-    letter-spacing: 0.1em; text-transform: uppercase; padding: 5px 9px; border-radius: 2px; white-space: nowrap; }
+  .chip { display: inline-flex; align-items: center; gap: 0.375rem; font-family: var(--font-mono); font-size: var(--text-micro); font-weight: 700;
+    letter-spacing: 0.1em; text-transform: uppercase; padding: 0.3125rem 0.5625rem; border-radius: var(--radius-sharp); white-space: nowrap; }
   /* The BOLD studio renders sit on a grey sweep; this fades their edges into the page. */
   .fade-edges { -webkit-mask-image: radial-gradient(closest-side, #000 60%, transparent 100%); mask-image: radial-gradient(closest-side, #000 60%, transparent 100%); }
   /* Fine noise so big black fields don't band on cheap phone screens. */

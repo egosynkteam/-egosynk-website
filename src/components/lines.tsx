@@ -12,21 +12,21 @@ const LINES = [
 export function Lines() {
   return (
     <section className="gutter py-24 md:py-32" aria-labelledby="lines-h">
-      <div className="mx-auto max-w-[1400px]">
+      <div className="page">
         <Reveal className="mb-12 flex flex-wrap items-end justify-between gap-6">
           <div>
             <span className="eyebrow">One brand, three lines</span>
-            <h2 id="lines-h" className="display mt-4 text-[clamp(40px,6vw,84px)]">Built for the<br />whole session</h2>
+            <h2 id="lines-h" className="display mt-4 text-display-lg">Built for the<br />whole session</h2>
           </div>
           <p className="max-w-[40ch] text-dim">What you drink before it, what you wear through it, what you wear after it.</p>
         </Reveal>
-        <div className="grid gap-px overflow-hidden rounded-[2px] border border-line bg-line md:grid-cols-3">
+        <div className="grid gap-px overflow-hidden rounded-sharp border border-line bg-line md:grid-cols-3">
           {LINES.map((l, i) => (
             <Reveal key={l.key} delay={i * 0.08} className="bg-ink">
-              <Link href={l.href} className="group relative flex h-full min-h-[440px] flex-col overflow-hidden p-7 md:min-h-[520px]">
+              <Link href={l.href} className="group relative flex h-full min-h-110 flex-col overflow-hidden p-7 md:min-h-130">
                 <div className="flex items-center justify-between">
                   <span className="mono text-xs text-rust-text">{l.n}</span>
-                  <span className={`chip ${l.live ? "bg-[#5fb98a]/15 text-[#7fd1a4]" : "border border-line text-dim"}`}>{l.status}</span>
+                  <span className={`chip ${l.live ? "bg-ok/15 text-ok-bright" : "border border-line text-dim"}`}>{l.status}</span>
                 </div>
                 <div className="relative my-6 flex flex-1 items-center justify-center">
                   {l.img ? (

@@ -67,19 +67,19 @@ export function SearchDialog({ open, onClose }: { open: boolean; onClose: () => 
   return (
     <AnimatePresence>
       {open && (
-        <motion.div className="fixed inset-0 z-[60] flex items-start justify-center bg-ink/70 px-4 pt-[max(12vh,env(safe-area-inset-top,0px))] backdrop-blur-sm"
+        <motion.div className="fixed inset-0 z-(--z-search) flex items-start justify-center bg-ink/70 px-4 pt-[max(12vh,env(safe-area-inset-top,0px))] backdrop-blur-sm"
           initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
           <motion.div role="dialog" aria-modal="true" aria-label="Search the store" onKeyDown={onKey}
             initial={{ y: -12, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: -8, opacity: 0 }} transition={{ duration: 0.2 }}
-            className="w-full max-w-[640px] overflow-hidden rounded-[2px] border border-line bg-surface shadow-2xl">
+            className="w-full max-w-2xl overflow-hidden rounded-sharp border border-line bg-surface shadow-2xl">
             <div className="flex items-center gap-3 border-b border-line px-4">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="shrink-0 text-steel" aria-hidden="true"><circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" /></svg>
               <input id="site-search" ref={input} value={q} onChange={(e) => { setQ(e.target.value); setActive(0); }}
                 type="search" placeholder="Search gear, HYDRO, BOLD…" autoComplete="off" spellCheck={false}
                 role="combobox" aria-expanded={hits.length > 0} aria-controls="site-search-results"
                 aria-activedescendant={hits[active] ? `hit-${hits[active].key}` : undefined}
-                className="h-14 w-full bg-transparent text-[17px] text-bone placeholder:text-steel focus:outline-none focus-visible:outline-none" />
-              <kbd className="mono hidden shrink-0 rounded-[2px] border border-line px-1.5 py-0.5 text-[10px] text-steel sm:block">ESC</kbd>
+                className="h-14 w-full bg-transparent text-lead text-bone placeholder:text-steel focus:outline-none focus-visible:outline-none" />
+              <kbd className="mono hidden shrink-0 rounded-sharp border border-line px-1.5 py-0.5 text-nano text-steel sm:block">ESC</kbd>
             </div>
             <ul id="site-search-results" role="listbox" className="max-h-[60vh] overflow-y-auto py-2">
               {hits.map((h, i) => (
@@ -88,7 +88,7 @@ export function SearchDialog({ open, onClose }: { open: boolean; onClose: () => 
                     className={`flex items-center justify-between gap-4 px-4 py-3 ${i === active ? "bg-surface-2" : ""}`}>
                     <span className="min-w-0">
                       <span className="block truncate font-semibold">{h.title}</span>
-                      <span className="mono text-[11px] uppercase tracking-[0.1em] text-steel">{h.meta}</span>
+                      <span className="mono text-micro uppercase tracking-[0.1em] text-steel">{h.meta}</span>
                     </span>
                     {h.note && <span className="mono shrink-0 text-sm font-bold">{h.note}</span>}
                   </a>

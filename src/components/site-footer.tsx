@@ -13,8 +13,8 @@ const COLS: { title: string; links: [string, string][] }[] = [
 export function SiteFooter() {
   return (
     <footer className="gutter relative mt-24 overflow-hidden border-t border-line pb-10 pt-16">
-      <EMark className="pointer-events-none absolute -bottom-24 -right-16 size-[420px] text-surface" accent="var(--color-rust-dim)" />
-      <div className="relative mx-auto grid max-w-[1400px] gap-12 md:grid-cols-[1.4fr_repeat(3,1fr)]">
+      <EMark className="pointer-events-none absolute -bottom-24 -right-16 size-105 text-surface" accent="var(--color-rust-dim)" />
+      <div className="relative grid page gap-12 md:grid-cols-[1.4fr_repeat(3,1fr)]">
         <div className="max-w-sm">
           <Wordmark />
           <p className="mt-4 text-sm leading-relaxed text-dim">Fuel, gear and scent for lifters who train past the point everyone else stops. Forged in Mumbai.</p>
@@ -41,7 +41,7 @@ export function SiteFooter() {
           </div>
         ))}
       </div>
-      <p className="mono relative mx-auto mt-14 max-w-[1400px] text-[11px] text-steel">© <Year />EGOSYNK.COM · GSTIN 27AKHPY6964E1ZI</p>
+      <p className="mono relative mt-14 page text-micro text-steel">© <Year />EGOSYNK.COM · GSTIN 27AKHPY6964E1ZI</p>
     </footer>
   );
 }

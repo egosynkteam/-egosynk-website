@@ -18,18 +18,18 @@ export function HydroBand() {
 
   return (
     <section ref={ref} className="gutter relative overflow-hidden border-y border-line bg-surface py-24 md:py-36" aria-labelledby="hydro-band-h">
-      <div className="mx-auto grid max-w-[1400px] items-center gap-14 md:grid-cols-2">
+      <div className=" grid page items-center gap-14 md:grid-cols-2">
         <div className="relative order-2 aspect-[4/5] md:order-1">
-          <motion.div style={{ opacity: glow }} className="absolute inset-[8%] rounded-full bg-[radial-gradient(circle,#c41e3a_0%,transparent_65%)] blur-2xl" />
+          <motion.div style={{ opacity: glow }} className="absolute inset-[8%] rounded-full bg-[radial-gradient(circle,var(--color-rust)_0%,transparent_65%)] blur-2xl" />
           <motion.div style={{ rotate, y, scale }} className="relative h-full">
             <Image src="/img/hydro-tub-34.webp" alt="HYDRO 150 tub" fill sizes="(min-width: 768px) 45vw, 90vw" className="object-contain" />
           </motion.div>
         </div>
         <div className="order-1 md:order-2">
           <span className="eyebrow">Fuel · first drop</span>
-          <h2 id="hydro-band-h" className="display mt-4 text-[clamp(44px,7vw,104px)]">HYDRO<br /><span className="text-rust">150</span></h2>
+          <h2 id="hydro-band-h" className="display mt-4 text-display-md">HYDRO<br /><span className="text-rust">150</span></h2>
           <p className="mt-5 max-w-[44ch] text-dim">Three jobs, one scoop. The three arms of the E on the label each do one of them.</p>
-          <ol className="mt-10 space-y-px overflow-hidden rounded-[2px] border border-line bg-line">
+          <ol className="mt-10 space-y-px overflow-hidden rounded-sharp border border-line bg-line">
             {HYDRO.arms.map((a, i) => (
               <Arm key={a.key} i={i} progress={p} arm={a} />
             ))}
@@ -57,7 +57,7 @@ function Arm({ i, progress, arm }: { i: number; progress: ReturnType<typeof useS
       </span>
       <span className="relative text-right">
         <span className="display block text-3xl">{arm.stat}</span>
-        <span className="mono text-[11px] uppercase text-steel">{arm.unit}</span>
+        <span className="mono text-micro uppercase text-steel">{arm.unit}</span>
       </span>
     </li>
   );

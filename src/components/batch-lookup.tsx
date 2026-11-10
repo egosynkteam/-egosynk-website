@@ -16,7 +16,7 @@ export function BatchLookup({ initial = "" }: { initial?: string }) {
       <label htmlFor="batch-code" className="sr-only">Batch code</label>
       <input id="batch-code" value={code} onChange={(e) => setCode(e.target.value)} placeholder="e.g. H150-2702-01" autoComplete="off"
         autoCapitalize="characters" spellCheck={false} maxLength={24}
-        className="mono h-[52px] min-w-0 flex-1 basis-56 rounded-[2px] border border-line bg-ink px-4 uppercase tracking-[0.08em] text-bone placeholder:normal-case placeholder:tracking-normal placeholder:text-steel focus:border-dim focus:outline-none" />
+        className="mono h-13 min-w-0 flex-1 basis-56 rounded-sharp border border-line bg-ink px-4 uppercase tracking-[0.08em] text-bone placeholder:normal-case placeholder:tracking-normal placeholder:text-steel focus:border-dim focus:outline-none" />
       <button type="submit" className="btn btn-primary" disabled={!clean}>Check batch →</button>
     </form>
   );
