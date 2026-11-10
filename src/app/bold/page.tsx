@@ -16,7 +16,7 @@ export const metadata: Metadata = {
     url: "/bold",
     title: "BOLD eau de parfum · EGOSYNK",
     description: "Ruby juice, clear glass, and the three arms of the E on the cap. In 30 and 100 ml. Join the list to hear first.",
-    images: [{ url: "/img/og-home.jpg", width: 1200, height: 630, alt: "EGOSYNK: HYDRO 150 pre-workout and BOLD eau de parfum" }],
+    images: [{ url: "/img/og-bold.jpg", width: 1200, height: 630, alt: "BOLD eau de parfum by EGOSYNK in 30 and 100 ml: ruby juice in clear glass with an E-shaped cap" }],
   },
 };
 
