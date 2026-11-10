@@ -28,15 +28,14 @@ const nextConfig: NextConfig = {
   async rewrites() {
     const pretty = PAGES.map((p) => ({ source: `/${p}`, destination: `/${p}.html` }));
     if (!isDev) return { beforeFiles: pretty, afterFiles: [], fallback: [] };
-    // Local preview only. The Netlify functions don't run under `next dev`, so function calls,
-    // product pages and uploaded media come from the live site. The waitlist goes to a local
+    // Local preview only. The Netlify functions don't run under `next dev`, so function calls
+    // and uploaded media come from the live site. The waitlist goes to a local
     // stand-in so test sign-ups never reach real data.
     return {
       beforeFiles: [{ source: "/.netlify/functions/drop-waitlist", destination: "/dev-api/waitlist" }, ...pretty],
       afterFiles: [],
       fallback: [
         { source: "/.netlify/functions/:path*", destination: `${LIVE}/.netlify/functions/:path*` },
-        { source: "/p/:slug", destination: `${LIVE}/p/:slug` },
         { source: "/media/:key", destination: `${LIVE}/media/:key` },
         { source: "/og-image", destination: `${LIVE}/og-image` },
       ],

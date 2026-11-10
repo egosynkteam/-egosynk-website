@@ -8,8 +8,16 @@ import { inr, track } from "@/lib/catalog-shared";
 import { legacy } from "@/lib/links";
 import { BRAND } from "@/lib/brand";
 
-type Bag = { lines: BagLine[]; count: number; open: () => void };
-const BagContext = createContext<Bag>({ lines: [], count: 0, open: () => {} });
+type Toast = { text: string; action?: { label: string; run: () => void } };
+type Bag = {
+  lines: BagLine[]; count: number; open: () => void;
+  // Adds to the bag (merging with the same product and size) and confirms with a toast.
+  add: (line: Omit<BagLine, "lineId">) => void;
+  say: (text: string, action?: Toast["action"]) => void;
+};
+const BagContext = createContext<Bag>({ lines: [], count: 0, open: () => {}, add: () => {}, say: () => {} });
+// A code copied from a product page's offers; the bag offers it in the discount field.
+const OFFER_KEY = "egosynk_offer";
 export const useBag = () => useContext(BagContext);
 
 type RazorpayOptions = Record<string, unknown> & { handler: (r: { razorpay_order_id: string; razorpay_payment_id: string; razorpay_signature: string }) => void };
@@ -48,13 +56,13 @@ export function BagProvider({ products, ship, children }: { products: ShopProduc
   const [applied, setCoupon] = useState<Coupon | null>(null);
   const coupon = lines.length ? applied : null;
   const [couponError, setCouponError] = useState("");
-  const [toast, setToast] = useState("");
+  const [toast, setToast] = useState<Toast | null>(null);
   const toastTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
 
-  const say = useCallback((msg: string) => {
-    setToast(msg);
+  const say = useCallback((text: string, action?: Toast["action"]) => {
+    setToast({ text, action });
     clearTimeout(toastTimer.current);
-    toastTimer.current = setTimeout(() => setToast(""), 2600);
+    toastTimer.current = setTimeout(() => setToast(null), action ? 4000 : 2600);
   }, []);
 
   const save = useCallback((next: BagLine[]) => writeBag(next), []);
@@ -110,7 +118,17 @@ export function BagProvider({ products, ship, children }: { products: ShopProduc
   }, [lines, code]);
 
   const sum = totals(lines, coupon, ship);
-  const value = useMemo(() => ({ lines, count: sum.count, open: () => setOpen(true) }), [lines, sum.count]);
+  const add = useCallback((line: Omit<BagLine, "lineId">) => {
+    const next = readBag();
+    const lineId = `${line.id}-${line.size}`;
+    const existing = next.find((l) => l.lineId === lineId);
+    if (existing) existing.qty += line.qty;
+    else next.push({ ...line, lineId });
+    writeBag(next);
+    track("add_to_cart", { currency: "INR", value: line.price * line.qty, items: [{ item_id: line.id, item_name: line.name, item_variant: line.size, price: line.price, quantity: line.qty }] });
+    say("Added to bag", { label: "View bag", run: () => setOpen(true) });
+  }, [say]);
+  const value = useMemo(() => ({ lines, count: sum.count, open: () => setOpen(true), add, say }), [lines, sum.count, add, say]);
 
   const changeQty = (lineId: string, d: number) => save(lines.flatMap((l) => (l.lineId !== lineId ? [l] : l.qty + d > 0 ? [{ ...l, qty: l.qty + d }] : [])));
   const remove = (lineId: string) => save(lines.filter((l) => l.lineId !== lineId));
@@ -127,8 +145,14 @@ export function BagProvider({ products, ship, children }: { products: ShopProduc
       <div aria-live="polite" className="pointer-events-none fixed inset-x-0 bottom-6 z-(--z-toast) flex justify-center px-4">
         <AnimatePresence>
           {toast && (
-            <motion.p initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 12 }}
-              className="rounded-sharp border border-line bg-surface px-5 py-3 text-sm shadow-2xl">{toast}</motion.p>
+            <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 12 }}
+              className="pointer-events-auto flex items-center gap-4 rounded-sharp border border-line bg-surface px-5 py-3 text-sm shadow-2xl">
+              <p>{toast.text}</p>
+              {toast.action && (
+                <button type="button" onClick={() => { toast.action?.run(); setToast(null); }}
+                  className="mono -my-1 text-micro font-bold uppercase tracking-[0.12em] text-rust-text underline-offset-4 hover:underline pointer-coarse:py-3">{toast.action.label}</button>
+              )}
+            </motion.div>
           )}
         </AnimatePresence>
       </div>
@@ -161,6 +185,13 @@ function BagDrawer(props: {
   const { open, onClose, lines, sum, ship, coupon } = props;
   const closeRef = useRef<HTMLButtonElement>(null);
   const [code, setCode] = useState("");
+  // Prefill a code copied from a product page's offers (it stays editable).
+  useEffect(() => {
+    if (!open || coupon) return;
+    let saved = "";
+    try { saved = localStorage.getItem(OFFER_KEY) || ""; } catch { /* storage blocked */ }
+    if (saved) { const t = setTimeout(() => setCode((c) => c || saved), 0); return () => clearTimeout(t); }
+  }, [open, coupon]);
   const [applying, setApplying] = useState(false);
   useModal(open, onClose, closeRef);
 
