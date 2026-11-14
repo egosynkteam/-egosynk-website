@@ -2,14 +2,43 @@
   "name": "egosynk-website",
   "version": "1.0.0",
   "private": true,
-  "description": "EGOSYNK storefront + Razorpay checkout functions",
+  "description": "EGOSYNK storefront (Next.js) + Netlify functions for checkout, catalog and admin",
   "dependencies": {
     "@netlify/blobs": "^8.1.0",
     "bcryptjs": "^2.4.3",
     "pg": "^8.23.1",
-    "razorpay": "^2.9.4"
+    "razorpay": "^2.9.4",
+    "@react-three/drei": "^10.7.9",
+    "@react-three/fiber": "^9.8.2",
+    "embla-carousel-autoplay": "^8.6.0",
+    "embla-carousel-react": "^8.6.0",
+    "motion": "^14.10.1",
+    "next": "16.4.5",
+    "react": "19.3.0",
+    "react-dom": "19.3.0",
+    "three": "^0.187.0"
   },
   "scripts": {
+    "predev": "node scripts/copy-legacy.mjs",
+    "dev": "next dev",
+    "prebuild": "node scripts/copy-legacy.mjs",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint",
     "test": "node tests/run.js"
+  },
+  "devDependencies": {
+    "@tailwindcss/turbopack": "^4",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "@types/three": "^0.187.0",
+    "eslint": "^9",
+    "eslint-config-next": "16.4.5",
+    "tailwindcss": "^4",
+    "typescript": "^5"
+  },
+  "engines": {
+    "node": ">=20.9"
   }
 }

@@ -10,6 +10,8 @@ const { getCoupons, publicOffers } = require('../lib/coupons');
 // putting the product's own title, description, share image and Product structured data
 // in the HTML — link previews (WhatsApp, Instagram) and search engines read those
 // without running JavaScript. The page's script then renders from the embedded JSON.
+// ?format=json returns that same data (product, category, related, reviews, size guide,
+// settings, offers) for the Next.js storefront's /p/[slug] page, which renders it itself.
 const SITE = 'https://egosynk.com';
 
 let templateCache = null;
@@ -35,12 +37,15 @@ exports.handler = async (event) => {
   const slug = (event.queryStringParameters && event.queryStringParameters.slug) ||
     decodeURIComponent(String(event.path || '').split('/').filter(Boolean).pop() || '');
   const id = idFromSlug(slug);
+  const json = (event.queryStringParameters || {}).format === 'json';
+  const JSON_HEADERS = { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'public, max-age=60', ...CATALOG_HEADERS };
   try {
     const [{ products, categories }, settings, sizeGuides, template, coupons] = await Promise.all([
       getPublicCatalog(), getSettings(), getSizeGuides(), loadTemplate(), getCoupons(),
     ]);
     const product = products.find((p) => p.id === id);
     if (!product) {
+      if (json) return { statusCode: 404, headers: JSON_HEADERS, body: JSON.stringify({ error: 'Not found' }) };
       return { statusCode: 404, headers: { 'Content-Type': 'text/html; charset=utf-8' }, body: notFound() };
     }
     // Renamed products: send old links to the current URL.
@@ -48,6 +53,8 @@ exports.handler = async (event) => {
       // Keep any ?query (e.g. ?review=<order> from My Orders) across the redirect.
       const qs = new URLSearchParams(event.queryStringParameters || {});
       qs.delete('slug');
+      qs.delete('format');
+      if (json) return { statusCode: 200, headers: JSON_HEADERS, body: JSON.stringify({ redirect: product.slug }) };
       const q = qs.toString();
       return { statusCode: 301, headers: { Location: `/p/${product.slug}${q ? '?' + q : ''}`, 'Cache-Control': 'public, max-age=300' }, body: '' };
     }
@@ -90,6 +97,8 @@ exports.handler = async (event) => {
     const data = { product, category, related, reviews, sizeGuide: guideKey ? sizeGuides[guideKey] || null : null,
       settings: { shippingFee, freeShippingThreshold, social }, offers: publicOffers(coupons) };
 
+    if (json) return { statusCode: 200, headers: JSON_HEADERS, body: JSON.stringify({ ...data, ld }) };
+
     // Function replacers, so "$" in product text isn't read as a replace pattern.
     const body = template
       .replace('<!--PRODUCT_HEAD-->', () => head)
@@ -101,6 +110,7 @@ exports.handler = async (event) => {
     };
   } catch (err) {
     console.error(err);
+    if (json) return { statusCode: 500, headers: JSON_HEADERS, body: JSON.stringify({ error: 'Could not load product' }) };
     return { statusCode: 500, headers: { 'Content-Type': 'text/html; charset=utf-8' }, body: notFound('Something went wrong loading this product.') };
   }
 };

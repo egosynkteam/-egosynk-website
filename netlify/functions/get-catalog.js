@@ -2,6 +2,7 @@ const { getSettings, getSizeGuides } = require('../lib/settings');
 const { CATALOG_HEADERS } = require('../lib/cdn');
 const { getPublicCatalog } = require('../lib/catalog');
 const { getCoupons, publicOffers } = require('../lib/coupons');
+const { getBundles, publicBundles } = require('../lib/bundles');
 
 // Public endpoint — the storefront (index.html) fetches the live catalog from here on
 // every page load instead of using a hardcoded product list. This is what keeps the
@@ -12,19 +13,20 @@ const { getCoupons, publicOffers } = require('../lib/coupons');
 // products/categories are left out.
 exports.handler = async () => {
   try {
-    const [{ products, categories }, settings, sizeGuides, coupons] = await Promise.all([
-      getPublicCatalog(), getSettings(), getSizeGuides(), getCoupons(),
+    const [{ products, categories }, settings, sizeGuides, coupons, bundles] = await Promise.all([
+      getPublicCatalog(), getSettings(), getSizeGuides(), getCoupons(), getBundles(),
     ]);
-    const { shippingFee, freeShippingThreshold, announcement, hero, social } = settings;
+    const { shippingFee, freeShippingThreshold, announcement, hero, social, launch } = settings;
     return {
       statusCode: 200,
       headers: { 'Cache-Control': 'public, max-age=30', ...CATALOG_HEADERS },
       body: JSON.stringify({
         products,
         categories: categories.map(({ id, name, desc, guide }) => ({ id, name, desc, guide })),
-        settings: { shippingFee, freeShippingThreshold, announcement, hero, social },
+        settings: { shippingFee, freeShippingThreshold, announcement, hero, social, launch },
         sizeGuides,
         offers: publicOffers(coupons),
+        bundles: publicBundles(bundles),
       }),
     };
   } catch (err) {

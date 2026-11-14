@@ -19,6 +19,9 @@ const DEFAULTS = {
     videoUrl: null,
   },
   social: { instagram: '', whatsapp: '', youtube: '', facebook: '' },
+  // Launch countdown on the storefront. Hidden while `date` is empty or once it has passed.
+  // `date` is ISO with the IST offset, e.g. 2027-03-15T18:00:00+05:30.
+  launch: { date: null, name: 'HYDRO 150', href: '/hydro' },
   analytics: { ga4Id: null, metaPixelId: null },
   abandonedCart: { enabled: true, delayHours: 1, couponCode: '' },
   ogImageKey: null,
@@ -58,6 +61,7 @@ async function getSettings() {
     announcement: { ...DEFAULTS.announcement, ...(saved.announcement || {}) },
     hero: { ...DEFAULTS.hero, ...(saved.hero || {}) },
     social: { ...DEFAULTS.social, ...(saved.social || {}) },
+    launch: { ...DEFAULTS.launch, ...(saved.launch || {}) },
     analytics: { ...DEFAULTS.analytics, ...(saved.analytics || {}) },
     abandonedCart: { ...DEFAULTS.abandonedCart, ...(saved.abandonedCart || {}) },
   };

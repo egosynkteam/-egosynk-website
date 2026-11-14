@@ -1,0 +1,35 @@
+<!doctype html>
+<!-- Source for public/img/og-bold.jpg (the /bold page's WhatsApp / Instagram / X preview).
+     Re-render: node scripts/render-og.mjs bold
+     Colours are the tokens in src/app/globals.css (ink, bone, dim, steel, rust, rust-dim, ember). -->
+<html><head><meta charset="utf-8">
+<link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=JetBrains+Mono:wght@700&family=Inter:wght@500&display=swap" rel="stylesheet">
+<style>
+  :root{--ink:#0d0e10;--bone:#edeae3;--dim:#a8a6a0;--steel:#8b8d93;--rust:#c41e3a;--rust-dim:#3d0f16;--ember:#2a0a10;--line:#2a2b2f}
+  *{margin:0;box-sizing:border-box}
+  body{width:1200px;height:630px;overflow:hidden;background:var(--ink);color:var(--bone);font-family:Inter,sans-serif;position:relative}
+  .glow{position:absolute;inset:0;background:radial-gradient(42% 75% at 78% 55%,var(--rust-dim) 0%,var(--ember) 40%,transparent 75%)}
+  .lines{position:absolute;inset:0;background:repeating-linear-gradient(115deg,transparent 0 22px,rgba(237,234,227,.025) 22px 23px)}
+  /* Everything that must be read sits 64px in from every edge. */
+  .copy{position:absolute;left:64px;top:60px;width:560px}
+  .logo{font:400 30px 'Archivo Black';letter-spacing:.02em}
+  .logo b{color:var(--rust);font-weight:400}
+  .eyebrow{font:700 16px 'JetBrains Mono';letter-spacing:.18em;text-transform:uppercase;color:#ec4d62;margin-top:34px}
+  h1{font:400 88px/0.9 'Archivo Black';text-transform:uppercase;letter-spacing:-.02em;margin-top:14px}
+  h1 span{color:var(--rust)}
+  .sub{font:500 22px/1.4 Inter;color:var(--dim);margin-top:22px;white-space:nowrap}
+  .chip{position:absolute;left:64px;bottom:60px;font:700 17px 'JetBrains Mono';letter-spacing:.12em;text-transform:uppercase;background:var(--rust);padding:12px 18px;border-radius:2px}
+  .sizes{position:absolute;right:64px;bottom:60px;font:700 15px 'JetBrains Mono';letter-spacing:.14em;text-transform:uppercase;color:var(--steel)}
+  .bottles{position:absolute;right:-40px;top:40px;width:720px;-webkit-mask-image:radial-gradient(closest-side,#000 64%,transparent 100%);mask-image:radial-gradient(closest-side,#000 64%,transparent 100%)}
+</style></head><body>
+<div class="glow"></div><div class="lines"></div>
+<img class="bottles" src="../public/img/bold-pair.webp" alt="">
+<div class="copy">
+  <div class="logo"><b>EGO</b>SYNK</div>
+  <p class="eyebrow">BOLD · Eau de parfum</p>
+  <h1>Wear<br>your<br><span>ego.</span></h1>
+  <p class="sub">Ruby juice, clear glass, the E as the cap.</p>
+</div>
+<div class="chip">Drop list open · Notes at launch</div>
+<div class="sizes">30 ml · 100 ml</div>
+</body></html>

@@ -1,0 +1,38 @@
+<!doctype html>
+<!-- Source for public/img/og-hydro.jpg (the /hydro page's WhatsApp / Instagram / X preview).
+     Re-render: node scripts/render-og.mjs hydro
+     Colours are the tokens in src/app/globals.css (ink, bone, dim, steel, rust, rust-dim). -->
+<html><head><meta charset="utf-8">
+<link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=JetBrains+Mono:wght@700&family=Inter:wght@500&display=swap" rel="stylesheet">
+<style>
+  :root{--ink:#0d0e10;--bone:#edeae3;--dim:#a8a6a0;--steel:#8b8d93;--rust:#c41e3a;--rust-text:#ec4d62;--rust-dim:#3d0f16}
+  *{margin:0;box-sizing:border-box}
+  body{width:1200px;height:630px;overflow:hidden;background:var(--ink);color:var(--bone);font-family:Inter,sans-serif;position:relative}
+  .glow{position:absolute;inset:0;background:radial-gradient(45% 75% at 72% 45%,var(--rust-dim) 0%,transparent 72%)}
+  .lines{position:absolute;inset:0;background:repeating-linear-gradient(115deg,transparent 0 22px,rgba(237,234,227,.025) 22px 23px)}
+  /* SYNK stands behind, faded at its edges so the copy stays readable. */
+  .synk{position:absolute;left:390px;top:20px;width:720px;opacity:.75;-webkit-mask-image:radial-gradient(closest-side,#000 55%,transparent 100%);mask-image:radial-gradient(closest-side,#000 55%,transparent 100%)}
+  .tub{position:absolute;right:40px;top:90px;height:500px;filter:drop-shadow(0 24px 40px rgba(0,0,0,.7))}
+  /* Everything that must be read sits 64px in from every edge. */
+  .copy{position:absolute;left:64px;top:60px;width:520px}
+  .logo{font:400 30px 'Archivo Black';letter-spacing:.02em}
+  .logo b{color:var(--rust);font-weight:400}
+  .eyebrow{font:700 16px 'JetBrains Mono';letter-spacing:.18em;text-transform:uppercase;color:var(--rust-text);margin-top:34px}
+  h1{font:400 96px/0.9 'Archivo Black';text-transform:uppercase;letter-spacing:-.02em;margin-top:14px}
+  h1 span{color:var(--rust)}
+  .sub{font:500 22px/1.4 Inter;color:var(--dim);margin-top:22px;max-width:470px}
+  .chip{position:absolute;left:64px;bottom:88px;font:700 17px 'JetBrains Mono';letter-spacing:.12em;text-transform:uppercase;background:var(--rust);padding:12px 18px;border-radius:2px}
+  .legal{position:absolute;left:64px;bottom:44px;font:700 12px 'JetBrains Mono';letter-spacing:.1em;text-transform:uppercase;color:var(--steel)}
+</style></head><body>
+<div class="glow"></div><div class="lines"></div>
+<img class="synk" src="../public/img/synk.webp" alt="">
+<img class="tub" src="../public/img/hydro-tub-34.webp" alt="">
+<div class="copy">
+  <div class="logo"><b>EGO</b>SYNK</div>
+  <p class="eyebrow">HYDRO 150 · Pre-workout</p>
+  <h1>Get in<br><span>Synk.</span></h1>
+  <p class="sub">Caffeine, citrulline and electrolytes in one scoop. Every gram printed on the tub.</p>
+</div>
+<div class="chip">Drop list open</div>
+<p class="legal">Health supplement. Not for medicinal use. Contains caffeine. For adults 18+.</p>
+</body></html>
