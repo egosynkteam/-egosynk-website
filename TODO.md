@@ -21,7 +21,8 @@ Last updated 22 Nov 2026. The new store is live on egosynk.com (`main`). Work in
 - [x] Free gift: EGOSYNK 600 ml plastic shaker on orders of ₹2,500+ after discounts (Admin → Settings → Free gift). On branch, live after the push. Not on the GST invoice; ask the CA whether a free gift needs anything on the invoice
 - [x] Snowfall on the homepage hero until 26 Dec (branch); Gear chip says "Drops 24 Dec" while the countdown runs
 - [ ] After the push: Admin → Settings → Announcement: "Christmas gear drops 24 Dec", "WELCOME250: ₹250 off your first order over ₹1,500", "Free shaker on orders over ₹2,500", "Free shipping over ₹999"
-- [ ] Steel thermal shaker: price, then add it as a product (Accessories) so it can be bought on its own
+- [x] Steel thermal shaker listed 22 Nov: ₹1,499, Accessories, NEW, render photos, shown as **Sold out** with "Notify me" (`/p/egosynk-thermal-steel-shaker-700-ml-17`). When stock arrives: Admin → Products → Mark Available
+- [ ] Steel shaker: confirm the specs in its description with the manufacturer (700 ml, double-wall, whisk ball, powder pod are from our spec, not a quote); ask the CA for its HSN/GST rate (it uses the Accessories default now)
 - [ ] Plastic shaker: manufacturer quote + stock before 24 Dec (spec: BRAND/3d/plastic-shaker/SPEC.md); weigh it for Shiprocket
 - [ ] WhatsApp: skipped for now (button stays hidden)
 
