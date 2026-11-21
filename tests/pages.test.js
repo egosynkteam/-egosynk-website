@@ -1,5 +1,5 @@
-// Syntax-checks every inline <script> in the store pages, and tests the redirect rule
-// exactly as written in login.html.
+// Syntax-checks every inline <script> in the store pages, and tests the after-sign-in
+// redirect rule exactly as written in src/lib/safe-redirect.ts.
 const fs = require('fs');
 const path = require('path');
 const vm = require('vm');
@@ -15,7 +15,7 @@ for (const f of fs.readdirSync(ROOT).filter((x) => x.endsWith('.html'))) {
 for (const f of ['site.js']) {
   try { new vm.Script(fs.readFileSync(path.join(ROOT, f), 'utf8')); } catch (e) { bad++; console.log('SYNTAX', f, e.message); }
 }
-const line = fs.readFileSync(path.join(ROOT, 'login.html'), 'utf8').match(/const redirect = (\/.*?\/)\.test/)[1];
+const line = fs.readFileSync(path.join(ROOT, 'src', 'lib', 'safe-redirect.ts'), 'utf8').match(/const SAME_SITE = (\/.*?\/);/)[1];
 const re = eval(line);
 const cases = { '/account.html': true, '/p/tee-1?review=x': true, '//evil.com': false, '/\\evil.com': false,
   'https://evil.com': false, 'javascript:alert(1)': false, 'account.html': false, '': false };

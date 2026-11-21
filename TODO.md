@@ -3,7 +3,8 @@
 Last updated 10 Nov 2026. Preview of the new store: https://storefront-next--egosynk.netlify.app (branch `storefront-next`).
 
 ## Next to build
-- [ ] **Old pages onto the design system**: account + sign-in pages, bulk, `shop.html`, admin (product pages done 10 Nov; policies + contact done 22 Nov on branch `design-system-pages`)
+- [ ] **Old pages onto the design system**: My Account, order confirmation, invoice, bulk, `shop.html`, admin (product pages done 10 Nov; policies, contact and the 5 sign-in pages done 22 Nov on branch `design-system-pages`, not live yet)
+- [ ] Before merging `design-system-pages`: one real password reset and one sign-up on the preview (the forms post to the live functions, so I didn't submit them)
 - [ ] EAA product page (needs the formula, flavour, size and a render)
 - [ ] Full review of the preview on a phone, once the preview link rebuilds
 - [ ] After `main` has the product-page JSON mode, remove the old-HTML fallback in `src/lib/product.ts`

@@ -6,13 +6,14 @@ const LIVE = process.env.STORE_ORIGIN || "https://egosynk.com";
 // The original store pages, published from public/ by scripts/copy-legacy.mjs. The live site
 // has served them without ".html" (Netlify's pretty URLs), and those addresses are in emails,
 // search results and old links, so both forms keep working.
-const PAGES = [
-  "account", "admin", "admin-orders", "bulk", "forgot-password", "invoice", "login",
-  "order-confirmation", "reset-password", "signup", "verify-email", "shop",
-];
+const PAGES = ["account", "admin", "admin-orders", "bulk", "invoice", "order-confirmation", "shop"];
 // Pages that moved into this app (src/app/<name>). Their old ".html" addresses are in
 // emails, search results and the remaining HTML pages, so they redirect permanently.
-const MOVED = ["contact", "privacy-policy", "refund-policy", "shipping-policy", "terms"];
+const MOVED = [
+  "contact", "privacy-policy", "refund-policy", "shipping-policy", "terms",
+  // Sign-in pages. Reset and verify links in emails already sent keep their ?token= through the redirect.
+  "login", "signup", "forgot-password", "reset-password", "verify-email",
+];
 
 const nextConfig: NextConfig = {
   cacheComponents: true,

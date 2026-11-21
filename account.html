@@ -78,7 +78,7 @@ async function init(){
 
   const meRes = await fetch('/.netlify/functions/me');
   if(meRes.status === 401){
-    window.location.href = '/login.html?redirect=' + encodeURIComponent('/account.html');
+    window.location.href = '/login?redirect=' + encodeURIComponent('/account.html');
     return;
   }
   if(!meRes.ok){
