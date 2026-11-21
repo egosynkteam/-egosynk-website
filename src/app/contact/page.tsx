@@ -14,7 +14,7 @@ export default function Contact() {
       path={legacy.contact}
       eyebrow="Help · Contact"
       title={<>Contact <span className="text-rust">&amp; grievances</span></>}
-      updated="20 October 2026"
+      updated="22 November 2026"
       intro="One inbox for everything. Send your order ID if you have one and we reply within 1 business day, Monday to Saturday."
       actions={<>
         <a href={`mailto:${SUPPORT_EMAIL}`} className="btn btn-primary">Email support →</a>
@@ -42,7 +42,7 @@ export default function Contact() {
       <p>As required under the Consumer Protection (E-Commerce) Rules, 2020:</p>
       <table>
         <tbody>
-          <tr><td>Name</td><td>EGOSYNK Support (Grievance Officer)</td></tr>
+          <tr><td>Name</td><td>Ashishkumar Lalbahadur Yadav (Proprietor)</td></tr>
           <tr><td>Email</td><td><Mail subject="Grievance" /> (subject: “Grievance”)</td></tr>
           <tr><td>Response</td><td>Acknowledged within 48 hours, resolved within 30 days</td></tr>
         </tbody>

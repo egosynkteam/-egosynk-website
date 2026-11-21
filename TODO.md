@@ -36,7 +36,7 @@ Last updated 22 Nov 2026. The new store is live on egosynk.com (`main`). Work in
 - [ ] Tell the manufacturer the batch code format, e.g. `H150-2702-01`, stamped at filling. The label's QR opens egosynk.com/batch (files in `BRAND/3d/hydro-launch/label/qr/`)
 - [ ] Blender: open `BRAND/3d/hydro-launch/renders/hydro-tub-v2.blend` → File → External Data → Unpack Resources → Remove packed files → save
 - [ ] After publishing: refresh link previews in Facebook's Sharing Debugger for `/hydro` and `/bold`
-- [ ] Contact page: the grievance officer is "EGOSYNK Support". The e-commerce rules ask for a named person; add your name if you want to be safe
+- [x] Contact page: grievance officer named (Ashishkumar Lalbahadur Yadav, Proprietor), 22 Nov
 - [ ] Optional: remove the test entry egosynkteam@gmail.com in Admin → Drop lists
 
 ## Done (10 Nov 2026)
