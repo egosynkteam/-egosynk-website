@@ -22,7 +22,8 @@ type Slide = {
   wide?: boolean;
 };
 
-const DELAY = 6500;
+// How long each slide stays up (ms). Also drives the progress bar under the slides.
+const DELAY = 4500;
 
 export function HeroCarousel({ gearSub, launch }: { gearSub?: string; launch?: Launch }) {
   const slides: Slide[] = [
@@ -112,7 +113,7 @@ function SlideView({ s, active, priority, launch }: { s: Slide; active: boolean;
   const page = (s.alt?.href || s.cta.href).split("#")[0];
   const words = { hidden: { y: "105%" }, show: { y: "0%" } };
   return (
-    <div className="gutter relative flex min-h-[min(92dvh,56.25rem)] items-center pb-28 pt-28 md:pb-24">
+    <div className="gutter relative flex min-h-[min(92dvh,56.25rem)] items-center pb-24 pt-24 md:pb-24 md:pt-28">
       <Art kind={s.art} active={active} priority={priority} />
       <div className="relative z-10 w-full page">
         {/* From tablet up the copy keeps to the left half, so it never runs into the product art. */}
@@ -123,6 +124,9 @@ function SlideView({ s, active, priority, launch }: { s: Slide; active: boolean;
             {active && (
               <motion.div key={s.id} initial="hidden" animate="show" exit={{ opacity: 0, transition: { duration: 0.2 } }}
                 variants={{ show: { transition: { staggerChildren: 0.08 } } }}>
+                <motion.div variants={{ hidden: { opacity: 0, scale: 0.96 }, show: { opacity: 1, scale: 1 } }}>
+                  <PhoneArt kind={s.art} priority={priority} />
+                </motion.div>
                 <motion.div variants={{ hidden: { opacity: 0, y: 10 }, show: { opacity: 1, y: 0 } }} className="mb-6 flex items-center gap-3">
                   <span className="eyebrow">{s.line}</span>
                   <span className="chip border border-line text-dim">
@@ -175,8 +179,30 @@ function Art({ kind, active, priority }: { kind: Slide["art"]; active: boolean; 
   return (
     <motion.div {...enter} className="pointer-events-none absolute inset-0">
       <div className={`absolute inset-0 ${kind === "hydro" ? "bg-[radial-gradient(55%_65%_at_72%_50%,var(--color-rust-dim)_0%,transparent_72%)]" : "bg-[radial-gradient(55%_60%_at_74%_55%,var(--color-ember)_0%,transparent_70%)]"}`} />
-      <Image src={img.src} alt={img.alt} width={img.w} height={img.h} priority={priority} sizes="(min-width: 768px) 45vw, 90vw"
-        className={`absolute top-1/2 h-auto -translate-y-1/2 opacity-40 md:opacity-100 ${img.cls}`} />
+      {/* Tablet and up: the product sits beside the copy. Phones get PhoneArt above the copy instead,
+          because behind the text it reads as words printed over the label. */}
+      <Image src={img.src} alt={img.alt} width={img.w} height={img.h} priority={priority} sizes="45vw"
+        className={`absolute top-1/2 hidden h-auto -translate-y-1/2 md:block ${img.cls}`} />
     </motion.div>
+  );
+}
+
+// box: the frame the photo fills. BOLD's studio shot has a grey sweep, so its frame takes the
+// photo's own 4:3 shape and fades at the edges; the tub is a cut-out and just fills the space.
+const PHONE_ART = {
+  hydro: { src: "/img/hydro-tub-34.webp", alt: "HYDRO 150 pre-workout tub, Salted Nimbu", box: "h-full w-full", cls: "object-contain scale-[1.75]" },
+  bold: { src: "/img/bold-pair.webp", alt: "BOLD eau de parfum, 100 and 30 ml", box: "fade-edges aspect-[4/3] h-full", cls: "object-cover scale-110" },
+} as const;
+
+// Phones only: the product in the flow of the slide, above the headline, at full strength.
+function PhoneArt({ kind, priority }: { kind: Slide["art"]; priority: boolean }) {
+  if (kind === "gear") return null;
+  const a = PHONE_ART[kind];
+  return (
+    <div className="mb-5 flex h-[min(25dvh,12.5rem)] w-full justify-center md:hidden">
+      <div className={`relative ${a.box}`}>
+        <Image src={a.src} alt={a.alt} fill priority={priority} sizes="90vw" className={a.cls} />
+      </div>
+    </div>
   );
 }
