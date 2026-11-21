@@ -12,7 +12,7 @@ Last updated 22 Nov 2026. The new store is live on egosynk.com (`main`). Work in
 - [ ] Before merging `design-system-pages`: one real password reset and one sign-up on the preview (the forms post to the live functions, so I didn't submit them)
 - [ ] EAA product page (needs the formula, flavour, size and a render)
 - [x] Phone review (22 Nov): hero product art no longer sits behind the text on phones; menu, bag, policy, sign-in, product, HYDRO and BOLD pages checked at 360/390 px
-- [ ] After `main` has the product-page JSON mode, remove the old-HTML fallback in `src/lib/product.ts`
+- [x] Old-HTML fallback removed from `src/lib/product.ts` (live function answers JSON, checked 22 Nov)
 - [x] Merge `storefront-next` → `main` (14 Nov) and publish (pushed 22 Nov)
 
 ## Christmas drop (set 22 Nov)
