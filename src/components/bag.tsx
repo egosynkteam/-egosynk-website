@@ -7,6 +7,7 @@ import { STATES, bagServerSnapshot, bagSnapshot, mediaUrl, parseBag, readBag, st
 import { inr, track } from "@/lib/catalog-shared";
 import { legacy } from "@/lib/links";
 import { BRAND } from "@/lib/brand";
+import { EMark } from "./logo";
 
 type Toast = { text: string; action?: { label: string; run: () => void } };
 type Bag = {
@@ -228,7 +229,7 @@ function BagDrawer(props: {
                       <motion.li key={l.lineId} layout exit={{ opacity: 0, x: 40 }} className="flex gap-4 py-5">
                         <div className="grid size-20 shrink-0 place-items-center overflow-hidden rounded-sharp border border-line bg-surface">
                           {/* eslint-disable-next-line @next/next/no-img-element */}
-                          {l.image ? <img src={mediaUrl(l.image)} alt="" className="size-full object-cover" /> : <span className="mono text-xs text-steel">ES</span>}
+                          {l.image ? <img src={mediaUrl(l.image)} alt="" className="size-full object-cover" /> : <EMark className="w-3/5 text-surface-3" accent="var(--color-rust-dim)" />}
                         </div>
                         <div className="min-w-0 flex-1">
                           <div className="flex items-start justify-between gap-3">

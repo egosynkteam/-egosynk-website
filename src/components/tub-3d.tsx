@@ -36,7 +36,7 @@ export function Tub3D() {
 
   return (
     <div className="relative aspect-[4/5] w-full">
-      <Image src="/img/hydro-tub-34.webp" alt="HYDRO 150 pre-workout tub, Salted Nimbu, 420 g" fill priority sizes="(min-width: 768px) 45vw, 90vw"
+      <Image src="/img/hydro-tub-34.webp" alt="HYDRO 150 pre-workout tub, Salted Nimbu, 420 g" fill loading="eager" fetchPriority="high" sizes="(min-width: 768px) 45vw, 90vw"
         className={`object-contain transition-opacity duration-700 ${ready ? "opacity-0" : "opacity-100"}`} />
       {mode === "3d" && (
         <Canvas className="!absolute inset-0" camera={{ position: [0, 0.04, 0.62], fov: 28 }} dpr={[1, 1.75]} gl={{ antialias: true, alpha: true }}

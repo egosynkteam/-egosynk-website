@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef } from "react";
-import { motion, useScroll, useTransform, type MotionValue } from "motion/react";
+import { motion, useReducedMotion, useScroll, useTransform, type MotionValue } from "motion/react";
 
 const TEXT = "We don't make gear for the warm-up. We make it for the set after the one you planned to stop on. Fuel that tells you every gram. Gear built for load. A scent for after. Sync your ego to the iron.";
 
@@ -27,7 +27,9 @@ export function Manifesto() {
 }
 
 function Word({ children, progress, range, accent }: { children: string; progress: MotionValue<number>; range: [number, number]; accent: boolean }) {
-  const opacity = useTransform(progress, range, [0.14, 1]);
+  // With reduced motion every word is simply there, at full strength.
+  const still = useReducedMotion();
+  const opacity = useTransform(progress, range, [still ? 1 : 0.14, 1]);
   return (
     <motion.span style={{ opacity }} className={`mr-[0.25em] ${accent ? "text-rust" : ""}`}>
       {children}

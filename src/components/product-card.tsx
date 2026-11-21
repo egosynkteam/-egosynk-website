@@ -18,10 +18,11 @@ export function ProductCard({ p, categories, saved, priority = false }: {
   const off = percentOff(p);
   const sold = p.available === false;
   return (
-    <div className={`group relative ${sold ? "opacity-60" : ""}`}>
+    <div className="group relative">
       <a href={legacy.product(p.slug)} className="block">
         <div className="relative aspect-[4/5] overflow-hidden rounded-sharp border border-line bg-surface">
-          <div className="absolute inset-0 bg-[radial-gradient(70%_60%_at_50%_40%,var(--color-surface-2)_0%,var(--color-surface)_70%)]" />
+          <div className={`absolute inset-0 ${sold ? "opacity-50 grayscale" : ""}`}>
+            <div className="absolute inset-0 bg-[radial-gradient(70%_60%_at_50%_40%,var(--color-surface-2)_0%,var(--color-surface)_70%)]" />
           {p.images?.[0] ? (
             // Admin-uploaded photo, served by the media function; plain <img> because it lives on the store's own path.
             // eslint-disable-next-line @next/next/no-img-element
@@ -30,11 +31,12 @@ export function ProductCard({ p, categories, saved, priority = false }: {
           ) : (
             <EMark className="absolute left-1/2 top-1/2 w-1/2 -translate-x-1/2 -translate-y-1/2 text-surface-2 transition-transform duration-700 ease-out-expo group-hover:scale-110" accent="var(--color-rust-dim)" />
           )}
+          </div>
           <span className="mono absolute left-3 top-3 text-nano uppercase tracking-[0.14em] text-steel">{categories.find((c) => c.id === p.cat)?.name || p.cat}</span>
           <span className="absolute bottom-3 left-3 flex gap-1.5">
             {p.tag && <span className="chip bg-rust text-bone">{p.tag}</span>}
             {off > 0 && <span className="chip bg-bone text-ink">−{off}%</span>}
-            {sold && <span className="chip border border-line bg-ink text-dim">Sold out</span>}
+            {sold && <span className="chip border border-line bg-ink text-bone">Sold out</span>}
           </span>
           <span className="absolute bottom-3 right-3 translate-y-3 opacity-0 transition-all duration-300 group-hover:translate-y-0 group-hover:opacity-100">
             <span className="mono text-micro font-bold uppercase tracking-[0.12em]">View →</span>
@@ -48,7 +50,7 @@ export function ProductCard({ p, categories, saved, priority = false }: {
           </span>
         </div>
         {p.rating && p.rating.count > 0 && <div className="mt-1.5"><Stars avg={p.rating.avg} count={p.rating.count} /></div>}
-        {p.sizes && p.sizes.length > 1 && <p className="mono mt-1 text-micro uppercase text-steel">{p.sizes.join(" · ")}</p>}
+        {p.sizes && p.sizes.length > 1 && <p className="mono mt-1 text-micro uppercase text-dim">{p.sizes.join(" · ")}</p>}
       </a>
       {saved !== undefined && (
         <button type="button" onClick={() => toggleSaved(p)} aria-pressed={saved} aria-label={`${saved ? "Remove from saved" : "Save"}: ${p.name}`}

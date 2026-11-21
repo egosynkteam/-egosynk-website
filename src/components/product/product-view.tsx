@@ -12,6 +12,7 @@ import {
   type Offer, type PdpData,
 } from "@/lib/product-shared";
 import { SizeGuideDialog } from "./size-guide";
+import { EMark } from "../logo";
 
 // Saved for later: the same localStorage list the old shop page uses, synced to the account.
 const SAVED_KEY = "egosynk_saved";
@@ -197,7 +198,10 @@ function Gallery({ images, name, badge }: { images: string[]; name: string; badg
             ))}
           </div>
         ) : (
-          <div className="grid aspect-square place-items-center md:aspect-[4/5]"><span className="display text-display-sm text-surface-3">ES</span></div>
+          <div className="relative grid aspect-square place-items-center overflow-hidden bg-[radial-gradient(70%_60%_at_50%_40%,var(--color-surface-2)_0%,var(--color-surface)_70%)] md:aspect-[4/5]">
+            <EMark className="w-2/5 text-surface-3" accent="var(--color-rust-dim)" />
+            <span className="mono absolute bottom-4 text-micro uppercase tracking-[0.14em] text-dim">Photos coming soon</span>
+          </div>
         )}
         {images.length > 1 && (
           <div className="pointer-events-none absolute inset-x-0 bottom-3 flex justify-center gap-1.5" aria-hidden="true">

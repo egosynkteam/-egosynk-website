@@ -4,9 +4,9 @@ import { Reveal } from "./reveal";
 import { EMark } from "./logo";
 
 const LINES = [
-  { key: "fuel", n: "01", name: "Fuel", status: "Launching", live: false, href: "/hydro", cta: "HYDRO 150", body: "Pre-workout, EAA and the supplements we trust. Open labels, no proprietary blends.", img: "/img/hydro-tub-front.webp" },
-  { key: "gear", n: "02", name: "Gear", status: "Live", live: true, href: "/shop", cta: "Shop gear", body: "Compression wear, sleeves, belts and grips, built for load rather than looks.", img: null },
-  { key: "scent", n: "03", name: "Scent", status: "In development", live: false, href: "/bold", cta: "BOLD", body: "BOLD eau de parfum. Ruby juice, clear glass, and the E on the cap.", img: "/img/bold-pair.webp" },
+  { key: "fuel", n: "01", name: "Fuel", status: "Launching", live: false, href: "/hydro", cta: "HYDRO 150", body: "Pre-workout, EAA and the supplements we trust. Open labels, no proprietary blends.", img: "/img/hydro-tub-front.webp", w: 1200, h: 1500 },
+  { key: "gear", n: "02", name: "Gear", status: "Live", live: true, href: "/shop", cta: "Shop gear", body: "Compression wear, sleeves, belts and grips, built for load rather than looks.", img: null, w: 0, h: 0 },
+  { key: "scent", n: "03", name: "Scent", status: "In development", live: false, href: "/bold", cta: "BOLD", body: "BOLD eau de parfum. Ruby juice, clear glass, and the E on the cap.", img: "/img/bold-pair.webp", w: 1600, h: 1200 },
 ];
 
 export function Lines() {
@@ -30,7 +30,7 @@ export function Lines() {
                 </div>
                 <div className="relative my-6 flex flex-1 items-center justify-center">
                   {l.img ? (
-                    <Image src={l.img} alt="" width={600} height={600} sizes="(min-width: 768px) 30vw, 80vw"
+                    <Image src={l.img} alt="" width={l.w} height={l.h} sizes="(min-width: 768px) 30vw, 80vw"
                       className={`h-[240px] w-auto object-contain transition-transform duration-700 ease-out-expo group-hover:-translate-y-2 group-hover:scale-[1.04] ${l.key === "scent" ? "fade-edges" : ""}`} />
                   ) : (
                     <EMark className="h-[200px] w-auto text-surface-2 transition-transform duration-700 ease-out-expo group-hover:-translate-y-2 group-hover:scale-[1.04]" />

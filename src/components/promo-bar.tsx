@@ -29,7 +29,7 @@ export function PromoBar({ code, text, short }: { code: string; text: string; sh
         <span className="sm:hidden">{short}</span>
         <span className="hidden sm:inline">{text} · code</span>
       </p>
-      <button type="button" onClick={copy} className="mono shrink-0 rounded-sharp bg-bone px-2 py-0.5 text-nano font-bold tracking-[0.08em] text-ink sm:text-micro" aria-label={`Copy code ${code}`}>
+      <button type="button" onClick={copy} className="mono grid min-h-6 shrink-0 place-items-center rounded-sharp bg-bone px-2.5 text-nano font-bold tracking-[0.08em] text-ink sm:text-micro" aria-label={`Copy code ${code}`}>
         {copied ? "Copied" : code}
       </button>
       <button type="button" onClick={close} aria-label="Close offer" className="absolute right-2 grid size-7 place-items-center text-bone/80 hover:text-bone pointer-coarse:size-9">

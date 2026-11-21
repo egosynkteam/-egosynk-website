@@ -5,12 +5,17 @@ const { getSessionUser } = require('../lib/session');
 // Guests keep their list in the browser only. The storefront merges the two on load.
 //   GET  → { ids: [3, 7] }
 //   POST { ids: [...] } → replaces the saved list
+// Guests get { ids: [], guest: true } with a 200: their list lives in their browser, so being
+// signed out isn't an error (a 401 here showed as a console error on every page for guests).
 const MAX = 200;
 
 exports.handler = async (event) => {
   try {
     const session = await getSessionUser(event);
-    if (!session) return { statusCode: 401, body: JSON.stringify({ error: 'Not logged in' }) };
+    if (!session) {
+      if (event.httpMethod !== 'GET' && event.httpMethod !== 'POST') return { statusCode: 405, body: 'Method Not Allowed' };
+      return { statusCode: 200, body: JSON.stringify({ ids: [], guest: true }) };
+    }
     const store = getStore('wishlists');
     const key = String(session.user.id);
 

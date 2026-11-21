@@ -24,11 +24,12 @@ export default async function ShopPage() {
           <p className="mt-4 max-w-[52ch] text-dim">Compression wear, sleeves, trunks, socks, belts and grips. Free shipping over ₹999, and a 7-day size exchange if the fit&apos;s wrong.</p>
         </div>
       </section>
-      <section className="gutter pt-8 md:pt-10" aria-label="Products">
+      <section className="gutter pt-8 md:pt-10" aria-labelledby="products-h">
         <div className="page">
+          <h2 id="products-h" className="sr-only">Products</h2>
           {products.length ? (
             // useSearchParams needs a boundary; the fallback is the same grid's footprint.
-            <Suspense fallback={<div className="h-[60dvh] animate-pulse rounded-sharp bg-surface" aria-label="Loading products" />}>
+            <Suspense fallback={<div role="status" className="h-[60dvh] animate-pulse rounded-sharp bg-surface" aria-label="Loading products" />}>
               <ShopBrowser products={products} categories={categories} />
             </Suspense>
           ) : (

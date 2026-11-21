@@ -11,7 +11,7 @@ const Tub3D = dynamic(() => import("./tub-3d").then((m) => m.Tub3D), { ssr: fals
 function Still() {
   return (
     <div className="relative aspect-[4/5] w-full">
-      <Image src="/img/hydro-tub-34.webp" alt="HYDRO 150 pre-workout tub, Salted Nimbu, 420 g" fill priority sizes="(min-width: 768px) 45vw, 90vw" className="object-contain" />
+      <Image src="/img/hydro-tub-34.webp" alt="HYDRO 150 pre-workout tub, Salted Nimbu, 420 g" fill loading="eager" fetchPriority="high" sizes="(min-width: 768px) 45vw, 90vw" className="object-contain" />
     </div>
   );
 }

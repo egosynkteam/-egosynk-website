@@ -10,6 +10,7 @@ import { JsonLd } from "@/components/json-ld";
 import { ProductView } from "@/components/product/product-view";
 import { Reviews } from "@/components/product/reviews";
 import { Reveal } from "@/components/reveal";
+import { EMark } from "@/components/logo";
 
 const SITE = "https://egosynk.com";
 
@@ -72,7 +73,7 @@ function Related({ items, title }: { items: PdpProduct[]; title: string }) {
                     {p.images?.[0]
                       // eslint-disable-next-line @next/next/no-img-element -- admin-uploaded photo served by the media function
                       ? <img src={mediaUrl(p.images[0])} alt={p.name} loading="lazy" decoding="async" className="size-full object-cover transition-transform duration-700 ease-out-expo group-hover:scale-[1.04]" />
-                      : <span className="mono text-small text-steel">ES</span>}
+                      : <EMark className="w-1/2 text-surface-3" accent="var(--color-rust-dim)" />}
                   </div>
                   <p className="mt-3 line-clamp-2 font-semibold leading-snug">{p.name}</p>
                   <p className="mono mt-1 text-small">
@@ -118,7 +119,7 @@ async function ProductBody({ params }: { params: PageProps<"/p/[slug]">["params"
 // Same footprint as the product view (gallery left, details right), so nothing jumps.
 function ProductSkeleton() {
   return (
-    <div aria-label="Loading product" className="animate-pulse">
+    <div role="status" aria-label="Loading product" className="animate-pulse">
       <div className="mb-6 h-3 w-48 rounded-sharp bg-surface" />
       <div className="grid gap-8 md:grid-cols-[1.1fr_1fr] md:gap-14">
         <div className="aspect-[4/5] rounded-sharp bg-surface" />

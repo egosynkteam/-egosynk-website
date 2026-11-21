@@ -45,7 +45,8 @@ export async function syncSaved() {
   try {
     const res = await fetch("/.netlify/functions/wishlist");
     if (!res.ok) return;
-    const { ids } = (await res.json()) as { ids: number[] };
+    const { ids, guest } = (await res.json()) as { ids: number[]; guest?: boolean };
+    if (guest) return;
     const local = parse(raw());
     const merged = [...new Set([...local, ...ids])];
     if (merged.length !== local.length) write(merged, false);

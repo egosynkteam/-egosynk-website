@@ -28,6 +28,12 @@ type Slide = {
 
 // How long each slide stays up (ms). Also drives the progress bar under the slides.
 const DELAY = 4500;
+// The desktop and phone copies of a slide's photo share one `sizes`, so the browser picks the
+// same file for both and downloads it once (different sizes meant the tub downloaded twice).
+const ART_SIZES = "(min-width: 768px) 45vw, 90vw";
+// The first slide's photo is the first thing a visitor sees: fetch it before anything else.
+// (fetchPriority + eager, not preload: there are two candidate images depending on screen width.)
+const first = (on: boolean) => (on ? { loading: "eager" as const, fetchPriority: "high" as const } : {});
 const noop = () => () => {};
 
 export function HeroCarousel({ gearSub, launch }: { gearSub?: string; launch?: Launch }) {
@@ -193,7 +199,7 @@ function Art({ kind, active, priority }: { kind: Slide["art"]; active: boolean; 
       <div className={`absolute inset-0 ${kind === "hydro" ? "bg-[radial-gradient(55%_65%_at_72%_50%,var(--color-rust-dim)_0%,transparent_72%)]" : "bg-[radial-gradient(55%_60%_at_74%_55%,var(--color-ember)_0%,transparent_70%)]"}`} />
       {/* Tablet and up: the product sits beside the copy. Phones get PhoneArt above the copy instead,
           because behind the text it reads as words printed over the label. */}
-      <Image src={img.src} alt={img.alt} width={img.w} height={img.h} priority={priority} sizes="45vw"
+      <Image src={img.src} alt={img.alt} width={img.w} height={img.h} {...first(priority)} sizes={ART_SIZES}
         className={`absolute top-1/2 hidden h-auto -translate-y-1/2 md:block ${img.cls}`} />
     </motion.div>
   );
@@ -213,7 +219,7 @@ function PhoneArt({ kind, priority }: { kind: Slide["art"]; priority: boolean })
   return (
     <div className="mb-5 flex h-[min(25dvh,12.5rem)] w-full justify-center md:hidden">
       <div className={`relative ${a.box}`}>
-        <Image src={a.src} alt={a.alt} fill priority={priority} sizes="90vw" className={a.cls} />
+        <Image src={a.src} alt={a.alt} fill {...first(priority)} sizes={ART_SIZES} className={a.cls} />
       </div>
     </div>
   );
