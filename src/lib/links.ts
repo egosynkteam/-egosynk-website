@@ -6,7 +6,7 @@ export const legacy = {
   // now live in this app: /#bag opens the bag drawer on any page.
   shop: "/shop.html",
   bag: "/#bag",
-  account: "/account.html",
+  account: "/account",
   login: "/login",
   signup: "/signup",
   forgotPassword: "/forgot-password",

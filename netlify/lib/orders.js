@@ -147,7 +147,7 @@ function shippedEmailHtml(order) {
     ${tracking}
     <p style="font-size:13px;line-height:1.6;">${itemsLine(order)}</p>
     <p style="font-size:12px;color:#8B8D93;">Order ID: ${escapeHtml(order.orderId)}</p>
-    ${order.userId ? buttonHtml('https://egosynk.com/account.html', 'View my orders') : ''}
+    ${order.userId ? buttonHtml('https://egosynk.com/account', 'View my orders') : ''}
   `;
 }
 

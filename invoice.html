@@ -108,7 +108,7 @@ async function init(){
   if(!id){ root.innerHTML = '<div class="state">No order reference given.</div>'; return; }
   try{
     const res = await fetch(`/.netlify/functions/get-invoice?id=${encodeURIComponent(id)}${k ? '&k=' + encodeURIComponent(k) : ''}`);
-    if(!res.ok){ root.innerHTML = '<div class="state">This invoice isn\'t available from this link. Open it from your order email or <a href="/account.html">My account</a>, or email support@egosynk.com with your order ID.</div>'; return; }
+    if(!res.ok){ root.innerHTML = '<div class="state">This invoice isn\'t available from this link. Open it from your order email or <a href="/account">My account</a>, or email support@egosynk.com with your order ID.</div>'; return; }
     const data = await res.json();
     render(data);
   }catch(err){

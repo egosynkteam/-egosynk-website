@@ -68,7 +68,7 @@ exports.handler = async (event) => {
     await logEvent('signup', emailNorm, { userId }, event);
 
     // Verification email is fire-and-forget — a missing/broken email config must never
-    // block account creation. account.html shows an unverified banner + resend option.
+    // block account creation. the account page shows an unverified banner + resend option.
     const verifyToken = await createToken('email-verifications', { email: emailNorm }, 24 * 60 * 60 * 1000);
     await sendEmail({
       to: emailNorm,

@@ -13,7 +13,7 @@
     <a class="site-logo" href="/"><span>EGO</span>SYNK</a>
     <div class="site-right">
       <a class="site-shop" href="/#shop">Shop</a>
-      <a class="site-icon" href="/account.html" title="Account" aria-label="Account"${cur('/account.html')}>
+      <a class="site-icon" href="/account" title="Account" aria-label="Account"${cur('/account')}>
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
       </a>
       <a class="site-icon" href="/#bag" title="Bag" aria-label="Bag">

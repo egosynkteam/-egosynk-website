@@ -2,7 +2,7 @@ const { getStore } = require('../lib/blob-store');
 const { getSessionUser } = require('../lib/session');
 const { openReasons, customerView } = require('../lib/exchanges');
 
-// Order history for the logged-in user's account.html. Matches by userId (attached at
+// Order history for the logged-in user's the account page. Matches by userId (attached at
 // checkout time when the buyer was logged in) — guest orders have no userId and won't
 // show here, which is correct: nothing ties them to an account.
 exports.handler = async (event) => {

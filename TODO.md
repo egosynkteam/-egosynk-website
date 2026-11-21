@@ -3,7 +3,9 @@
 Last updated 10 Nov 2026. Preview of the new store: https://storefront-next--egosynk.netlify.app (branch `storefront-next`).
 
 ## Next to build
-- [ ] **Old pages onto the design system**: My Account, order confirmation, invoice, bulk, `shop.html`, admin (product pages done 10 Nov; policies, contact and the 5 sign-in pages done 22 Nov on branch `design-system-pages`, not live yet)
+- [ ] **Old pages onto the design system**: bulk, `shop.html`, admin (product pages done 10 Nov; policies, contact, sign-in pages, My Account and order confirmation done 22 Nov on branch `design-system-pages`, not live yet). Invoice stays a white printable page on purpose
+- [ ] **LIVE BUG (main):** order-confirmation.html crashes after payment for every order with an invoice (`viewKey` used outside `init()`), so customers see "Your order couldn't load" and the purchase isn't tracked. Payment itself is fine. Fixed on `design-system-pages`; ship that branch or hotfix main before real orders
+- [ ] On the preview, signed in: check My Account (orders, tracking, exchange form) and one full test checkout to the new confirmation page
 - [ ] Before merging `design-system-pages`: one real password reset and one sign-up on the preview (the forms post to the live functions, so I didn't submit them)
 - [ ] EAA product page (needs the formula, flavour, size and a render)
 - [ ] Full review of the preview on a phone, once the preview link rebuilds

@@ -1,7 +1,7 @@
 const { getSessionUser } = require('../lib/session');
 
 // Used everywhere the front-end needs to know "is someone logged in right now?" —
-// nav account icon, checkout prefill, account.html gate. 401 = treat as guest, not an error.
+// nav account icon, checkout prefill, the account page gate. 401 = treat as guest, not an error.
 exports.handler = async (event) => {
   try {
     const session = await getSessionUser(event);

@@ -341,7 +341,7 @@ function CheckoutDialog({ open, onClose, lines, coupon, total, say }: { open: bo
           // sessionStorage, not the URL, so it never lands in history or analytics.
           try { sessionStorage.setItem("egosynk_payment", JSON.stringify({ order: r.razorpay_order_id, payment_id: r.razorpay_payment_id, signature: r.razorpay_signature })); } catch { /* ignore */ }
           // eslint-disable-next-line @next/next/no-location-assign-relative-destination -- a static page outside the app
-          location.href = `/order-confirmation.html?order=${encodeURIComponent(r.razorpay_order_id)}`;
+          location.href = `/order-confirmation?order=${encodeURIComponent(r.razorpay_order_id)}`;
         },
         modal: { ondismiss: () => say("Checkout cancelled") },
       });

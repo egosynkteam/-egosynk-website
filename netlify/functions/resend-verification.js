@@ -5,7 +5,7 @@ const { sendEmail, emailWrapper, buttonHtml, escapeHtml } = require('../lib/emai
 const SITE_URL = process.env.SITE_URL || 'https://egosynk.com';
 
 // Session-protected — only a logged-in user can trigger a resend for their own account.
-// account.html calls this when it sees emailVerified:false on the profile.
+// the account page calls this when it sees emailVerified:false on the profile.
 exports.handler = async (event) => {
   if (event.httpMethod !== 'POST') return { statusCode: 405, body: 'Method Not Allowed' };
 

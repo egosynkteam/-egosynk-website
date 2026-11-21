@@ -545,7 +545,7 @@
     <button class="cart-btn" onclick="focusSearch()" title="Search" aria-label="Search products">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
     </button>
-    <a class="cart-btn" href="/account.html" id="accountBtn" title="Account">
+    <a class="cart-btn" href="/account" id="accountBtn" title="Account">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
     </a>
     <button class="cart-btn" onclick="toggleCart(true)">
@@ -1693,7 +1693,7 @@ async function proceedToPayment(){
         // browser history, analytics or a shared link.
         try{ sessionStorage.setItem('egosynk_payment', JSON.stringify({
           order: response.razorpay_order_id, payment_id: response.razorpay_payment_id, signature: response.razorpay_signature })); } catch(e){}
-        window.location.href = `/order-confirmation.html?order=${encodeURIComponent(response.razorpay_order_id)}`;
+        window.location.href = `/order-confirmation?order=${encodeURIComponent(response.razorpay_order_id)}`;
       },
       modal: {
         ondismiss: function(){ showToast('Checkout cancelled'); }
