@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { Suspense } from "react";
 import { notFound, permanentRedirect } from "next/navigation";
 import { getCatalog } from "@/lib/catalog";
 import { getProduct, percentOff, type PdpProduct, type ProductResult } from "@/lib/product";
@@ -88,20 +89,47 @@ function Related({ items, title }: { items: PdpProduct[]; title: string }) {
   );
 }
 
-// The product is resolved before anything is sent, so a renamed product answers with a real
-// 308 + Location and a removed one with a real 404 for every visitor and link-preview bot.
-// (Streaming the page first would fix the status at 200.) Listed products are prerendered,
-// so this only waits on the first visit to a new or old URL.
-export default async function ProductPage(props: PageProps<"/p/[slug]">) {
-  const { slug } = await props.params;
-  const r = await getProduct(slug);
-  if (r.kind === "redirect") permanentRedirect(`/p/${r.slug}`);
-  if (r.kind === "missing") notFound();
+// The page frame renders at once and the product streams into it. Products listed at build
+// time are prerendered whole; one added later (a new product in admin) renders on its first
+// visit, and the product read has to sit inside <Suspense> for that to work on Netlify.
+// Renamed and removed products never get here: src/proxy.ts answers them first with a real
+// 308 or 404, before any page is rendered.
+export default function ProductPage(props: PageProps<"/p/[slug]">) {
   return (
     <section className="gutter pb-24 pt-[calc(var(--header-h)+1.5rem)] md:pt-[calc(var(--header-h)+2.5rem)]">
       <div className="page">
-        <Product r={r} />
+        <Suspense fallback={<ProductSkeleton />}>
+          <ProductBody params={props.params} />
+        </Suspense>
       </div>
     </section>
+  );
+}
+
+async function ProductBody({ params }: { params: PageProps<"/p/[slug]">["params"] }) {
+  const { slug } = await params;
+  const r = await getProduct(slug);
+  // Normally caught by the proxy; kept as a fallback if the catalog it checks was unreachable.
+  if (r.kind === "redirect") permanentRedirect(`/p/${r.slug}`);
+  if (r.kind === "missing") notFound();
+  return <Product r={r} />;
+}
+
+// Same footprint as the product view (gallery left, details right), so nothing jumps.
+function ProductSkeleton() {
+  return (
+    <div aria-label="Loading product" className="animate-pulse">
+      <div className="mb-6 h-3 w-48 rounded-sharp bg-surface" />
+      <div className="grid gap-8 md:grid-cols-[1.1fr_1fr] md:gap-14">
+        <div className="aspect-[4/5] rounded-sharp bg-surface" />
+        <div className="space-y-4">
+          <div className="h-3 w-24 rounded-sharp bg-surface" />
+          <div className="h-10 w-3/4 rounded-sharp bg-surface" />
+          <div className="h-6 w-28 rounded-sharp bg-surface" />
+          <div className="mt-8 h-12 w-full rounded-sharp bg-surface" />
+          <div className="h-12 w-full rounded-sharp bg-surface" />
+        </div>
+      </div>
+    </div>
   );
 }
