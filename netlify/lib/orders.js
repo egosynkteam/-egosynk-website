@@ -49,6 +49,9 @@ function orderEmailHtml(order, forOwner) {
   const shippingRow = order.shippingFee != null
     ? `<tr><td style="padding:6px 0;">Shipping</td><td style="padding:6px 0;text-align:right;">${order.shippingFee ? money(order.shippingFee) : 'Free'}</td></tr>`
     : '';
+  const giftRow = order.gift
+    ? `<tr><td style="padding:6px 0;">Free gift: ${escapeHtml(order.gift.name)}</td><td style="padding:6px 0;text-align:right;">Free</td></tr>`
+    : '';
   const s = order.shipping;
   const intro = forOwner
     ? `<p style="font-size:14px;line-height:1.6;"><strong>New paid order.</strong></p>`
@@ -59,6 +62,7 @@ function orderEmailHtml(order, forOwner) {
     <p style="font-size:12px;color:#8B8D93;">Order ID: ${escapeHtml(order.orderId)}${order.invoice ? '<br>Invoice: ' + escapeHtml(order.invoice.number) : ''}<br>Sold by EGOSYNK · GSTIN: ${GSTIN}</p>
     <table style="width:100%;font-size:13px;border-collapse:collapse;margin:16px 0;">
       ${itemsRows}
+      ${giftRow}
       ${discountRow}
       ${shippingRow}
       <tr><td style="padding-top:10px;font-weight:700;">Total</td><td style="padding-top:10px;text-align:right;font-weight:700;">${money(order.amount / 100)}</td></tr>

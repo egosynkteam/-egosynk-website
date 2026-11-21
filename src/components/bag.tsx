@@ -48,7 +48,10 @@ async function requestCoupon(code: string, lines: BagLine[]): Promise<Coupon> {
 
 // One bag for the whole storefront: the header button opens it, /#bag opens it (product,
 // account and policy pages link there), and /?restore=<token> from reminder emails refills it.
-export function BagProvider({ products, ship, children }: { products: ShopProduct[]; ship: { fee: number; freeOver: number }; children: React.ReactNode }) {
+// Store shipping rules and the free-gift offer, from admin settings (via the layout).
+export type Ship = { fee: number; freeOver: number; gift?: { name: string; threshold: number } | null };
+
+export function BagProvider({ products, ship, children }: { products: ShopProduct[]; ship: Ship; children: React.ReactNode }) {
   const saved = useSyncExternalStore(subscribeBag, bagSnapshot, bagServerSnapshot);
   const lines = useMemo(() => parseBag(saved), [saved]);
   const [isOpen, setOpen] = useState(false);
@@ -178,7 +181,7 @@ function useModal(open: boolean, onClose: () => void, focusRef: React.RefObject<
 type Sum = ReturnType<typeof totals>;
 
 function BagDrawer(props: {
-  open: boolean; onClose: () => void; lines: BagLine[]; sum: Sum; ship: { fee: number; freeOver: number };
+  open: boolean; onClose: () => void; lines: BagLine[]; sum: Sum; ship: Ship;
   coupon: Coupon | null; couponError: string; onQty: (id: string, d: number) => void; onRemove: (id: string) => void;
   onCoupon: (code: string) => Promise<boolean>; onRemoveCoupon: () => void; onCheckout: () => void;
 }) {
@@ -218,12 +221,7 @@ function BagDrawer(props: {
               </div>
             ) : (
               <>
-                <div className="border-b border-line px-5 py-4">
-                  <p className="text-sm text-dim">{sum.toFree > 0 ? <>Add <b className="text-bone">{inr(sum.toFree)}</b> more for free shipping</> : <b className="text-bone">You&apos;ve unlocked free shipping</b>}</p>
-                  <div className="mt-2 h-1 overflow-hidden rounded-full bg-line">
-                    <motion.div className="h-full bg-rust" initial={false} animate={{ width: `${Math.min(100, ((sum.subtotal - sum.discount) / Math.max(1, ship.freeOver)) * 100)}%` }} />
-                  </div>
-                </div>
+                <Goals sum={sum} ship={ship} />
                 <ul className="flex-1 divide-y divide-line overflow-y-auto overscroll-contain px-5">
                   <AnimatePresence initial={false}>
                     {lines.map((l) => (
@@ -250,6 +248,16 @@ function BagDrawer(props: {
                       </motion.li>
                     ))}
                   </AnimatePresence>
+                  {ship.gift && sum.subtotal - sum.discount >= ship.gift.threshold && (
+                    <li className="flex items-center gap-4 py-5">
+                      <div className="grid size-20 shrink-0 place-items-center rounded-sharp border border-dashed border-rust/60 bg-rust-dim text-2xl" aria-hidden="true">🎁</div>
+                      <div className="flex-1">
+                        <p className="mono text-micro uppercase tracking-[0.12em] text-rust-text">Free gift</p>
+                        <p className="font-semibold text-bone">{ship.gift.name}</p>
+                      </div>
+                      <p className="mono text-sm text-ok-bright">FREE</p>
+                    </li>
+                  )}
                 </ul>
 
                 <div className="border-t border-line bg-surface px-5 pb-5 pt-4">
@@ -415,5 +423,23 @@ function CheckoutDialog({ open, onClose, lines, coupon, total, say }: { open: bo
         </div>
       )}
     </AnimatePresence>
+  );
+}
+
+// The next thing the bag can unlock: free shipping first, then the free gift.
+function Goals({ sum, ship }: { sum: Sum; ship: Ship }) {
+  const goods = sum.subtotal - sum.discount;
+  const gift = ship.gift;
+  const goal = sum.toFree > 0 || !gift
+    ? { left: sum.toFree, of: ship.freeOver, todo: "free shipping", done: "You've unlocked free shipping" }
+    : { left: Math.max(0, gift.threshold - goods), of: gift.threshold, todo: `a free ${gift.name}`, done: `Free ${gift.name} unlocked` };
+  return (
+    <div className="border-b border-line px-5 py-4">
+      <p className="text-sm text-dim">{goal.left > 0 ? <>Add <b className="text-bone">{inr(goal.left)}</b> more for {goal.todo}</> : <b className="text-bone">{goal.done}</b>}</p>
+      <div className="mt-2 h-1 overflow-hidden rounded-full bg-line">
+        <motion.div className="h-full bg-rust" initial={false} animate={{ width: `${Math.min(100, (goods / Math.max(1, goal.of)) * 100)}%` }} />
+      </div>
+      {sum.toFree > 0 && gift && <p className="mono mt-2 text-micro text-steel">Spend {inr(gift.threshold)}+ and the {gift.name} comes free.</p>}
+    </div>
   );
 }

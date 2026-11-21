@@ -31,6 +31,7 @@ exports.handler = async (event) => {
           orderId: order.orderId,
           items: order.items,
           amount: order.amount,
+          gift: order.gift || null,
           paidAt: order.paidAt,
           invoiceNumber: order.invoice ? order.invoice.number : null,
           fulfilment: order.fulfilment

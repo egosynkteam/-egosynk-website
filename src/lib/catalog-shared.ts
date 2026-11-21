@@ -32,12 +32,15 @@ export type Catalog = {
     hero?: { eyebrow?: string; headline?: string; accent?: string; sub?: string };
     social?: { instagram?: string; whatsapp?: string; youtube?: string; facebook?: string };
     launch?: { date?: string | null; name?: string; href?: string };
+    freeGift?: { enabled?: boolean; threshold?: number; name?: string };
   };
 };
 
 // Only used if the catalog can't be reached; the admin's values always win. Must equal
 // DEFAULTS in netlify/lib/settings.js (tests/brand.test.js checks).
 export const SHIPPING_FALLBACK = { shippingFee: 79, freeShippingThreshold: 999 } as const;
+// Same for the free gift: equals DEFAULTS.freeGift (tests/gift.test.js checks).
+export const GIFT_FALLBACK = { enabled: true, threshold: 2500, name: "EGOSYNK 600 ml shaker" } as const;
 
 // FUEL and SCENT launch from this storefront; the gear rail shows everything else.
 export const SCENT_CATS = new Set(["fragrance"]);

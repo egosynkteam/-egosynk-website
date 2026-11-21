@@ -2,12 +2,13 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState, useSyncExternalStore } from "react";
 import useEmblaCarousel from "embla-carousel-react";
 import Autoplay from "embla-carousel-autoplay";
 import { AnimatePresence, motion } from "motion/react";
 import { EMark } from "./logo";
-import { Countdown, type Launch } from "./countdown";
+import { Countdown, launchFor, type Launch } from "./countdown";
+import { Snow } from "./snow";
 
 type Slide = {
   id: string;
@@ -24,6 +25,7 @@ type Slide = {
 
 // How long each slide stays up (ms). Also drives the progress bar under the slides.
 const DELAY = 4500;
+const noop = () => () => {};
 
 export function HeroCarousel({ gearSub, launch }: { gearSub?: string; launch?: Launch }) {
   const slides: Slide[] = [
@@ -77,6 +79,7 @@ export function HeroCarousel({ gearSub, launch }: { gearSub?: string; launch?: L
           ))}
         </div>
       </div>
+      <Snow />
 
       <div className="gutter absolute inset-x-0 bottom-6 z-10 md:bottom-10">
         <div className=" flex page items-center gap-3">
@@ -112,6 +115,12 @@ function SlideView({ s, active, priority, launch }: { s: Slide; active: boolean;
   // The countdown sits on the slide for whatever is launching (admin → Settings → Launch countdown).
   const page = (s.alt?.href || s.cta.href).split("#")[0];
   const words = { hidden: { y: "105%" }, show: { y: "0%" } };
+  // While a countdown runs for this slide, its chip says when it drops instead of "Live now".
+  const upcoming = launchFor(launch, page);
+  const counting = useSyncExternalStore(noop, () => !!upcoming && upcoming.at > Date.now(), () => false);
+  const status = counting && upcoming
+    ? `Drops ${new Date(upcoming.at).toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata", day: "numeric", month: "short" })}`
+    : s.status;
   return (
     <div className="gutter relative flex min-h-[min(92dvh,56.25rem)] items-center pb-24 pt-24 md:pb-24 md:pt-28">
       <Art kind={s.art} active={active} priority={priority} />
@@ -130,8 +139,8 @@ function SlideView({ s, active, priority, launch }: { s: Slide; active: boolean;
                 <motion.div variants={{ hidden: { opacity: 0, y: 10 }, show: { opacity: 1, y: 0 } }} className="mb-6 flex items-center gap-3">
                   <span className="eyebrow">{s.line}</span>
                   <span className="chip border border-line text-dim">
-                    <span className={`size-1.5 rounded-full ${s.status === "Live now" ? "bg-ok" : "bg-rust-bright"}`} />
-                    {s.status}
+                    <span className={`size-1.5 rounded-full ${status === "Live now" ? "bg-ok" : "bg-rust-bright"}`} />
+                    {status}
                   </span>
                 </motion.div>
                 <h1 className="display text-display-hero">

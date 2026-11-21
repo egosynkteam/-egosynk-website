@@ -24,6 +24,9 @@ const DEFAULTS = {
   launch: { date: null, name: 'HYDRO 150', href: '/hydro' },
   analytics: { ga4Id: null, metaPixelId: null },
   abandonedCart: { enabled: true, delayHours: 1, couponCode: '' },
+  // Free gift added to orders whose goods (after any discount) reach `threshold` ₹.
+  // Packed with the order; not a line on the GST invoice (see giftFor).
+  freeGift: { enabled: true, threshold: 2500, name: 'EGOSYNK 600 ml shaker' },
   ogImageKey: null,
 };
 
@@ -64,6 +67,7 @@ async function getSettings() {
     launch: { ...DEFAULTS.launch, ...(saved.launch || {}) },
     analytics: { ...DEFAULTS.analytics, ...(saved.analytics || {}) },
     abandonedCart: { ...DEFAULTS.abandonedCart, ...(saved.abandonedCart || {}) },
+    freeGift: { ...DEFAULTS.freeGift, ...(saved.freeGift || {}) },
   };
 }
 
@@ -75,8 +79,16 @@ async function getCategories() {
   return (await getStore('settings').get('categories', { type: 'json' })) || DEFAULT_CATEGORIES;
 }
 
+// The gift this order earns, judged like free shipping: on what the customer pays for the
+// goods after any discount. null when the offer is off or the order is below the line.
+function giftFor(goodsTotal, settings) {
+  const g = settings.freeGift;
+  if (!g || !g.enabled || !g.name || !(g.threshold > 0) || goodsTotal < g.threshold) return null;
+  return { name: g.name, threshold: g.threshold };
+}
+
 function shippingFor(subtotal, settings) {
   return subtotal >= settings.freeShippingThreshold ? 0 : settings.shippingFee;
 }
 
-module.exports = { DEFAULTS, DEFAULT_CATEGORIES, DEFAULT_SIZE_GUIDES, getSettings, getCategories, getSizeGuides, shippingFor };
+module.exports = { DEFAULTS, DEFAULT_CATEGORIES, DEFAULT_SIZE_GUIDES, getSettings, getCategories, getSizeGuides, shippingFor, giftFor };

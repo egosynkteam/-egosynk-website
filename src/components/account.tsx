@@ -10,6 +10,7 @@ type Item = { id: number; name: string; cat?: string; size?: string; qty: number
 type Exchange = { status: string; reason: string; note?: string; items: { name: string; size?: string; newSize?: string }[] };
 type Order = {
   orderId: string; items: Item[]; amount: number; paidAt: string; invoiceNumber: string | null;
+  gift?: { name: string } | null;
   fulfilment: { status: string; courier?: string; tracking?: string; trackUrl?: string | null };
   exchange: Exchange | null;
   exchangeOptions: { reasons: { id: string; label: string; until: string }[]; sizesByItem: string[][] } | null;
@@ -148,6 +149,7 @@ function OrderCard({ order: o, reload }: { order: Order; reload: () => Promise<v
             <a href={`/p/${encodeURIComponent(i.id)}?review=${encodeURIComponent(o.orderId)}#reviews`} className={`text-micro ${textLink}`}>Write a review</a>
           </li>
         ))}
+        {o.gift && <li className="text-small text-rust-text">+ Free gift: {o.gift.name}</li>}
       </ul>
       <div className="mt-5 flex flex-wrap items-center justify-between gap-3 border-t border-line pt-4">
         <p className="mono text-micro uppercase tracking-[0.1em] text-dim">

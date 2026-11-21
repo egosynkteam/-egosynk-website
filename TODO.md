@@ -12,15 +12,23 @@ Last updated 22 Nov 2026. The new store is live on egosynk.com (`main`). Work in
 - [ ] After `main` has the product-page JSON mode, remove the old-HTML fallback in `src/lib/product.ts`
 - [x] Merge `storefront-next` → `main` (14 Nov) and publish (pushed 22 Nov)
 
+## Christmas drop (set 22 Nov)
+- [x] Countdown: "Christmas gear", 24 Dec 2026 00:00 IST, homepage Gear slide (live setting)
+- [x] WELCOME250: ₹250 off first orders of ₹1,500+, in the top bar and on product pages (live)
+- [x] Free gift: EGOSYNK 600 ml plastic shaker on orders of ₹2,500+ after discounts (Admin → Settings → Free gift). On branch, live after the push. Not on the GST invoice; ask the CA whether a free gift needs anything on the invoice
+- [x] Snowfall on the homepage hero until 26 Dec (branch); Gear chip says "Drops 24 Dec" while the countdown runs
+- [ ] After the push: Admin → Settings → Announcement: "Christmas gear drops 24 Dec", "WELCOME250: ₹250 off your first order over ₹1,500", "Free shaker on orders over ₹2,500", "Free shipping over ₹999"
+- [ ] Steel thermal shaker: price, then add it as a product (Accessories) so it can be bought on its own
+- [ ] Plastic shaker: manufacturer quote + stock before 24 Dec (spec: BRAND/3d/plastic-shaker/SPEC.md); weigh it for Shiprocket
+- [ ] WhatsApp: skipped for now (button stays hidden)
+
 ## Waiting on you
 - [x] **Turn off the BOLD 50 ml / 100 ml listings on the live site** (hidden 22 Nov; product pages now 404) (Admin → Products → untick "Visible on the store"): they can be bought, but the product doesn't exist yet
 - [ ] One small real test order on the preview (the only checkout step not tested)
 - [ ] HYDRO tub render: the label shows "200" but the launch tub is HYDRO 150. Wrong label?
 - [ ] Logo pick (options A–F in `BRAND/LOGO OPTIONS`); trademark filing is missing class 3 (perfume, for BOLD)
 - [ ] Real prices: HYDRO tub, shaker, bundles (now ₹299 / ₹1,799 / ₹4,199, shown as "Indicative"), BOLD 30 ml and 100 ml
-- [ ] Launch date: set it in Admin → Settings → Launch countdown once the admin update is live
 - [ ] EAA details: formula, flavour, pack size, servings
-- [ ] WhatsApp number in Admin → Settings → Social (the chat button stays hidden until then)
 - [ ] Turn on auto-renew for egosynk.com in GoDaddy
 - [ ] Tell the manufacturer the batch code format, e.g. `H150-2702-01`, stamped at filling. The label's QR opens egosynk.com/batch (files in `BRAND/3d/hydro-launch/label/qr/`)
 - [ ] Blender: open `BRAND/3d/hydro-launch/renders/hydro-tub-v2.blend` → File → External Data → Unpack Resources → Remove packed files → save

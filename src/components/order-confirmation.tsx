@@ -9,6 +9,7 @@ import { SUPPORT_EMAIL } from "./legal-page";
 type Item = { id: number; name: string; size?: string; qty: number; price: number };
 type Order = {
   orderId: string; items: Item[]; amount: number; shippingFee?: number | null; discount: number; coupon: string | null;
+  gift?: { name: string } | null;
   invoiceNumber: string | null;
   shipping: { name: string; email?: string; phone: string; address1: string; address2?: string; city: string; state: string; pincode: string };
 };
@@ -124,6 +125,7 @@ export function OrderConfirmation() {
           <p className="mono">{inr(i.price * i.qty)}</p>
         </div>
       ))}
+      {order.gift && <div className={row}><p>Free gift · {order.gift.name}</p><p className="mono text-ok-bright">Free</p></div>}
       {order.discount > 0 && <div className={row}><p>Discount{order.coupon ? ` · ${order.coupon}` : ""}</p><p className="mono text-ok-bright">−{inr(order.discount)}</p></div>}
       {order.shippingFee != null && <div className={row}><p>Shipping</p><p className="mono">{order.shippingFee ? inr(order.shippingFee) : "Free"}</p></div>}
       <div className="flex justify-between pt-4 text-lead font-bold"><p>Total</p><p className="mono">{inr(order.amount / 100)}</p></div>
