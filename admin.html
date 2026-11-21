@@ -507,7 +507,7 @@
         <button class="secondary" onclick="loadEnquiries()">Refresh</button>
       </div>
     </div>
-    <p class="muted" style="margin-bottom:10px;">From the <a href="/bulk.html" target="_blank">bulk orders page</a>. Each one is also emailed to egosynkteam@gmail.com once Resend is set up. The note is internal only.</p>
+    <p class="muted" style="margin-bottom:10px;">From the <a href="/bulk" target="_blank">bulk orders page</a>. Each one is also emailed to egosynkteam@gmail.com once Resend is set up. The note is internal only.</p>
     <div id="enquiriesWrap"><div class="skeleton" aria-label="Loading"><i></i><i></i><i></i></div></div>
   </div>
 
@@ -1676,7 +1676,7 @@ function renderEnquiries(){
         <button onclick="updateEnquiry('${esc(q.key)}')">Save</button>
         <button class="danger" onclick="deleteEnquiry('${esc(q.key)}')">Delete</button>
       </div>
-    </div>`).join('') : '<div class="msg">No enquiries in this view. Share <a href="/bulk.html" target="_blank" rel="noopener">egosynk.com/bulk.html</a> with gyms, coaches and teams to get bulk orders.</div>';
+    </div>`).join('') : '<div class="msg">No enquiries in this view. Share <a href="/bulk" target="_blank" rel="noopener">egosynk.com/bulk</a> with gyms, coaches and teams to get bulk orders.</div>';
 }
 async function enquiryAction(payload){
   const res = await adminFetch('/.netlify/functions/admin-enquiries', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(payload) });

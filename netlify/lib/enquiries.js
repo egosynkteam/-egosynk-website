@@ -1,7 +1,7 @@
 const { getStore } = require('./blob-store');
 const { sendEmail, emailWrapper, escapeHtml } = require('./email');
 
-// Bulk / team enquiries from bulk.html, kept in the `enquiries` store as q/<time>-<rand>
+// Bulk / team enquiries from the bulk form (/bulk), kept in the `enquiries` store as q/<time>-<rand>
 // and worked through in admin → Enquiries.
 const TYPES = { gym: 'Gym / studio', coach: 'Coach / trainer', team: 'Sports team / club', corporate: 'Corporate / event', other: 'Other' };
 const QUANTITIES = ['10–25', '26–50', '51–100', '100+'];

@@ -36,7 +36,7 @@
 
   const links = [
     ['/shop', 'Shop'], ['/shipping-policy', 'Shipping'], ['/refund-policy', 'Returns & exchanges'],
-    ['/terms', 'Terms'], ['/privacy-policy', 'Privacy'], ['/contact', 'Contact'], ['/bulk.html', 'Bulk orders'],
+    ['/terms', 'Terms'], ['/privacy-policy', 'Privacy'], ['/contact', 'Contact'], ['/bulk', 'Bulk orders'],
   ];
   document.addEventListener('DOMContentLoaded', () => {
     const foot = document.createElement('footer');

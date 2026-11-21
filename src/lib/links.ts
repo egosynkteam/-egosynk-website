@@ -15,7 +15,7 @@ export const legacy = {
   terms: "/terms",
   privacy: "/privacy-policy",
   contact: "/contact",
-  bulk: "/bulk.html",
+  bulk: "/bulk",
 };
 
 export const WAITLIST_ENDPOINT = "/.netlify/functions/drop-waitlist";
