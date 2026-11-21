@@ -3,14 +3,14 @@
 Last updated 10 Nov 2026. Preview of the new store: https://storefront-next--egosynk.netlify.app (branch `storefront-next`).
 
 ## Next to build
-- [ ] **Old pages onto the design system**: account, policies, `shop.html`, admin (product pages done 10 Nov)
+- [ ] **Old pages onto the design system**: account + sign-in pages, bulk, `shop.html`, admin (product pages done 10 Nov; policies + contact done 22 Nov on branch `design-system-pages`)
 - [ ] EAA product page (needs the formula, flavour, size and a render)
 - [ ] Full review of the preview on a phone, once the preview link rebuilds
 - [ ] After `main` has the product-page JSON mode, remove the old-HTML fallback in `src/lib/product.ts`
 - [ ] Merge `storefront-next` → `main` to put the new store live in "coming soon" mode
 
 ## Waiting on you
-- [ ] **Turn off the BOLD 50 ml / 100 ml listings on the live site** (Admin → Products → untick "Visible on the store"): they can be bought, but the product doesn't exist yet
+- [x] **Turn off the BOLD 50 ml / 100 ml listings on the live site** (hidden 22 Nov; product pages now 404) (Admin → Products → untick "Visible on the store"): they can be bought, but the product doesn't exist yet
 - [ ] **15 Nov:** Netlify credits reset. Publish `main` to egosynk.com (or upgrade Netlify to Personal, $9/month); the preview link rebuilds then too
 - [ ] One small real test order on the preview (the only checkout step not tested)
 - [ ] HYDRO tub render: the label shows "200" but the launch tub is HYDRO 150. Wrong label?
@@ -23,6 +23,7 @@ Last updated 10 Nov 2026. Preview of the new store: https://storefront-next--ego
 - [ ] Tell the manufacturer the batch code format, e.g. `H150-2702-01`, stamped at filling. The label's QR opens egosynk.com/batch (files in `BRAND/3d/hydro-launch/label/qr/`)
 - [ ] Blender: open `BRAND/3d/hydro-launch/renders/hydro-tub-v2.blend` → File → External Data → Unpack Resources → Remove packed files → save
 - [ ] After publishing: refresh link previews in Facebook's Sharing Debugger for `/hydro` and `/bold`
+- [ ] Contact page: the grievance officer is "EGOSYNK Support". The e-commerce rules ask for a named person; add your name if you want to be safe
 - [ ] Optional: remove the test entry egosynkteam@gmail.com in Admin → Drop lists
 
 ## Done (10 Nov 2026)

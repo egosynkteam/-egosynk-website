@@ -35,8 +35,8 @@
   addEventListener('storage', (e) => { if(e.key === 'egosynk_cart') bagCount(); });
 
   const links = [
-    ['/#shop', 'Shop'], ['/shipping-policy.html', 'Shipping'], ['/refund-policy.html', 'Returns & exchanges'],
-    ['/terms.html', 'Terms'], ['/privacy-policy.html', 'Privacy'], ['/contact.html', 'Contact'], ['/bulk.html', 'Bulk orders'],
+    ['/#shop', 'Shop'], ['/shipping-policy', 'Shipping'], ['/refund-policy', 'Returns & exchanges'],
+    ['/terms', 'Terms'], ['/privacy-policy', 'Privacy'], ['/contact', 'Contact'], ['/bulk.html', 'Bulk orders'],
   ];
   document.addEventListener('DOMContentLoaded', () => {
     const foot = document.createElement('footer');

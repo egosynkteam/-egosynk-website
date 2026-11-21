@@ -1,5 +1,5 @@
-// The original store pages (bag, account, policies) are published from public/ by
-// scripts/copy-legacy.mjs; product pages come from the product-page function.
+// Store addresses. The policy pages are routes in this app; the account, bulk and old shop
+// pages are still the original HTML, published from public/ by scripts/copy-legacy.mjs.
 export const legacy = {
   product: (slug: string) => `/p/${encodeURIComponent(slug)}`,
   // The old store page (full catalog grid) is still served at /shop.html. The bag and checkout
@@ -7,11 +7,11 @@ export const legacy = {
   shop: "/shop.html",
   bag: "/#bag",
   account: "/account.html",
-  shipping: "/shipping-policy.html",
-  returns: "/refund-policy.html",
-  terms: "/terms.html",
-  privacy: "/privacy-policy.html",
-  contact: "/contact.html",
+  shipping: "/shipping-policy",
+  returns: "/refund-policy",
+  terms: "/terms",
+  privacy: "/privacy-policy",
+  contact: "/contact",
   bulk: "/bulk.html",
 };
 

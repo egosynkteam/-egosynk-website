@@ -7,10 +7,12 @@ const LIVE = process.env.STORE_ORIGIN || "https://egosynk.com";
 // has served them without ".html" (Netlify's pretty URLs), and those addresses are in emails,
 // search results and old links, so both forms keep working.
 const PAGES = [
-  "account", "admin", "admin-orders", "bulk", "contact", "forgot-password", "invoice", "login",
-  "order-confirmation", "privacy-policy", "refund-policy", "reset-password", "shipping-policy",
-  "signup", "terms", "verify-email", "shop",
+  "account", "admin", "admin-orders", "bulk", "forgot-password", "invoice", "login",
+  "order-confirmation", "reset-password", "signup", "verify-email", "shop",
 ];
+// Pages that moved into this app (src/app/<name>). Their old ".html" addresses are in
+// emails, search results and the remaining HTML pages, so they redirect permanently.
+const MOVED = ["contact", "privacy-policy", "refund-policy", "shipping-policy", "terms"];
 
 const nextConfig: NextConfig = {
   cacheComponents: true,
@@ -24,6 +26,9 @@ const nextConfig: NextConfig = {
         as: "*.css",
       },
     },
+  },
+  async redirects() {
+    return MOVED.map((p) => ({ source: `/${p}.html`, destination: `/${p}`, permanent: true }));
   },
   async rewrites() {
     const pretty = PAGES.map((p) => ({ source: `/${p}`, destination: `/${p}.html` }));

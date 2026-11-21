@@ -284,8 +284,8 @@
 
 <footer>
   <div class="links">
-    <a href="/#shop">Shop</a><a href="/shipping-policy.html">Shipping</a><a href="/refund-policy.html">Returns &amp; Exchanges</a>
-    <a href="/terms.html">Terms</a><a href="/privacy-policy.html">Privacy</a><a href="/contact.html">Contact</a><a href="/bulk.html">Bulk orders</a><a href="#" onclick="window.egoCookieSettings&&egoCookieSettings();return false;">Cookie settings</a>
+    <a href="/#shop">Shop</a><a href="/shipping-policy">Shipping</a><a href="/refund-policy">Returns &amp; Exchanges</a>
+    <a href="/terms">Terms</a><a href="/privacy-policy">Privacy</a><a href="/contact">Contact</a><a href="/bulk.html">Bulk orders</a><a href="#" onclick="window.egoCookieSettings&&egoCookieSettings();return false;">Cookie settings</a>
   </div>
   <div class="mono">© 2026 EGOSYNK.COM · GSTIN 27AKHPY6964E1ZI</div>
 </footer>
@@ -445,10 +445,10 @@ function render(){
         </div>
         ${P.description ? `<p class="desc reveal">${esc(P.description)}</p>` : ''}
         ${(P.highlights || []).length ? `<ul class="highlights reveal">${P.highlights.map(h => `<li>${esc(h)}</li>`).join('')}</ul>` : ''}
-        <details class="acc reveal"><summary>Shipping</summary><p>Dispatched in 1–2 business days, delivered in 3–7 business days across India. Tracking appears in your account once shipped. <a href="/shipping-policy.html">Shipping policy</a></p></details>
+        <details class="acc reveal"><summary>Shipping</summary><p>Dispatched in 1–2 business days, delivered in 3–7 business days across India. Tracking appears in your account once shipped. <a href="/shipping-policy">Shipping policy</a></p></details>
         <details class="acc reveal"><summary>Returns &amp; exchanges</summary><p>${isHygiene(P)
           ? 'You can exchange it for another size within 7 days of delivery only if the hygiene seal is unbroken. Opened items can\'t be exchanged, but if it arrives damaged or wrong we\'ll replace or refund it.'
-          : 'Exchange for another size within 7 days of delivery, unused with tags.'} <a href="/refund-policy.html">Full policy</a></p></details>
+          : 'Exchange for another size within 7 days of delivery, unused with tags.'} <a href="/refund-policy">Full policy</a></p></details>
       </div>
     </div>
     ${reviewsHtml()}
