@@ -30,7 +30,7 @@ exports.handler = async (event) => {
         html: emailWrapper(`
           <p style="font-size:14px;line-height:1.6;">Hey ${escapeHtml(user.name)},</p>
           <p style="font-size:14px;line-height:1.6;">Someone requested a password reset for this account. If that was you, set a new password below.</p>
-          ${buttonHtml(`${SITE_URL}/reset-password.html?token=${token}`, 'Reset Password')}
+          ${buttonHtml(`${SITE_URL}/reset-password?token=${token}`, 'Reset Password')}
           <p style="font-size:12px;color:#8B8D93;">This link expires in 1 hour. If you didn't request this, you can safely ignore this email — your password won't change.</p>
         `),
       });

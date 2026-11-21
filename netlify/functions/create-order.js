@@ -3,7 +3,7 @@ const { getStore } = require('../lib/blob-store');
 const { getSessionUser } = require('../lib/session');
 const { logEvent } = require('../lib/audit');
 const { stateCodeFor, taxInfoFor } = require('../lib/gst');
-const { getSettings, getCategories, shippingFor } = require('../lib/settings');
+const { getSettings, getCategories, shippingFor, giftFor } = require('../lib/settings');
 const { stockLeft } = require('../lib/orders');
 const { allowRequest } = require('../lib/rate-limit');
 const { findAndEvaluate, allocateDiscount } = require('../lib/coupons');
@@ -105,7 +105,9 @@ exports.handler = async (event) => {
     }));
 
     // Free shipping is judged on what the customer actually pays for the goods.
-    const shippingFee = shippingFor(subtotal - discount, await getSettings());
+    const settings = await getSettings();
+    const shippingFee = shippingFor(subtotal - discount, settings);
+    const gift = giftFor(subtotal - discount, settings);
     amount = subtotal - discount + shippingFee;
 
     const razorpay = new Razorpay({
@@ -131,6 +133,7 @@ exports.handler = async (event) => {
       discount,
       coupon,
       shippingFee,
+      gift,
       amount: amount * 100,
       currency: 'INR',
       shipping: {

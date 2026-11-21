@@ -6,10 +6,17 @@ const LIVE = process.env.STORE_ORIGIN || "https://egosynk.com";
 // The original store pages, published from public/ by scripts/copy-legacy.mjs. The live site
 // has served them without ".html" (Netlify's pretty URLs), and those addresses are in emails,
 // search results and old links, so both forms keep working.
-const PAGES = [
-  "account", "admin", "admin-orders", "bulk", "contact", "forgot-password", "invoice", "login",
-  "order-confirmation", "privacy-policy", "refund-policy", "reset-password", "shipping-policy",
-  "signup", "terms", "verify-email", "shop",
+const PAGES = ["admin", "admin-orders", "invoice"];
+// Pages that moved into this app (src/app/<name>). Their old ".html" addresses are in
+// emails, search results and the remaining HTML pages, so they redirect permanently.
+const MOVED = [
+  "contact", "privacy-policy", "refund-policy", "shipping-policy", "terms",
+  // Sign-in pages. Reset and verify links in emails already sent keep their ?token= through the redirect.
+  "login", "signup", "forgot-password", "reset-password", "verify-email",
+  // Account and receipt. ?order= and ?k= (the view key in confirmation emails) carry over.
+  "account", "order-confirmation",
+  // The old store grid; /shop is now src/app/shop with the same filters.
+  "shop", "bulk",
 ];
 
 const nextConfig: NextConfig = {
@@ -24,6 +31,9 @@ const nextConfig: NextConfig = {
         as: "*.css",
       },
     },
+  },
+  async redirects() {
+    return MOVED.map((p) => ({ source: `/${p}.html`, destination: `/${p}`, permanent: true }));
   },
   async rewrites() {
     const pretty = PAGES.map((p) => ({ source: `/${p}`, destination: `/${p}.html` }));

@@ -84,7 +84,7 @@
     el.setAttribute('aria-label', 'Cookie choices');
     el.innerHTML =
       '<p>We use cookies for analytics and ads to improve EGOSYNK — only if you agree. ' +
-      '<a href="/privacy-policy.html#cookies">Details</a></p>' +
+      '<a href="/privacy-policy#cookies">Details</a></p>' +
       '<div><button type="button" data-v="denied">Decline</button><button type="button" data-v="granted" class="yes">Accept</button></div>';
     var css = document.createElement('style');
     css.textContent =

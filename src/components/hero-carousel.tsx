@@ -2,12 +2,13 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState, useSyncExternalStore } from "react";
 import useEmblaCarousel from "embla-carousel-react";
 import Autoplay from "embla-carousel-autoplay";
 import { AnimatePresence, motion } from "motion/react";
 import { EMark } from "./logo";
-import { Countdown, type Launch } from "./countdown";
+import { Countdown, launchFor, type Launch } from "./countdown";
+import { Snow } from "./snow";
 
 type Slide = {
   id: string;
@@ -20,9 +21,14 @@ type Slide = {
   art: "hydro" | "gear" | "bold";
   // Gear's art is only a background shape, so its longer headline gets a wider column.
   wide?: boolean;
+  // The page a launch countdown (admin → Settings) must link to for it to show on this slide.
+  // Defaults to the slide's own page; Gear's is the homepage, where store-wide launches point.
+  launchPage?: string;
 };
 
-const DELAY = 6500;
+// How long each slide stays up (ms). Also drives the progress bar under the slides.
+const DELAY = 4500;
+const noop = () => () => {};
 
 export function HeroCarousel({ gearSub, launch }: { gearSub?: string; launch?: Launch }) {
   const slides: Slide[] = [
@@ -34,7 +40,7 @@ export function HeroCarousel({ gearSub, launch }: { gearSub?: string; launch?: L
     {
       id: "gear", line: "Gear", status: "Live now", title: ["Sync your ego", "to the iron."],
       sub: gearSub || "Compression gear engineered for lifters who train past the point everyone else stops.",
-      cta: { href: "/#gear", label: "Shop gear" }, art: "gear", wide: true,
+      cta: { href: "/shop", label: "Shop gear" }, art: "gear", wide: true, launchPage: "/",
     },
     {
       id: "bold", line: "Scent", status: "In development", title: ["Wear your", "ego."],
@@ -76,6 +82,7 @@ export function HeroCarousel({ gearSub, launch }: { gearSub?: string; launch?: L
           ))}
         </div>
       </div>
+      <Snow />
 
       <div className="gutter absolute inset-x-0 bottom-6 z-10 md:bottom-10">
         <div className=" flex page items-center gap-3">
@@ -109,10 +116,16 @@ export function HeroCarousel({ gearSub, launch }: { gearSub?: string; launch?: L
 
 function SlideView({ s, active, priority, launch }: { s: Slide; active: boolean; priority: boolean; launch?: Launch }) {
   // The countdown sits on the slide for whatever is launching (admin → Settings → Launch countdown).
-  const page = (s.alt?.href || s.cta.href).split("#")[0];
+  const page = s.launchPage || (s.alt?.href || s.cta.href).split("#")[0];
   const words = { hidden: { y: "105%" }, show: { y: "0%" } };
+  // While a countdown runs for this slide, its chip says when it drops instead of "Live now".
+  const upcoming = launchFor(launch, page);
+  const counting = useSyncExternalStore(noop, () => !!upcoming && upcoming.at > Date.now(), () => false);
+  const status = counting && upcoming
+    ? `Drops ${new Date(upcoming.at).toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata", day: "numeric", month: "short" })}`
+    : s.status;
   return (
-    <div className="gutter relative flex min-h-[min(92dvh,56.25rem)] items-center pb-28 pt-28 md:pb-24">
+    <div className="gutter relative flex min-h-[min(92dvh,56.25rem)] items-center pb-24 pt-24 md:pb-24 md:pt-28">
       <Art kind={s.art} active={active} priority={priority} />
       <div className="relative z-10 w-full page">
         {/* From tablet up the copy keeps to the left half, so it never runs into the product art. */}
@@ -123,11 +136,14 @@ function SlideView({ s, active, priority, launch }: { s: Slide; active: boolean;
             {active && (
               <motion.div key={s.id} initial="hidden" animate="show" exit={{ opacity: 0, transition: { duration: 0.2 } }}
                 variants={{ show: { transition: { staggerChildren: 0.08 } } }}>
+                <motion.div variants={{ hidden: { opacity: 0, scale: 0.96 }, show: { opacity: 1, scale: 1 } }}>
+                  <PhoneArt kind={s.art} priority={priority} />
+                </motion.div>
                 <motion.div variants={{ hidden: { opacity: 0, y: 10 }, show: { opacity: 1, y: 0 } }} className="mb-6 flex items-center gap-3">
                   <span className="eyebrow">{s.line}</span>
                   <span className="chip border border-line text-dim">
-                    <span className={`size-1.5 rounded-full ${s.status === "Live now" ? "bg-ok" : "bg-rust-bright"}`} />
-                    {s.status}
+                    <span className={`size-1.5 rounded-full ${status === "Live now" ? "bg-ok" : "bg-rust-bright"}`} />
+                    {status}
                   </span>
                 </motion.div>
                 <h1 className="display text-display-hero">
@@ -175,8 +191,30 @@ function Art({ kind, active, priority }: { kind: Slide["art"]; active: boolean; 
   return (
     <motion.div {...enter} className="pointer-events-none absolute inset-0">
       <div className={`absolute inset-0 ${kind === "hydro" ? "bg-[radial-gradient(55%_65%_at_72%_50%,var(--color-rust-dim)_0%,transparent_72%)]" : "bg-[radial-gradient(55%_60%_at_74%_55%,var(--color-ember)_0%,transparent_70%)]"}`} />
-      <Image src={img.src} alt={img.alt} width={img.w} height={img.h} priority={priority} sizes="(min-width: 768px) 45vw, 90vw"
-        className={`absolute top-1/2 h-auto -translate-y-1/2 opacity-40 md:opacity-100 ${img.cls}`} />
+      {/* Tablet and up: the product sits beside the copy. Phones get PhoneArt above the copy instead,
+          because behind the text it reads as words printed over the label. */}
+      <Image src={img.src} alt={img.alt} width={img.w} height={img.h} priority={priority} sizes="45vw"
+        className={`absolute top-1/2 hidden h-auto -translate-y-1/2 md:block ${img.cls}`} />
     </motion.div>
+  );
+}
+
+// box: the frame the photo fills. BOLD's studio shot has a grey sweep, so its frame takes the
+// photo's own 4:3 shape and fades at the edges; the tub is a cut-out and just fills the space.
+const PHONE_ART = {
+  hydro: { src: "/img/hydro-tub-34.webp", alt: "HYDRO 150 pre-workout tub, Salted Nimbu", box: "h-full w-full", cls: "object-contain scale-[1.75]" },
+  bold: { src: "/img/bold-pair.webp", alt: "BOLD eau de parfum, 100 and 30 ml", box: "fade-edges aspect-[4/3] h-full", cls: "object-cover scale-110" },
+} as const;
+
+// Phones only: the product in the flow of the slide, above the headline, at full strength.
+function PhoneArt({ kind, priority }: { kind: Slide["art"]; priority: boolean }) {
+  if (kind === "gear") return null;
+  const a = PHONE_ART[kind];
+  return (
+    <div className="mb-5 flex h-[min(25dvh,12.5rem)] w-full justify-center md:hidden">
+      <div className={`relative ${a.box}`}>
+        <Image src={a.src} alt={a.alt} fill priority={priority} sizes="90vw" className={a.cls} />
+      </div>
+    </div>
   );
 }

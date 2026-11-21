@@ -1,7 +1,7 @@
 const { sendEmail, emailWrapper, escapeHtml } = require('./email');
 
 // Exchange / issue requests a customer raises from My Orders on a delivered order.
-// The windows mirror refund-policy.html: a size exchange within 7 days of delivery,
+// The windows mirror the returns policy (src/app/refund-policy): a size exchange within 7 days of delivery,
 // damaged or wrong items within 48 hours. One request per order; a rejected one can be
 // raised again while the window is still open.
 const REASONS = {

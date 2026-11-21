@@ -68,7 +68,7 @@ exports.handler = async (event) => {
     await logEvent('signup', emailNorm, { userId }, event);
 
     // Verification email is fire-and-forget — a missing/broken email config must never
-    // block account creation. account.html shows an unverified banner + resend option.
+    // block account creation. the account page shows an unverified banner + resend option.
     const verifyToken = await createToken('email-verifications', { email: emailNorm }, 24 * 60 * 60 * 1000);
     await sendEmail({
       to: emailNorm,
@@ -76,7 +76,7 @@ exports.handler = async (event) => {
       html: emailWrapper(`
         <p style="font-size:14px;line-height:1.6;">Hey ${escapeForEmail(user.name)},</p>
         <p style="font-size:14px;line-height:1.6;">Welcome to EGOSYNK. Verify your email to finish setting up your account.</p>
-        ${buttonHtml(`${SITE_URL}/verify-email.html?token=${verifyToken}`, 'Verify Email')}
+        ${buttonHtml(`${SITE_URL}/verify-email?token=${verifyToken}`, 'Verify Email')}
         <p style="font-size:12px;color:#8B8D93;">This link expires in 24 hours. If you didn't create this account, you can ignore this email.</p>
       `),
     });

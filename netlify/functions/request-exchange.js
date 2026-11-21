@@ -4,7 +4,7 @@ const { logEvent } = require('../lib/audit');
 const { REASONS, needsSeal, openReasons, customerView, emailRequestReceived } = require('../lib/exchanges');
 
 // A logged-in customer raises an exchange or issue request on one of their delivered
-// orders (account.html → My Orders). Body:
+// orders (the account page → My Orders). Body:
 //   { orderId, reason: 'size'|'damaged'|'wrong_item', items: [{ index, newSize?, sealed? }], note? }
 // `index` points into order.items; a size exchange needs a new size the product offers,
 // and for innerwear/socks `sealed: true` (the hygiene seal is unbroken).

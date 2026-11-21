@@ -1,7 +1,7 @@
 const { getStore } = require('../lib/blob-store');
 const { canViewOrder } = require('../lib/order-access');
 
-// Used by order-confirmation.html to render the receipt after a successful, verified payment.
+// Used by the order-confirmation page to render the receipt after a successful, verified payment.
 // Only paid orders, and only for someone allowed to see them (lib/order-access.js): the
 // receipt includes the delivery address. Anyone else gets the same 404 as a wrong id.
 exports.handler = async (event) => {
@@ -25,6 +25,7 @@ exports.handler = async (event) => {
         items: order.items,
         amount: order.amount,
         shippingFee: order.shippingFee,
+        gift: order.gift || null,
         discount: order.discount || 0,
         coupon: order.coupon || null,
         currency: order.currency,

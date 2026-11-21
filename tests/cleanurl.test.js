@@ -7,8 +7,11 @@ const end = src.indexOf('function loadScript');
 eval(src.slice(start, end));
 const cases = {
   'https://egosynk.com/reset-password.html?token=abc': 'https://egosynk.com/reset-password.html',
+  'https://egosynk.com/reset-password?token=abc': 'https://egosynk.com/reset-password',
+  'https://egosynk.com/verify-email?token=abc': 'https://egosynk.com/verify-email',
   'https://egosynk.com/?utm_source=ig&utm_campaign=launch&restore=tok&gclid=G1': 'https://egosynk.com/?utm_source=ig&utm_campaign=launch&gclid=G1',
   'https://egosynk.com/order-confirmation.html?order=o1&payment_id=p&signature=s': 'https://egosynk.com/order-confirmation.html',
+  'https://egosynk.com/order-confirmation?order=o1&k=secret': 'https://egosynk.com/order-confirmation',
   'https://egosynk.com/invoice.html?id=o1&k=secret': 'https://egosynk.com/invoice.html',
   'https://egosynk.com/p/tee-1': 'https://egosynk.com/p/tee-1',
   '': '',

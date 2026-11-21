@@ -120,5 +120,5 @@ function notFound(msg = 'This product isn\'t available any more.') {
 <title>Not found — EGOSYNK</title><meta name="robots" content="noindex">
 <style>body{margin:0;min-height:100vh;display:grid;place-items:center;background:#0D0E10;color:#EDEAE3;font-family:system-ui,sans-serif;text-align:center;padding:24px}
 a{color:#E63950}h1{font-size:22px;letter-spacing:.04em;text-transform:uppercase}</style></head>
-<body><div><h1><span style="color:#C41E3A">EGO</span>SYNK</h1><p>${msg}</p><p><a href="/#shop">Back to the shop →</a></p></div></body></html>`;
+<body><div><h1><span style="color:#C41E3A">EGO</span>SYNK</h1><p>${msg}</p><p><a href="/shop">Back to the shop →</a></p></div></body></html>`;
 }

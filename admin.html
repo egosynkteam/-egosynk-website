@@ -507,7 +507,7 @@
         <button class="secondary" onclick="loadEnquiries()">Refresh</button>
       </div>
     </div>
-    <p class="muted" style="margin-bottom:10px;">From the <a href="/bulk.html" target="_blank">bulk orders page</a>. Each one is also emailed to egosynkteam@gmail.com once Resend is set up. The note is internal only.</p>
+    <p class="muted" style="margin-bottom:10px;">From the <a href="/bulk" target="_blank">bulk orders page</a>. Each one is also emailed to egosynkteam@gmail.com once Resend is set up. The note is internal only.</p>
     <div id="enquiriesWrap"><div class="skeleton" aria-label="Loading"><i></i><i></i><i></i></div></div>
   </div>
 
@@ -613,6 +613,16 @@
           <div class="field"><label for="s-free">Free shipping from (₹)</label><input id="s-free" type="number" min="0"></div>
         </div>
         <p class="muted">Keep the Shipping Policy page in step if you change these.</p>
+      </section>
+
+      <section class="settings-card">
+        <h4>Free gift</h4>
+        <div class="checkbox-field"><input type="checkbox" id="s-gift-on"><label for="s-gift-on" style="margin:0;">Add a free gift to big orders</label></div>
+        <div class="field-row">
+          <div class="field"><label for="s-gift-min">Orders from (₹, after discounts)</label><input id="s-gift-min" type="number" min="1"></div>
+          <div class="field"><label for="s-gift-name">Gift</label><input id="s-gift-name" maxlength="60" placeholder="EGOSYNK 600 ml shaker"></div>
+        </div>
+        <p class="muted">Shown in the bag ("₹X more for a free …"), on the receipt and on the order here, so it gets packed. It is not a line on the GST invoice. Keep stock of the gift.</p>
       </section>
 
       <section class="settings-card">
@@ -1666,7 +1676,7 @@ function renderEnquiries(){
         <button onclick="updateEnquiry('${esc(q.key)}')">Save</button>
         <button class="danger" onclick="deleteEnquiry('${esc(q.key)}')">Delete</button>
       </div>
-    </div>`).join('') : '<div class="msg">No enquiries in this view. Share <a href="/bulk.html" target="_blank" rel="noopener">egosynk.com/bulk.html</a> with gyms, coaches and teams to get bulk orders.</div>';
+    </div>`).join('') : '<div class="msg">No enquiries in this view. Share <a href="/bulk" target="_blank" rel="noopener">egosynk.com/bulk</a> with gyms, coaches and teams to get bulk orders.</div>';
 }
 async function enquiryAction(payload){
   const res = await adminFetch('/.netlify/functions/admin-enquiries', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(payload) });
@@ -2233,6 +2243,8 @@ let settingsImages = { hero: null, og: null };
 function fillSettingsForm(st){
   const set = (id, v) => { document.getElementById(id).value = v == null ? '' : v; };
   set('s-fee', st.shippingFee); set('s-free', st.freeShippingThreshold);
+  const fg = st.freeGift || {};
+  document.getElementById('s-gift-on').checked = fg.enabled !== false; set('s-gift-min', fg.threshold); set('s-gift-name', fg.name);
   document.getElementById('s-ann-on').checked = !(st.announcement && st.announcement.enabled === false);
   set('s-ann', ((st.announcement && st.announcement.items) || []).join('\n'));
   const h = st.hero || {};
@@ -2280,6 +2292,7 @@ async function saveSettings(){
   const data = {
     shippingFee: Number(val('s-fee')),
     freeShippingThreshold: Number(val('s-free')),
+    freeGift: { enabled: document.getElementById('s-gift-on').checked, threshold: Number(val('s-gift-min')), name: val('s-gift-name').trim() },
     announcement: { enabled: document.getElementById('s-ann-on').checked, items: val('s-ann').split('\n').map(s => s.trim()).filter(Boolean) },
     hero: { eyebrow: val('s-eyebrow'), headline: val('s-headline'), accent: val('s-accent'), sub: val('s-sub'), imageKey: settingsImages.hero, videoUrl: val('s-video').trim() },
     social: { instagram: val('s-ig'), whatsapp: val('s-wa'), youtube: val('s-yt'), facebook: val('s-fb') },
@@ -2462,7 +2475,7 @@ function renderOrders(orders){
       <td data-label="Payment"><span class="status ${o.status}">${o.status}</span></td>
       <td data-label="Customer">${esc(o.shipping.name)}<br><span class="muted">${esc(o.shipping.phone)}${o.shipping.email ? '<br>' + esc(o.shipping.email) : ''}</span></td>
       <td data-label="Ship to">${esc(o.shipping.address1)}${o.shipping.address2 ? ', ' + esc(o.shipping.address2) : ''}<br>${esc(o.shipping.city)}, ${esc(o.shipping.state)} ${esc(o.shipping.pincode)}</td>
-      <td data-label="Items" class="muted">${o.items.map(i => `${esc(i.name)}${i.size ? ' ('+esc(i.size)+')' : ''} x${i.qty}`).join('<br>')}</td>
+      <td data-label="Items" class="muted">${o.items.map(i => `${esc(i.name)}${i.size ? ' ('+esc(i.size)+')' : ''} x${i.qty}`).join('<br>')}${o.gift ? `<br><strong style="color:var(--rust-bright)">+ FREE: ${esc(o.gift.name)}</strong>` : ''}</td>
       <td data-label="Amount">₹${(o.amount/100).toLocaleString('en-IN')}</td>
       <td data-label="Order / invoice" class="muted">${id}${o.invoice ? `<br><a href="/invoice.html?id=${encodeURIComponent(o.orderId)}" target="_blank" rel="noopener">${esc(o.invoice.number)}</a>` : ''}</td>
       <td data-label="Fulfilment">${action}</td>

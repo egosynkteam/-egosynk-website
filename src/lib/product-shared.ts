@@ -42,6 +42,12 @@ export function offerText(o: Offer) {
   return `${amount} ${scope}${min}${cap}`;
 }
 
+// The same offer in a few words, for the phone strip: "₹250 off first order ₹1,500+".
+export function offerShort(o: Offer) {
+  const amount = o.type === "percent" ? `${o.value}% off` : `${inr(o.value)} off`;
+  return `${amount}${o.firstOrderOnly ? " first order" : ""}${o.minSubtotal ? ` ${inr(o.minSubtotal)}+` : ""}`;
+}
+
 export const COMPRESSION = { light: "Light compression", medium: "Medium compression", firm: "Firm compression" } as const;
 export function specChips(p: PdpProduct) {
   const s = p.specs || {};

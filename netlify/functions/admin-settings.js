@@ -63,6 +63,11 @@ function cleanStore(d) {
         // Only links inside the store, so the countdown can't send people off-site.
         href: /^\/(?!\/)[^\s"'<>]*$/.test(href) ? href : '/hydro',
       },
+      freeGift: {
+        enabled: !(d.freeGift && d.freeGift.enabled === false),
+        threshold: money(d.freeGift && d.freeGift.threshold) || 2500,
+        name: str(d.freeGift && d.freeGift.name, 60) || 'EGOSYNK 600 ml shaker',
+      },
       ogImageKey: mediaKey(d.ogImageKey),
       abandonedCart: {
         enabled: !(d.abandonedCart && d.abandonedCart.enabled === false),

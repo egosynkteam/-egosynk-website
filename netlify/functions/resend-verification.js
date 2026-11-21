@@ -5,7 +5,7 @@ const { sendEmail, emailWrapper, buttonHtml, escapeHtml } = require('../lib/emai
 const SITE_URL = process.env.SITE_URL || 'https://egosynk.com';
 
 // Session-protected — only a logged-in user can trigger a resend for their own account.
-// account.html calls this when it sees emailVerified:false on the profile.
+// the account page calls this when it sees emailVerified:false on the profile.
 exports.handler = async (event) => {
   if (event.httpMethod !== 'POST') return { statusCode: 405, body: 'Method Not Allowed' };
 
@@ -23,7 +23,7 @@ exports.handler = async (event) => {
       html: emailWrapper(`
         <p style="font-size:14px;line-height:1.6;">Hey ${escapeHtml(session.user.name)},</p>
         <p style="font-size:14px;line-height:1.6;">Here's a fresh link to verify your email.</p>
-        ${buttonHtml(`${SITE_URL}/verify-email.html?token=${verifyToken}`, 'Verify Email')}
+        ${buttonHtml(`${SITE_URL}/verify-email?token=${verifyToken}`, 'Verify Email')}
         <p style="font-size:12px;color:#8B8D93;">This link expires in 24 hours.</p>
       `),
     });

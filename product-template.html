@@ -265,7 +265,7 @@
 <nav>
   <a class="logo" href="/"><span>EGO</span>SYNK</a>
   <div class="nav-right">
-    <a class="icon-btn" href="/account.html" title="Account" aria-label="Account">
+    <a class="icon-btn" href="/account" title="Account" aria-label="Account">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
     </a>
     <a class="icon-btn" href="/#bag" id="bagBtn" title="Bag" aria-label="Bag">
@@ -284,8 +284,8 @@
 
 <footer>
   <div class="links">
-    <a href="/#shop">Shop</a><a href="/shipping-policy.html">Shipping</a><a href="/refund-policy.html">Returns &amp; Exchanges</a>
-    <a href="/terms.html">Terms</a><a href="/privacy-policy.html">Privacy</a><a href="/contact.html">Contact</a><a href="/bulk.html">Bulk orders</a><a href="#" onclick="window.egoCookieSettings&&egoCookieSettings();return false;">Cookie settings</a>
+    <a href="/shop">Shop</a><a href="/shipping-policy">Shipping</a><a href="/refund-policy">Returns &amp; Exchanges</a>
+    <a href="/terms">Terms</a><a href="/privacy-policy">Privacy</a><a href="/contact">Contact</a><a href="/bulk">Bulk orders</a><a href="#" onclick="window.egoCookieSettings&&egoCookieSettings();return false;">Cookie settings</a>
   </div>
   <div class="mono">© 2026 EGOSYNK.COM · GSTIN 27AKHPY6964E1ZI</div>
 </footer>
@@ -393,7 +393,7 @@ function render(){
   const cat = DATA.category;
   const s = DATA.settings || {};
   document.getElementById('main').innerHTML = `
-    <div class="crumbs reveal"><a href="/#shop">Shop</a> / ${cat ? `<a href="/#shop" onclick="sessionStorage.setItem('egosynk_filter','${esc(cat.id)}')">${esc(cat.name)}</a> / ` : ''}<span style="color:var(--bone-dim)">${esc(P.name)}</span></div>
+    <div class="crumbs reveal"><a href="/shop">Shop</a> / ${cat ? `<a href="/shop?cat=${encodeURIComponent(cat.id)}">${esc(cat.name)}</a> / ` : ''}<span style="color:var(--bone-dim)">${esc(P.name)}</span></div>
     <div class="pdp">
       <div class="reveal" style="--i:1">
         <div class="gallery-main" id="galleryMain">
@@ -445,10 +445,10 @@ function render(){
         </div>
         ${P.description ? `<p class="desc reveal">${esc(P.description)}</p>` : ''}
         ${(P.highlights || []).length ? `<ul class="highlights reveal">${P.highlights.map(h => `<li>${esc(h)}</li>`).join('')}</ul>` : ''}
-        <details class="acc reveal"><summary>Shipping</summary><p>Dispatched in 1–2 business days, delivered in 3–7 business days across India. Tracking appears in your account once shipped. <a href="/shipping-policy.html">Shipping policy</a></p></details>
+        <details class="acc reveal"><summary>Shipping</summary><p>Dispatched in 1–2 business days, delivered in 3–7 business days across India. Tracking appears in your account once shipped. <a href="/shipping-policy">Shipping policy</a></p></details>
         <details class="acc reveal"><summary>Returns &amp; exchanges</summary><p>${isHygiene(P)
           ? 'You can exchange it for another size within 7 days of delivery only if the hygiene seal is unbroken. Opened items can\'t be exchanged, but if it arrives damaged or wrong we\'ll replace or refund it.'
-          : 'Exchange for another size within 7 days of delivery, unused with tags.'} <a href="/refund-policy.html">Full policy</a></p></details>
+          : 'Exchange for another size within 7 days of delivery, unused with tags.'} <a href="/refund-policy">Full policy</a></p></details>
       </div>
     </div>
     ${reviewsHtml()}
@@ -752,7 +752,7 @@ function toggleSaved(){
   try{ localStorage.setItem('egosynk_saved', JSON.stringify(next)); } catch(e){}
   fetch('/.netlify/functions/wishlist', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ ids: next }) }).catch(() => {});
   paintSaved();
-  showToast(on ? 'Saved · <a href="/#shop">See saved items</a>' : 'Removed from saved');
+  showToast(on ? 'Saved · <a href="/shop">See saved items</a>' : 'Removed from saved');
   track(on ? 'add_to_wishlist' : 'remove_from_wishlist', { items: [{ item_id: P.id, item_name: P.name, price: P.price }] });
 }
 

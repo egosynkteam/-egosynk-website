@@ -4,7 +4,7 @@ const { CATALOG_HEADERS } = require('../lib/cdn');
 // /sitemap.xml (rewritten here in netlify.toml): the static pages plus one URL per
 // visible product, so new products reach search engines without editing a file.
 const SITE = 'https://egosynk.com';
-const STATIC = ['/', '/shipping-policy.html', '/refund-policy.html', '/terms.html', '/privacy-policy.html', '/contact.html', '/bulk.html'];
+const STATIC = ['/', '/shipping-policy', '/refund-policy', '/terms', '/privacy-policy', '/contact', '/bulk'];
 const xmlEsc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;');
 
 exports.handler = async () => {

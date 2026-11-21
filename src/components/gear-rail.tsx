@@ -3,16 +3,16 @@
 import { useCallback, useEffect, useState } from "react";
 import useEmblaCarousel from "embla-carousel-react";
 import { motion } from "motion/react";
-import { inr, type Category, type Product } from "@/lib/catalog-shared";
-import { legacy } from "@/lib/links";
-import { EMark } from "./logo";
-import { Stars } from "./stars";
+import { type Category, type Product } from "@/lib/catalog-shared";
+import { useSavedIds } from "@/lib/saved";
+import { ProductCard } from "./product-card";
 
 // Live gear from the catalog, as a swipeable rail with category filters. Each card opens the
-// existing product page, where sizes, bag and checkout already work.
+// product page; the full catalog with filters is the Shop page (/shop).
 export function GearRail({ products, categories }: { products: Product[]; categories: Category[] }) {
   const cats = categories.filter((c) => products.some((p) => p.cat === c.id));
   const [cat, setCat] = useState<string>("all");
+  const saved = useSavedIds();
   const shown = cat === "all" ? products : products.filter((p) => p.cat === cat);
   const [ref, api] = useEmblaCarousel({ align: "start", dragFree: true, containScroll: "trimSnaps" });
   const [edges, setEdges] = useState({ prev: false, next: true });
@@ -51,33 +51,10 @@ export function GearRail({ products, categories }: { products: Product[]; catego
         <ul className="flex touch-pan-y gap-4">
           {shown.map((p, i) => (
             <li key={p.id} className="min-w-0 flex-[0_0_78%] sm:flex-[0_0_44%] lg:flex-[0_0_23.5%]">
-              <motion.a href={legacy.product(p.slug)} initial={{ opacity: 0, y: 18 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
-                transition={{ duration: 0.6, delay: Math.min(i, 5) * 0.05, ease: [0.16, 1, 0.3, 1] }}
-                className={`group block ${p.available === false ? "opacity-60" : ""}`}>
-                <div className="relative aspect-[4/5] overflow-hidden rounded-sharp border border-line bg-surface">
-                  <div className="absolute inset-0 bg-[radial-gradient(70%_60%_at_50%_40%,var(--color-surface-2)_0%,var(--color-surface)_70%)]" />
-                  {p.images?.[0] ? (
-                    // Admin-uploaded photo, served by the media function; plain <img> because it lives on the store's own path.
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={`/media/${encodeURIComponent(p.images[0])}`} alt={p.name} loading="lazy" decoding="async"
-                      className="absolute inset-0 size-full object-cover transition-transform duration-700 ease-out-expo group-hover:scale-105" />
-                  ) : (
-                    <EMark className="absolute left-1/2 top-1/2 w-1/2 -translate-x-1/2 -translate-y-1/2 text-surface-2 transition-transform duration-700 ease-out-expo group-hover:scale-110" accent="var(--color-rust-dim)" />
-                  )}
-                  <span className="mono absolute left-3 top-3 text-nano uppercase tracking-[0.14em] text-steel">{categories.find((c) => c.id === p.cat)?.name || p.cat}</span>
-                  {p.tag && <span className="chip absolute right-3 top-3 bg-rust text-bone">{p.tag}</span>}
-                  {p.available === false && <span className="chip absolute bottom-3 left-3 border border-line bg-ink text-dim">Sold out</span>}
-                  <span className="absolute inset-x-3 bottom-3 translate-y-3 text-right opacity-0 transition-all duration-300 group-hover:translate-y-0 group-hover:opacity-100">
-                    <span className="mono text-micro font-bold uppercase tracking-[0.12em]">View →</span>
-                  </span>
-                </div>
-                <div className="mt-3 flex items-start justify-between gap-3">
-                  <h3 className="text-body font-semibold leading-snug">{p.name}</h3>
-                  <span className="mono shrink-0 text-body font-bold">{inr(p.price)}</span>
-                </div>
-                {p.rating && p.rating.count > 0 && <div className="mt-1.5"><Stars avg={p.rating.avg} count={p.rating.count} /></div>}
-                {p.sizes && p.sizes.length > 1 && <p className="mono mt-1 text-micro uppercase text-steel">{p.sizes.join(" · ")}</p>}
-              </motion.a>
+              <motion.div initial={{ opacity: 0, y: 18 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
+                transition={{ duration: 0.6, delay: Math.min(i, 5) * 0.05, ease: [0.16, 1, 0.3, 1] }}>
+                <ProductCard p={p} categories={categories} saved={saved.has(p.id)} />
+              </motion.div>
             </li>
           ))}
         </ul>

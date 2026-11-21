@@ -6,7 +6,9 @@ import { SiteFooter } from "@/components/site-footer";
 import { MotionRoot } from "@/components/motion-root";
 import { JsonLd, ORGANIZATION } from "@/components/json-ld";
 import { WhatsAppButton } from "@/components/whatsapp-button";
-import { getCatalog, whatsappLink, SHIPPING_FALLBACK } from "@/lib/catalog";
+import { PromoBar } from "@/components/promo-bar";
+import { offerShort, offerText } from "@/lib/product-shared";
+import { getCatalog, whatsappLink, SHIPPING_FALLBACK, GIFT_FALLBACK } from "@/lib/catalog";
 import { BagProvider } from "@/components/bag";
 import { BRAND } from "@/lib/brand";
 import "./globals.css";
@@ -27,17 +29,26 @@ export const metadata: Metadata = {
 export const viewport: Viewport = { themeColor: BRAND.ink, viewportFit: "cover" };
 
 export default async function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
-  const { settings, products } = await getCatalog();
+  const { settings, products, offers } = await getCatalog();
+  // The one coupon the admin ticked "Top bar", shown in the strip above the header.
+  const top = offers?.find((o) => o.topBar);
   // Just what the bag needs to re-price a restored bag; the rest of the catalog stays on the server.
   const shop = products.map((p) => ({ id: p.id, name: p.name, cat: p.cat, price: p.price, image: p.images?.[0] || null, available: p.available !== false }));
-  const ship = { fee: settings.shippingFee ?? SHIPPING_FALLBACK.shippingFee, freeOver: settings.freeShippingThreshold ?? SHIPPING_FALLBACK.freeShippingThreshold };
+  const fg = settings.freeGift ?? GIFT_FALLBACK;
+  const ship = {
+    fee: settings.shippingFee ?? SHIPPING_FALLBACK.shippingFee,
+    freeOver: settings.freeShippingThreshold ?? SHIPPING_FALLBACK.freeShippingThreshold,
+    // Shown in the bag only; create-order decides the gift from the server's own settings.
+    gift: fg?.enabled !== false && fg?.name && fg.threshold ? { name: fg.name, threshold: fg.threshold } : null,
+  };
   const whatsapp = whatsappLink(settings.social?.whatsapp, "Hi EGOSYNK, I have a question");
   return (
-    <html lang="en-IN" className={`${archivo.variable} ${inter.variable} ${jetbrains.variable}`}>
+    <html lang="en-IN" data-promo={top ? "" : undefined} className={`${archivo.variable} ${inter.variable} ${jetbrains.variable}`} suppressHydrationWarning>
       <body className="min-h-dvh">
         <JsonLd data={ORGANIZATION} />
         <MotionRoot>
           <BagProvider products={shop} ship={ship}>
+            {top && <PromoBar code={top.code} text={offerText(top)} short={offerShort(top)} />}
             <SiteHeader />
             <main id="main">{children}</main>
             <SiteFooter />

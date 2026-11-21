@@ -5,7 +5,7 @@ const { logEvent } = require('../lib/audit');
 const { getCategories } = require('../lib/settings');
 const { TYPES, QUANTITIES, emailNewEnquiry } = require('../lib/enquiries');
 
-// bulk.html form. POST { name, org?, type, email, phone, city?, categories: [id], quantity,
+// The bulk enquiry form (src/components/bulk-form.tsx). POST { name, org?, type, email, phone, city?, categories: [id], quantity,
 // branding?, message?, website (honeypot, must be empty) }.
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 const str = (v, max) => String(v == null ? '' : v).trim().slice(0, max);

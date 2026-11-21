@@ -1,28 +1,42 @@
 # EGOSYNK to-do
 
-Last updated 10 Nov 2026. Preview of the new store: https://storefront-next--egosynk.netlify.app (branch `storefront-next`).
+Last updated 22 Nov 2026. The new store is live on egosynk.com (`main`). Work in progress: branch `design-system-pages` (not pushed).
 
 ## Next to build
-- [ ] **Old pages onto the design system**: account, policies, `shop.html`, admin (product pages done 10 Nov)
+- [x] **Shop page** `/shop` (22 Nov): full catalog with collections, search, size/price/in-stock filters, sort, wishlist hearts; filters in the URL (`/shop?cat=sleeves`). Old `shop.html` redirects there; header Gear and every "Shop gear" button point to it
+- [x] Offer strip above the header on every page (the coupon ticked "Top bar": WELCOME250), copy + close
+- [x] Bulk orders page `/bulk` in the new design (22 Nov); `bulk.html` redirects
+- [ ] **Old pages onto the design system**: admin (only you see it; invoice stays a printable white page) (product pages done 10 Nov; policies, contact, sign-in pages, My Account and order confirmation done 22 Nov on branch `design-system-pages`, not live yet). Invoice stays a white printable page on purpose
+- [ ] **LIVE BUG (main):** order-confirmation.html crashes after payment for every order with an invoice (`viewKey` used outside `init()`), so customers see "Your order couldn't load" and the purchase isn't tracked. Payment itself is fine. Fixed on `design-system-pages`; ship that branch or hotfix main before real orders
+- [ ] On the preview, signed in: check My Account (orders, tracking, exchange form) and one full test checkout to the new confirmation page
+- [ ] Before merging `design-system-pages`: one real password reset and one sign-up on the preview (the forms post to the live functions, so I didn't submit them)
 - [ ] EAA product page (needs the formula, flavour, size and a render)
-- [ ] Full review of the preview on a phone, once the preview link rebuilds
-- [ ] After `main` has the product-page JSON mode, remove the old-HTML fallback in `src/lib/product.ts`
-- [ ] Merge `storefront-next` → `main` to put the new store live in "coming soon" mode
+- [x] Phone review (22 Nov): hero product art no longer sits behind the text on phones; menu, bag, policy, sign-in, product, HYDRO and BOLD pages checked at 360/390 px
+- [x] Old-HTML fallback removed from `src/lib/product.ts` (live function answers JSON, checked 22 Nov)
+- [x] Merge `storefront-next` → `main` (14 Nov) and publish (pushed 22 Nov)
+
+## Christmas drop (set 22 Nov)
+- [x] Countdown: "Christmas gear", 24 Dec 2026 00:00 IST, homepage Gear slide (live setting)
+- [x] WELCOME250: ₹250 off first orders of ₹1,500+, in the top bar and on product pages (live)
+- [x] Free gift: EGOSYNK 600 ml plastic shaker on orders of ₹2,500+ after discounts (Admin → Settings → Free gift). On branch, live after the push. Not on the GST invoice; ask the CA whether a free gift needs anything on the invoice
+- [x] Snowfall on the homepage hero until 26 Dec (branch); Gear chip says "Drops 24 Dec" while the countdown runs
+- [ ] After the push: Admin → Settings → Announcement: "Christmas gear drops 24 Dec", "WELCOME250: ₹250 off your first order over ₹1,500", "Free shaker on orders over ₹2,500", "Free shipping over ₹999"
+- [ ] Steel thermal shaker: price, then add it as a product (Accessories) so it can be bought on its own
+- [ ] Plastic shaker: manufacturer quote + stock before 24 Dec (spec: BRAND/3d/plastic-shaker/SPEC.md); weigh it for Shiprocket
+- [ ] WhatsApp: skipped for now (button stays hidden)
 
 ## Waiting on you
-- [ ] **Turn off the BOLD 50 ml / 100 ml listings on the live site** (Admin → Products → untick "Visible on the store"): they can be bought, but the product doesn't exist yet
-- [ ] **15 Nov:** Netlify credits reset. Publish `main` to egosynk.com (or upgrade Netlify to Personal, $9/month); the preview link rebuilds then too
+- [x] **Turn off the BOLD 50 ml / 100 ml listings on the live site** (hidden 22 Nov; product pages now 404) (Admin → Products → untick "Visible on the store"): they can be bought, but the product doesn't exist yet
 - [ ] One small real test order on the preview (the only checkout step not tested)
 - [ ] HYDRO tub render: the label shows "200" but the launch tub is HYDRO 150. Wrong label?
 - [ ] Logo pick (options A–F in `BRAND/LOGO OPTIONS`); trademark filing is missing class 3 (perfume, for BOLD)
 - [ ] Real prices: HYDRO tub, shaker, bundles (now ₹299 / ₹1,799 / ₹4,199, shown as "Indicative"), BOLD 30 ml and 100 ml
-- [ ] Launch date: set it in Admin → Settings → Launch countdown once the admin update is live
 - [ ] EAA details: formula, flavour, pack size, servings
-- [ ] WhatsApp number in Admin → Settings → Social (the chat button stays hidden until then)
 - [ ] Turn on auto-renew for egosynk.com in GoDaddy
 - [ ] Tell the manufacturer the batch code format, e.g. `H150-2702-01`, stamped at filling. The label's QR opens egosynk.com/batch (files in `BRAND/3d/hydro-launch/label/qr/`)
 - [ ] Blender: open `BRAND/3d/hydro-launch/renders/hydro-tub-v2.blend` → File → External Data → Unpack Resources → Remove packed files → save
 - [ ] After publishing: refresh link previews in Facebook's Sharing Debugger for `/hydro` and `/bold`
+- [ ] Contact page: the grievance officer is "EGOSYNK Support". The e-commerce rules ask for a named person; add your name if you want to be safe
 - [ ] Optional: remove the test entry egosynkteam@gmail.com in Admin → Drop lists
 
 ## Done (10 Nov 2026)
