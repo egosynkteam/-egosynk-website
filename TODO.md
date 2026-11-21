@@ -1,6 +1,6 @@
 # EGOSYNK to-do
 
-Last updated 10 Nov 2026. Preview of the new store: https://storefront-next--egosynk.netlify.app (branch `storefront-next`).
+Last updated 22 Nov 2026. The new store is live on egosynk.com (`main`). Work in progress: branch `design-system-pages` (not pushed).
 
 ## Next to build
 - [ ] **Old pages onto the design system**: bulk, `shop.html`, admin (product pages done 10 Nov; policies, contact, sign-in pages, My Account and order confirmation done 22 Nov on branch `design-system-pages`, not live yet). Invoice stays a white printable page on purpose
@@ -8,13 +8,12 @@ Last updated 10 Nov 2026. Preview of the new store: https://storefront-next--ego
 - [ ] On the preview, signed in: check My Account (orders, tracking, exchange form) and one full test checkout to the new confirmation page
 - [ ] Before merging `design-system-pages`: one real password reset and one sign-up on the preview (the forms post to the live functions, so I didn't submit them)
 - [ ] EAA product page (needs the formula, flavour, size and a render)
-- [ ] Full review of the preview on a phone, once the preview link rebuilds
+- [x] Phone review (22 Nov): hero product art no longer sits behind the text on phones; menu, bag, policy, sign-in, product, HYDRO and BOLD pages checked at 360/390 px
 - [ ] After `main` has the product-page JSON mode, remove the old-HTML fallback in `src/lib/product.ts`
-- [ ] Merge `storefront-next` → `main` to put the new store live in "coming soon" mode
+- [x] Merge `storefront-next` → `main` (14 Nov) and publish (pushed 22 Nov)
 
 ## Waiting on you
 - [x] **Turn off the BOLD 50 ml / 100 ml listings on the live site** (hidden 22 Nov; product pages now 404) (Admin → Products → untick "Visible on the store"): they can be bought, but the product doesn't exist yet
-- [ ] **15 Nov:** Netlify credits reset. Publish `main` to egosynk.com (or upgrade Netlify to Personal, $9/month); the preview link rebuilds then too
 - [ ] One small real test order on the preview (the only checkout step not tested)
 - [ ] HYDRO tub render: the label shows "200" but the launch tub is HYDRO 150. Wrong label?
 - [ ] Logo pick (options A–F in `BRAND/LOGO OPTIONS`); trademark filing is missing class 3 (perfume, for BOLD)
