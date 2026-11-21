@@ -52,6 +52,9 @@ function orderEmailHtml(order, forOwner) {
   const giftRow = order.gift
     ? `<tr><td style="padding:6px 0;">Free gift: ${escapeHtml(order.gift.name)}</td><td style="padding:6px 0;text-align:right;">Free</td></tr>`
     : '';
+  const noteRow = order.giftNote
+    ? `<p style="font-size:13px;line-height:1.6;margin:12px 0;padding:10px 12px;border-left:3px solid #C41E3A;background:#17181B;">Gift order${order.giftNote.message ? `. Card message: “${escapeHtml(order.giftNote.message)}”` : ' (no message)'}</p>`
+    : '';
   const s = order.shipping;
   const intro = forOwner
     ? `<p style="font-size:14px;line-height:1.6;"><strong>New paid order.</strong></p>`
@@ -59,6 +62,7 @@ function orderEmailHtml(order, forOwner) {
 
   return `
     ${intro}
+    ${noteRow}
     <p style="font-size:12px;color:#8B8D93;">Order ID: ${escapeHtml(order.orderId)}${order.invoice ? '<br>Invoice: ' + escapeHtml(order.invoice.number) : ''}<br>Sold by EGOSYNK · GSTIN: ${GSTIN}</p>
     <table style="width:100%;font-size:13px;border-collapse:collapse;margin:16px 0;">
       ${itemsRows}

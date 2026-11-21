@@ -124,10 +124,11 @@ function SlideView({ s, active, priority, launch }: { s: Slide; active: boolean;
   // The countdown sits on the slide for whatever is launching (admin → Settings → Launch countdown).
   const page = s.launchPage || (s.alt?.href || s.cta.href).split("#")[0];
   const words = { hidden: { y: "105%" }, show: { y: "0%" } };
-  // While a countdown runs for this slide, its chip says when it drops instead of "Live now".
+  // While a countdown runs for a slide that isn't on sale yet, its chip says when it drops.
+  // A live line (Gear) keeps "Live now"; its countdown is for a new drop within it.
   const upcoming = launchFor(launch, page);
   const counting = useSyncExternalStore(noop, () => !!upcoming && upcoming.at > Date.now(), () => false);
-  const status = counting && upcoming
+  const status = counting && upcoming && s.status !== "Live now"
     ? `Drops ${new Date(upcoming.at).toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata", day: "numeric", month: "short" })}`
     : s.status;
   return (

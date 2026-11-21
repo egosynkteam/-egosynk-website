@@ -323,7 +323,8 @@ function CheckoutDialog({ open, onClose, lines, coupon, total, say }: { open: bo
   async function pay(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setError("");
-    const shipping = Object.fromEntries(new FormData(e.currentTarget).entries()) as Record<string, string>;
+    const { isGift, giftMessage, ...shipping } = Object.fromEntries(new FormData(e.currentTarget).entries()) as Record<string, string>;
+    const giftNote = isGift === "on" ? { message: (giftMessage || "").trim().slice(0, 200) } : null;
     if (!/^[6-9]\d{9}$/.test(shipping.phone)) { setError("Enter a valid 10-digit mobile number."); return; }
     if (!/^\d{6}$/.test(shipping.pincode)) { setError("Enter a valid 6-digit pincode."); return; }
     track("begin_checkout", { currency: "INR", value: lines.reduce((s, l) => s + l.price * l.qty, 0), coupon: coupon?.code,
@@ -334,7 +335,7 @@ function CheckoutDialog({ open, onClose, lines, coupon, total, say }: { open: bo
       const [res] = await Promise.all([
         fetch("/.netlify/functions/create-order", {
           method: "POST", headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ cart: lines.map((l) => ({ id: l.id, name: l.name, size: l.size, qty: l.qty })), couponCode: coupon?.code || null, shipping }),
+          body: JSON.stringify({ cart: lines.map((l) => ({ id: l.id, name: l.name, size: l.size, qty: l.qty })), couponCode: coupon?.code || null, shipping, giftNote }),
         }),
         loadRazorpay(),
       ]);
@@ -416,6 +417,7 @@ function CheckoutDialog({ open, onClose, lines, coupon, total, say }: { open: bo
                     }} /></label>
               </div>
               <p aria-live="polite" className="-mt-2 min-h-[1em] text-xs text-dim">{pinHint}</p>
+              <GiftNoteField />
               {error && <p role="alert" className="text-sm text-rust-text">{error}</p>}
               <button type="submit" disabled={busy} className="btn btn-primary w-full disabled:opacity-60">{busy ? "Opening payment…" : `Pay ${inr(total)} →`}</button>
               <p className="text-center text-xs text-steel">You&apos;ll pay in Razorpay&apos;s secure window. The final total, including shipping, is confirmed there.</p>
@@ -441,6 +443,29 @@ function Goals({ sum, ship }: { sum: Sum; ship: Ship }) {
         <motion.div className="h-full bg-rust" initial={false} animate={{ width: `${Math.min(100, (goods / Math.max(1, goal.of)) * 100)}%` }} />
       </div>
       {sum.toFree > 0 && gift && <p className="mono mt-2 text-micro text-steel">Spend {inr(gift.threshold)}+ and the {gift.name} comes free.</p>}
+    </div>
+  );
+}
+
+// "This is a gift": a short message we print on a card and pack with the order. Free.
+function GiftNoteField() {
+  const [on, setOn] = useState(false);
+  const [text, setText] = useState("");
+  return (
+    <div className="rounded-sharp border border-line p-4">
+      <label className="flex items-center gap-3 text-sm text-bone">
+        <input type="checkbox" name="isGift" checked={on} onChange={(e) => setOn(e.target.checked)} className="size-4 accent-rust" />
+        This is a gift <span className="text-dim">· add a free gift note</span>
+      </label>
+      {on && (
+        <label className="mt-3 grid gap-1.5">
+          <span className="mono text-micro uppercase tracking-[0.12em] text-dim">Your message (we print it on a card in the parcel)</span>
+          <textarea name="giftMessage" value={text} onChange={(e) => setText(e.target.value.slice(0, 200))} rows={3} maxLength={200}
+            placeholder="Merry Christmas! Now no excuses on leg day. — A"
+            className="w-full rounded-sharp border border-line bg-ink px-3.5 py-3 text-bone placeholder:text-steel focus:border-dim focus:outline-none" />
+          <span className="mono text-right text-micro text-steel">{text.length}/200</span>
+        </label>
+      )}
     </div>
   );
 }

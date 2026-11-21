@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
+import { isFestive } from "@/lib/season";
 import { AnimatePresence, motion, useMotionValueEvent, useScroll, useTransform } from "motion/react";
 import { Wordmark } from "./logo";
 import { legacy } from "@/lib/links";
@@ -13,8 +14,13 @@ const NAV = [
   { href: "/shop", label: "Gear", note: "Live" },
   { href: "/bold", label: "Scent", note: "BOLD" },
 ];
+// Christmas season only (src/lib/season.ts).
+const GIFTS = { href: "/gifts", label: "Gifts", note: "Christmas" };
+const noop = () => () => {};
 
 export function SiteHeader() {
+  const festive = useSyncExternalStore(noop, () => isFestive(Date.now()), () => false);
+  const nav = festive ? [...NAV, GIFTS] : NAV;
   const { count: bag, open: openBag } = useBag();
   const [open, setOpen] = useState(false);
   const [searching, setSearching] = useState(false);
@@ -55,7 +61,7 @@ export function SiteHeader() {
         </Link>
 
         <nav aria-label="Main" className="hidden items-center gap-8 md:flex">
-          {NAV.map((n) => (
+          {nav.map((n) => (
             <Link key={n.href} href={n.href} className="group relative font-mono text-small font-bold uppercase tracking-[0.12em] text-dim transition-colors hover:text-bone">
               {n.label}
               <span className="absolute -bottom-1.5 left-0 h-px w-full origin-left scale-x-0 bg-rust transition-transform duration-300 group-hover:scale-x-100" />
@@ -103,7 +109,7 @@ export function SiteHeader() {
             transition={{ duration: 0.25 }}
             className="h-[calc(100dvh-var(--header-h))] pb-10 pt-6 md:hidden"
           >
-            {NAV.map((n, i) => (
+            {nav.map((n, i) => (
               <motion.div key={n.href} initial={{ opacity: 0, x: -16 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.05 * i + 0.05 }}>
                 <Link href={n.href} onClick={() => setOpen(false)} className="flex items-baseline justify-between border-b border-line py-5">
                   <span className="display text-5xl">{n.label}</span>

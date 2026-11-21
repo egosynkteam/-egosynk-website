@@ -7,6 +7,7 @@ import { Marquee } from "@/components/marquee";
 import { Lines } from "@/components/lines";
 import { HydroBand } from "@/components/hydro-band";
 import { GearRail } from "@/components/gear-rail";
+import { GiftBand } from "@/components/gift-guide";
 import { Manifesto } from "@/components/manifesto";
 import { Reveal } from "@/components/reveal";
 import { WaitlistForm } from "@/components/waitlist-form";
@@ -25,7 +26,7 @@ export const metadata: Metadata = {
 };
 
 export default async function Home() {
-  const { settings, products } = await getCatalog();
+  const { settings, products, categories } = await getCatalog();
   // Same product rich results the old homepage published, now in the server HTML.
   const productList = {
     "@context": "https://schema.org",
@@ -55,6 +56,8 @@ export default async function Home() {
       {products.length > 0 && <JsonLd data={productList} />}
       <HeroCarousel gearSub={settings.hero?.sub} launch={settings.launch} />
       <Marquee items={[...new Set(ticker)]} />
+      {/* Christmas season only (src/lib/season.ts); renders nothing outside it. */}
+      <GiftBand products={products.filter(isGear)} categories={categories} />
       <Lines />
       <HydroBand />
 

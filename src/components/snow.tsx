@@ -2,10 +2,10 @@
 
 import { useSyncExternalStore } from "react";
 
-// The Christmas season on the storefront: a light snowfall over the homepage hero, from now
-// until Boxing Day night (IST). Past that it renders nothing, so nothing needs undoing.
-const SEASON = { from: Date.parse("2026-11-22T00:00:00+05:30"), to: Date.parse("2026-12-26T23:59:59+05:30") };
-export const isFestive = (now: number) => now >= SEASON.from && now <= SEASON.to;
+import { isFestive } from "@/lib/season";
+
+// A light snowfall over the homepage hero during the Christmas season (src/lib/season.ts).
+// Past that it renders nothing, so nothing needs undoing.
 
 const noop = () => () => {};
 

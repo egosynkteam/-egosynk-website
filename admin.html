@@ -2487,7 +2487,7 @@ function renderOrders(orders){
       <td data-label="Payment"><span class="status ${o.status}">${o.status}</span></td>
       <td data-label="Customer">${esc(o.shipping.name)}<br><span class="muted">${esc(o.shipping.phone)}${o.shipping.email ? '<br>' + esc(o.shipping.email) : ''}</span></td>
       <td data-label="Ship to">${esc(o.shipping.address1)}${o.shipping.address2 ? ', ' + esc(o.shipping.address2) : ''}<br>${esc(o.shipping.city)}, ${esc(o.shipping.state)} ${esc(o.shipping.pincode)}</td>
-      <td data-label="Items" class="muted">${o.items.map(i => `${esc(i.name)}${i.size ? ' ('+esc(i.size)+')' : ''} x${i.qty}`).join('<br>')}${o.gift ? `<br><strong style="color:var(--rust-bright)">+ FREE: ${esc(o.gift.name)}</strong>` : ''}</td>
+      <td data-label="Items" class="muted">${o.items.map(i => `${esc(i.name)}${i.size ? ' ('+esc(i.size)+')' : ''} x${i.qty}`).join('<br>')}${o.gift ? `<br><strong style="color:var(--rust-bright)">+ FREE: ${esc(o.gift.name)}</strong>` : ''}${o.giftNote ? `<br><strong style="color:var(--amber)">GIFT NOTE:</strong> <span style="color:var(--bone)">${o.giftNote.message ? '“' + esc(o.giftNote.message) + '”' : '(no message)'}</span>` : ''}</td>
       <td data-label="Amount">₹${(o.amount/100).toLocaleString('en-IN')}</td>
       <td data-label="Order / invoice" class="muted">${id}${o.invoice ? `<br><a href="/invoice.html?id=${encodeURIComponent(o.orderId)}" target="_blank" rel="noopener">${esc(o.invoice.number)}</a>` : ''}</td>
       <td data-label="Fulfilment">${action}</td>

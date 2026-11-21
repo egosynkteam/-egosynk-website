@@ -10,6 +10,7 @@ type Item = { id: number; name: string; size?: string; qty: number; price: numbe
 type Order = {
   orderId: string; items: Item[]; amount: number; shippingFee?: number | null; discount: number; coupon: string | null;
   gift?: { name: string } | null;
+  giftNote?: { message: string } | null;
   invoiceNumber: string | null;
   shipping: { name: string; email?: string; phone: string; address1: string; address2?: string; city: string; state: string; pincode: string };
 };
@@ -130,6 +131,12 @@ export function OrderConfirmation() {
       {order.shippingFee != null && <div className={row}><p>Shipping</p><p className="mono">{order.shippingFee ? inr(order.shippingFee) : "Free"}</p></div>}
       <div className="flex justify-between pt-4 text-lead font-bold"><p>Total</p><p className="mono">{inr(order.amount / 100)}</p></div>
 
+      {order.giftNote && (
+        <p className="mt-6 rounded-sharp border border-line bg-ink p-4 text-small text-dim">
+          <span className="mono block text-micro uppercase tracking-[0.12em] text-rust-text">Gift note</span>
+          {order.giftNote.message ? <>We&apos;ll print “<span className="text-bone">{order.giftNote.message}</span>” on a card in the parcel.</> : "We'll pack it as a gift."}
+        </p>
+      )}
       <h2 className="mono mb-2 mt-8 text-micro uppercase tracking-[0.12em] text-steel">Delivering to</h2>
       <address className="text-small not-italic leading-relaxed text-dim">
         {s.name}<br />

@@ -25,6 +25,9 @@ Last updated 22 Nov 2026. The new store is live on egosynk.com (`main`). Work in
 - [ ] Steel shaker: confirm the specs in its description with the manufacturer (700 ml, double-wall, whisk ball, powder pod are from our spec, not a quote); ask the CA for its HSN/GST rate (it uses the Accessories default now)
 - [ ] Plastic shaker: manufacturer quote + stock before 24 Dec (spec: BRAND/3d/plastic-shaker/SPEC.md); weigh it for Shiprocket
 - [ ] WhatsApp: skipped for now (button stays hidden)
+- [x] Christmas gift guide `/gifts` (22 Nov): sections from the live catalog (under ₹1,000, heavy lifter, gym regular, go big + free shaker), "order by 16 Dec" countdown, homepage section and header "Gifts" link until 26 Dec (src/lib/season.ts)
+- [x] Gift note at checkout: "This is a gift" + message (200 chars), shown on the receipt, in admin orders (GIFT NOTE) and in the order emails. **Print the card when packing**
+- [ ] After 26 Dec: decide whether to keep /gifts up (it shows "cut-off has passed" on its own)
 
 ## Waiting on you
 - [x] **Turn off the BOLD 50 ml / 100 ml listings on the live site** (hidden 22 Nov; product pages now 404) (Admin → Products → untick "Visible on the store"): they can be bought, but the product doesn't exist yet
