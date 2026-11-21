@@ -63,8 +63,8 @@ export function ProductView({ data }: { data: PdpData }) {
   return (
     <>
       <nav aria-label="Breadcrumb" className="mono mb-6 text-micro uppercase tracking-[0.12em] text-steel">
-        <Link href="/#gear" className="hover:text-bone">Shop</Link>
-        {category && <> <span aria-hidden="true">/</span> <span>{category.name}</span></>}
+        <Link href="/shop" className="hover:text-bone">Shop</Link>
+        {category && <> <span aria-hidden="true">/</span> <Link href={`/shop?cat=${encodeURIComponent(category.id)}`} className="hover:text-bone">{category.name}</Link></>}
         <span aria-hidden="true"> / </span><span className="text-dim" aria-current="page">{p.name}</span>
       </nav>
 

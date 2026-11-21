@@ -6,7 +6,7 @@ const LIVE = process.env.STORE_ORIGIN || "https://egosynk.com";
 // The original store pages, published from public/ by scripts/copy-legacy.mjs. The live site
 // has served them without ".html" (Netlify's pretty URLs), and those addresses are in emails,
 // search results and old links, so both forms keep working.
-const PAGES = ["admin", "admin-orders", "bulk", "invoice", "shop"];
+const PAGES = ["admin", "admin-orders", "bulk", "invoice"];
 // Pages that moved into this app (src/app/<name>). Their old ".html" addresses are in
 // emails, search results and the remaining HTML pages, so they redirect permanently.
 const MOVED = [
@@ -15,6 +15,8 @@ const MOVED = [
   "login", "signup", "forgot-password", "reset-password", "verify-email",
   // Account and receipt. ?order= and ?k= (the view key in confirmation emails) carry over.
   "account", "order-confirmation",
+  // The old store grid; /shop is now src/app/shop with the same filters.
+  "shop",
 ];
 
 const nextConfig: NextConfig = {

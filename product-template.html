@@ -284,7 +284,7 @@
 
 <footer>
   <div class="links">
-    <a href="/#shop">Shop</a><a href="/shipping-policy">Shipping</a><a href="/refund-policy">Returns &amp; Exchanges</a>
+    <a href="/shop">Shop</a><a href="/shipping-policy">Shipping</a><a href="/refund-policy">Returns &amp; Exchanges</a>
     <a href="/terms">Terms</a><a href="/privacy-policy">Privacy</a><a href="/contact">Contact</a><a href="/bulk.html">Bulk orders</a><a href="#" onclick="window.egoCookieSettings&&egoCookieSettings();return false;">Cookie settings</a>
   </div>
   <div class="mono">© 2026 EGOSYNK.COM · GSTIN 27AKHPY6964E1ZI</div>
@@ -393,7 +393,7 @@ function render(){
   const cat = DATA.category;
   const s = DATA.settings || {};
   document.getElementById('main').innerHTML = `
-    <div class="crumbs reveal"><a href="/#shop">Shop</a> / ${cat ? `<a href="/#shop" onclick="sessionStorage.setItem('egosynk_filter','${esc(cat.id)}')">${esc(cat.name)}</a> / ` : ''}<span style="color:var(--bone-dim)">${esc(P.name)}</span></div>
+    <div class="crumbs reveal"><a href="/shop">Shop</a> / ${cat ? `<a href="/shop?cat=${encodeURIComponent(cat.id)}">${esc(cat.name)}</a> / ` : ''}<span style="color:var(--bone-dim)">${esc(P.name)}</span></div>
     <div class="pdp">
       <div class="reveal" style="--i:1">
         <div class="gallery-main" id="galleryMain">
@@ -752,7 +752,7 @@ function toggleSaved(){
   try{ localStorage.setItem('egosynk_saved', JSON.stringify(next)); } catch(e){}
   fetch('/.netlify/functions/wishlist', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ ids: next }) }).catch(() => {});
   paintSaved();
-  showToast(on ? 'Saved · <a href="/#shop">See saved items</a>' : 'Removed from saved');
+  showToast(on ? 'Saved · <a href="/shop">See saved items</a>' : 'Removed from saved');
   track(on ? 'add_to_wishlist' : 'remove_from_wishlist', { items: [{ item_id: P.id, item_name: P.name, price: P.price }] });
 }
 

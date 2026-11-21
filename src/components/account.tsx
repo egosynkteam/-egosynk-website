@@ -90,7 +90,7 @@ function Loaded({ user, orders, reload }: { user: User; orders: Order[]; reload:
         <h2 className={sectionTitle}>Order history</h2>
         {orders.length === 0 ? (
           <div className="rounded-sharp border border-line bg-surface p-8 text-center text-dim">
-            No orders yet. <Link href="/#gear" className={textLink}>Start shopping</Link>.
+            No orders yet. <Link href="/shop" className={textLink}>Start shopping</Link>.
           </div>
         ) : (
           <ol className="grid gap-4">{orders.map((o) => <OrderCard key={o.orderId} order={o} reload={reload} />)}</ol>

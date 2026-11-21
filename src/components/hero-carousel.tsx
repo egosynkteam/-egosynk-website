@@ -21,6 +21,9 @@ type Slide = {
   art: "hydro" | "gear" | "bold";
   // Gear's art is only a background shape, so its longer headline gets a wider column.
   wide?: boolean;
+  // The page a launch countdown (admin → Settings) must link to for it to show on this slide.
+  // Defaults to the slide's own page; Gear's is the homepage, where store-wide launches point.
+  launchPage?: string;
 };
 
 // How long each slide stays up (ms). Also drives the progress bar under the slides.
@@ -37,7 +40,7 @@ export function HeroCarousel({ gearSub, launch }: { gearSub?: string; launch?: L
     {
       id: "gear", line: "Gear", status: "Live now", title: ["Sync your ego", "to the iron."],
       sub: gearSub || "Compression gear engineered for lifters who train past the point everyone else stops.",
-      cta: { href: "/#gear", label: "Shop gear" }, art: "gear", wide: true,
+      cta: { href: "/shop", label: "Shop gear" }, art: "gear", wide: true, launchPage: "/",
     },
     {
       id: "bold", line: "Scent", status: "In development", title: ["Wear your", "ego."],
@@ -113,7 +116,7 @@ export function HeroCarousel({ gearSub, launch }: { gearSub?: string; launch?: L
 
 function SlideView({ s, active, priority, launch }: { s: Slide; active: boolean; priority: boolean; launch?: Launch }) {
   // The countdown sits on the slide for whatever is launching (admin → Settings → Launch countdown).
-  const page = (s.alt?.href || s.cta.href).split("#")[0];
+  const page = s.launchPage || (s.alt?.href || s.cta.href).split("#")[0];
   const words = { hidden: { y: "105%" }, show: { y: "0%" } };
   // While a countdown runs for this slide, its chip says when it drops instead of "Live now".
   const upcoming = launchFor(launch, page);

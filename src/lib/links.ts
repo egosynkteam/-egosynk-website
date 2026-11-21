@@ -2,9 +2,9 @@
 // pages are still the original HTML, published from public/ by scripts/copy-legacy.mjs.
 export const legacy = {
   product: (slug: string) => `/p/${encodeURIComponent(slug)}`,
-  // The old store page (full catalog grid) is still served at /shop.html. The bag and checkout
-  // now live in this app: /#bag opens the bag drawer on any page.
-  shop: "/shop.html",
+  // The full catalog with filters (src/app/shop). The bag and checkout live in this app:
+  // /#bag opens the bag drawer on any page.
+  shop: "/shop",
   bag: "/#bag",
   account: "/account",
   login: "/login",

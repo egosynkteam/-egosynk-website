@@ -217,7 +217,7 @@ function BagDrawer(props: {
               <div className="flex flex-1 flex-col items-center justify-center gap-6 px-8 text-center">
                 <p className="display text-3xl">Your bag is empty.</p>
                 <p className="text-dim">Add something built to last.</p>
-                <Link href="/#gear" onClick={onClose} className="btn btn-primary">Shop gear →</Link>
+                <Link href="/shop" onClick={onClose} className="btn btn-primary">Shop gear →</Link>
               </div>
             ) : (
               <>

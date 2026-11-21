@@ -25,6 +25,8 @@ export type Catalog = {
   products: Product[];
   categories: Category[];
   bundles?: Bundle[];
+  // Public coupons (admin ticks "On product page" / "Top bar").
+  offers?: { code: string; type: "percent" | "flat"; value: number; minSubtotal?: number; maxDiscount?: number | null; firstOrderOnly?: boolean; topBar?: boolean }[];
   settings: {
     shippingFee?: number;
     freeShippingThreshold?: number;

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { AnimatePresence, motion, useMotionValueEvent, useScroll } from "motion/react";
+import { AnimatePresence, motion, useMotionValueEvent, useScroll, useTransform } from "motion/react";
 import { Wordmark } from "./logo";
 import { legacy } from "@/lib/links";
 import { SearchDialog } from "./search-dialog";
@@ -10,7 +10,7 @@ import { useBag } from "./bag";
 
 const NAV = [
   { href: "/hydro", label: "Fuel", note: "HYDRO 150" },
-  { href: "/#gear", label: "Gear", note: "Live" },
+  { href: "/shop", label: "Gear", note: "Live" },
   { href: "/bold", label: "Scent", note: "BOLD" },
 ];
 
@@ -21,6 +21,8 @@ export function SiteHeader() {
   const [solid, setSolid] = useState(false);
   const { scrollY } = useScroll();
   useMotionValueEvent(scrollY, "change", (y) => setSolid(y > 24));
+  // Starts below the offer strip (--promo-h, 0 when there is none) and slides up as it scrolls away.
+  const top = useTransform(scrollY, (y) => `max(0px, calc(var(--promo-h) - ${Math.round(y)}px))`);
 
   useEffect(() => {
     document.documentElement.style.overflow = open ? "hidden" : "";
@@ -41,8 +43,9 @@ export function SiteHeader() {
   }, []);
 
   return (
-    <header
-      className={`gutter fixed inset-x-0 top-0 z-(--z-header) pt-[env(safe-area-inset-top,0px)] transition-colors duration-300 ${
+    <motion.header
+      style={{ top: open ? 0 : top }}
+      className={`gutter fixed inset-x-0 top-(--promo-h) z-(--z-header) pt-[env(safe-area-inset-top,0px)] transition-colors duration-300 ${
         solid || open ? "border-b border-line bg-ink/85 backdrop-blur-md" : "border-b border-transparent"
       }`}
     >
@@ -112,6 +115,6 @@ export function SiteHeader() {
         )}
       </AnimatePresence>
       <SearchDialog open={searching} onClose={() => setSearching(false)} />
-    </header>
+    </motion.header>
   );
 }

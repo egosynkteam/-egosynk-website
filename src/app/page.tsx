@@ -1,3 +1,4 @@
+import Link from "next/link";
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import Image from "next/image";
@@ -57,13 +58,13 @@ export default async function Home() {
       <Lines />
       <HydroBand />
 
-      {/* Older pages link to /#shop; it lands here. */}
+      {/* Old links to /#shop land here; the full catalog is /shop. */}
       <span id="shop" className="block scroll-mt-24" aria-hidden="true" />
       <section id="gear" className="gutter scroll-mt-24 py-24 md:py-32" aria-labelledby="gear-h">
         <div className="page">
           <Reveal className="mb-10 flex flex-wrap items-end justify-between gap-6">
             <div>
-              <span className="eyebrow">Gear · live now</span>
+              <span className="eyebrow">Gear</span>
               <h2 id="gear-h" className="display mt-4 text-display-lg">Shop the drop</h2>
             </div>
             <p className="max-w-[40ch] text-dim">Compression and lifting gear, ready to ship.{free ? ` Free shipping over ${inr(free)}.` : ""}</p>
@@ -71,6 +72,9 @@ export default async function Home() {
           <Suspense fallback={<RailSkeleton />}>
             <Gear />
           </Suspense>
+          <div className="mt-10 flex justify-center">
+            <Link href="/shop" className="btn btn-ghost">See all gear →</Link>
+          </div>
         </div>
       </section>
 

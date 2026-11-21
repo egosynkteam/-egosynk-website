@@ -65,6 +65,8 @@
 :root {
   color-scheme: dark;
   --header-h: 4.25rem;
+  /* Height of the offer strip above the header (promo-bar.tsx); 0 when there is none or it's closed. */
+  --promo-h: 0px;
   /* Stacking order, lowest to highest. */
   --z-whatsapp: 40;
   --z-header: 50;
@@ -73,6 +75,8 @@
   --z-dialog: 75;
   --z-toast: 80;
 }
+html[data-promo] { --promo-h: 2rem; }
+html:not([data-promo]) .promo-bar { display: none; }
 html { background: var(--color-ink); overflow-x: clip; scroll-behavior: smooth; }
 body { background: var(--color-ink); color: var(--color-bone); font-family: var(--font-sans); -webkit-font-smoothing: antialiased; }
 ::selection { background: var(--color-rust); color: var(--color-bone); }

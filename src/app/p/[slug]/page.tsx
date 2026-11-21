@@ -41,7 +41,7 @@ function Product({ r }: { r: Exclude<ProductResult, { kind: "redirect" } | { kin
     return (
       <div className="py-24 text-center">
         <p className="display text-display-sm">Couldn&apos;t load this product</p>
-        <p className="mt-4 text-dim">Refresh in a minute, or <Link href="/#gear" className="underline decoration-rust underline-offset-4">browse the gear</Link>.</p>
+        <p className="mt-4 text-dim">Refresh in a minute, or <Link href="/shop" className="underline decoration-rust underline-offset-4">browse the gear</Link>.</p>
       </div>
     );
   }
