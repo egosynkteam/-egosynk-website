@@ -22,14 +22,14 @@ export function PromoBar({ code, text, short }: { code: string; text: string; sh
   };
 
   return (
-    <div role="region" aria-label="Offer" className="promo-bar gutter relative flex h-(--promo-h) items-center justify-center gap-3 bg-rust text-bone">
+    <div role="region" aria-label="Offer" className="promo-bar relative flex h-(--promo-h) items-center justify-center gap-2.5 bg-rust pl-3 pr-11 text-bone sm:gap-3">
       {/* Already closed this visit: hide before paint, without a flash (runs before hydration). */}
       <script dangerouslySetInnerHTML={{ __html: `try{if(sessionStorage.getItem(${JSON.stringify(DISMISSED)})===${JSON.stringify(code)}){document.documentElement.removeAttribute("data-promo")}}catch(e){}` }} />
-      <p className="mono truncate text-nano font-bold uppercase tracking-[0.1em] sm:text-micro sm:tracking-[0.12em]">
+      <p className="mono truncate text-nano font-bold uppercase tracking-[0.02em] min-[400px]:tracking-[0.08em] sm:text-micro sm:tracking-[0.12em]">
         <span className="sm:hidden">{short}</span>
         <span className="hidden sm:inline">{text} · code</span>
       </p>
-      <button type="button" onClick={copy} className="mono grid min-h-6 shrink-0 place-items-center rounded-sharp bg-bone px-2.5 text-nano font-bold tracking-[0.08em] text-ink sm:text-micro" aria-label={`Copy code ${code}`}>
+      <button type="button" onClick={copy} className="mono grid min-h-6 shrink-0 place-items-center rounded-sharp bg-bone px-2 text-nano font-bold tracking-[0.04em] text-ink sm:px-2.5 sm:text-micro sm:tracking-[0.08em]" aria-label={`Copy code ${code}`}>
         {copied ? "Copied" : code}
       </button>
       <button type="button" onClick={close} aria-label="Close offer" className="absolute right-2 grid size-7 place-items-center text-bone/80 hover:text-bone pointer-coarse:size-9">

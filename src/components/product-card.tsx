@@ -18,7 +18,7 @@ export function ProductCard({ p, categories, saved, priority = false }: {
   const off = percentOff(p);
   const sold = p.available === false;
   return (
-    <div className="group relative">
+    <div className="group relative @container">
       <a href={legacy.product(p.slug)} className="block">
         <div className="relative aspect-[4/5] overflow-hidden rounded-sharp border border-line bg-surface">
           <div className={`absolute inset-0 ${sold ? "opacity-50 grayscale" : ""}`}>
@@ -32,19 +32,22 @@ export function ProductCard({ p, categories, saved, priority = false }: {
             <EMark className="absolute left-1/2 top-1/2 w-1/2 -translate-x-1/2 -translate-y-1/2 text-surface-2 transition-transform duration-700 ease-out-expo group-hover:scale-110" accent="var(--color-rust-dim)" />
           )}
           </div>
-          <span className="mono absolute left-3 top-3 text-nano uppercase tracking-[0.14em] text-steel">{categories.find((c) => c.id === p.cat)?.name || p.cat}</span>
+          <span className="mono absolute left-3 right-14 top-3 truncate text-nano uppercase tracking-[0.14em] text-steel">{categories.find((c) => c.id === p.cat)?.name || p.cat}</span>
           <span className="absolute bottom-3 left-3 flex gap-1.5">
             {p.tag && <span className="chip bg-rust text-bone">{p.tag}</span>}
             {off > 0 && <span className="chip bg-bone text-ink">−{off}%</span>}
             {sold && <span className="chip border border-line bg-ink text-bone">Sold out</span>}
           </span>
-          <span className="absolute bottom-3 right-3 translate-y-3 opacity-0 transition-all duration-300 group-hover:translate-y-0 group-hover:opacity-100">
+          {/* Hover hint for mouse users; on touch screens a tap would leave it stuck on. */}
+          <span className="absolute bottom-3 right-3 translate-y-3 opacity-0 transition-all duration-300 group-hover:translate-y-0 group-hover:opacity-100 pointer-coarse:hidden">
             <span className="mono text-micro font-bold uppercase tracking-[0.12em]">View →</span>
           </span>
         </div>
-        <div className="mt-3 flex items-start justify-between gap-3">
-          <h3 className="text-body font-semibold leading-snug">{p.name}</h3>
-          <span className="shrink-0 text-right">
+        {/* Name and price side by side when the card is wide enough; in narrow cards (two
+            columns on a small phone) the price goes under the name instead of overflowing. */}
+        <div className="mt-3 flex flex-col gap-1 @[14rem]:flex-row @[14rem]:items-start @[14rem]:justify-between @[14rem]:gap-3">
+          <h3 className="min-w-0 text-body font-semibold leading-snug">{p.name}</h3>
+          <span className="shrink-0 @[14rem]:text-right">
             <span className="mono block text-body font-bold">{inr(p.price)}</span>
             {off > 0 && <s className="mono block text-micro text-steel">{inr(p.mrp!)}</s>}
           </span>
